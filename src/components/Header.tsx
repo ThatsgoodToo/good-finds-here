@@ -38,7 +38,9 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
       <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
         {/* Left: Logo */}
         <div className="flex items-center">
-          <img src={logo} alt="That's Good Too" className="h-8 w-8 sm:h-10 sm:w-10" />
+          <button onClick={() => navigate("/")} className="focus:outline-none">
+            <img src={logo} alt="That's Good Too" className="h-8 w-8 sm:h-10 sm:w-10 hover:opacity-80 transition-opacity" />
+          </button>
         </div>
 
         {/* Center: What's Good Today */}

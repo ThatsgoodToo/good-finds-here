@@ -25,6 +25,7 @@ const VendorSignup = () => {
           onToggleMap={() => {}}
           isMapView={false}
           isCentered={true}
+          onWhatsgoodClick={() => navigate("/")}
         />
         
         <div className="flex items-center justify-center p-4 pt-8">

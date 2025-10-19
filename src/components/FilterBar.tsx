@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Grid3x3, List, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, Grid3x3, List, SlidersHorizontal, X } from "lucide-react";
 
 type FilterType = "all" | "product" | "service" | "experience" | "sale";
 
@@ -38,6 +39,26 @@ const FilterBar = ({
   return (
     <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm border-b border-border py-4 animate-fade-in">
       <div className="container mx-auto px-4 space-y-3">
+        {/* Active Filters Display */}
+        {activeFilter !== "all" && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-muted-foreground">Active filters:</span>
+            <Badge 
+              variant="secondary" 
+              className="flex items-center gap-1 px-3 py-1"
+            >
+              {filters.find(f => f.type === activeFilter)?.label}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 hover:bg-transparent"
+                onClick={() => onFilterChange("all")}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          </div>
+        )}
         {/* Top Row: Back Button, Search Input, Edit Filters, View Toggle */}
         <div className="flex items-center gap-3">
           {onBack && (

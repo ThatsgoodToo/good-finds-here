@@ -9,9 +9,10 @@ interface SearchBarProps {
   onToggleMap: () => void;
   isMapView: boolean;
   isCentered: boolean;
+  onWhatsgoodClick?: () => void;
 }
 
-const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered }: SearchBarProps) => {
+const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodClick }: SearchBarProps) => {
   const [query, setQuery] = useState("");
 
   const handleSearch = () => {
@@ -24,9 +25,14 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered }: SearchBarPr
     // Hero/Centered search bar layout
     return (
       <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-4 animate-fade-in">
-        <h1 className="text-foreground text-4xl md:text-5xl font-light mb-12 text-center">
-          What are you looking for?
-        </h1>
+        {/* What's Good Today Button */}
+        <Button
+          onClick={onWhatsgoodClick}
+          variant="outline"
+          className="text-foreground hover:text-primary border-border/50 rounded-full px-8 py-6 text-base sm:text-lg bg-transparent hover:bg-muted/50 mb-12"
+        >
+          WHAT'S GOOD TODAY
+        </Button>
         
         <div className="flex items-center gap-3 w-full max-w-4xl">
           {/* Map toggle on left */}

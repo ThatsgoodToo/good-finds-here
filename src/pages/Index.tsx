@@ -146,6 +146,7 @@ const Index = () => {
           onToggleMap={() => setIsMapView(!isMapView)}
           isMapView={isMapView}
           isCentered={!hasSearched}
+          onWhatsgoodClick={handleWhatsgoodClick}
         />
 
         {/* Content appears after search */}
