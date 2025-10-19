@@ -2,6 +2,7 @@ import { Hand, Settings, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import logo from "@/assets/logo.png";
+import SignupModal from "@/components/SignupModal";
 
 interface HeaderProps {
   showGoodToday?: boolean;
@@ -21,9 +23,11 @@ interface HeaderProps {
 const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYourGoodsClick }: HeaderProps) => {
   const navigate = useNavigate();
   const { user, userRole, signOut } = useAuth();
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  
   const handleYourGoodsClick = () => {
     if (!user) {
-      navigate("/auth");
+      setShowSignupModal(true);
     } else {
       onYourGoodsClick?.();
     }
@@ -114,6 +118,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
           </DropdownMenu>
         </div>
       </div>
+      <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </header>
   );
 };

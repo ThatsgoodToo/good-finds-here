@@ -55,14 +55,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
+    // Use the secure get_user_role function
     const { data, error } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
+      .rpc("get_user_role", { _user_id: userId });
 
     if (!error && data) {
-      setUserRole(data.role as UserRole);
+      setUserRole(data as UserRole);
+    } else {
+      setUserRole(null);
     }
   };
 
