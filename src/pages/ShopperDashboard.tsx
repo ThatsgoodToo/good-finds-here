@@ -87,6 +87,7 @@ const ShopperDashboard = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [customFilterInput, setCustomFilterInput] = useState("");
   const [profileSettings, setProfileSettings] = useState({
     location: "Portland, Oregon",
     locationEnabled: true,
@@ -365,6 +366,21 @@ const ShopperDashboard = () => {
     toast.success(`Added ${value} to preferences`);
   };
 
+  const handleAddCustomFilter = () => {
+    if (!customFilterInput.trim()) {
+      toast.error("Please enter a filter");
+      return;
+    }
+    const newPref = {
+      id: Date.now().toString(),
+      name: customFilterInput.trim(),
+      category: "Custom"
+    };
+    setPreferences([...preferences, newPref]);
+    toast.success(`Added "${customFilterInput}" to preferences`);
+    setCustomFilterInput("");
+  };
+
   const openFolderDetails = (folderId: string) => {
     setSelectedFolderId(folderId);
   };
@@ -395,27 +411,24 @@ const ShopperDashboard = () => {
               
               <div className="flex items-center gap-3">
                 {/* Toggle between Vendor and Shopper - Show if user has both roles */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      <span className="hidden sm:inline">Switch Dashboard</span>
-                      <span className="sm:hidden">Switch</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/shopper")} className="font-semibold">
-                      Shopper Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/dashboard/vendor")}>
-                      Vendor Dashboard
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+                  <Button
+                    variant={userRole === "shopper" ? "default" : "ghost"}
+                    size="sm"
+                    className="px-4"
+                    onClick={() => navigate("/dashboard/shopper")}
+                  >
+                    Shopper
+                  </Button>
+                  <Button
+                    variant={userRole === "vendor" ? "default" : "ghost"}
+                    size="sm"
+                    className="px-4"
+                    onClick={() => navigate("/dashboard/vendor")}
+                  >
+                    Vendor
+                  </Button>
+                </div>
                 
                 {/* Settings Gear Icon */}
                 <DropdownMenu>
@@ -704,46 +717,68 @@ const ShopperDashboard = () => {
                   onClick={() => setShowAddPreferenceDialog(true)}
                 >
                   <Plus className="h-4 w-4" />
-                  Add Filter
+                  Browse Filters
                 </Button>
               </div>
+
+              {/* Add Custom Filter */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add Custom Filter</CardTitle>
+                  <CardDescription>
+                    Type your own custom filter preferences
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g., Vegan, Organic, Local Artist..."
+                      value={customFilterInput}
+                      onChange={(e) => setCustomFilterInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddCustomFilter();
+                        }
+                      }}
+                    />
+                    <Button onClick={handleAddCustomFilter}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
               
               <Card>
                 <CardHeader>
                   <CardTitle>Active Filters</CardTitle>
                   <CardDescription>
-                    These filters affect your New Offers, search results, and recommendations
+                    Your personalized filters for search and recommendations
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {Object.keys(standardFilters).map((category) => {
-                      const categoryFilters = preferences.filter(p => p.category === category);
-                      if (categoryFilters.length === 0) return null;
-                      
-                      return (
-                        <div key={category}>
-                          <h4 className="font-semibold text-sm mb-2 text-muted-foreground">{category}</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {categoryFilters.map((pref) => (
-                              <Badge 
-                                key={pref.id} 
-                                variant="secondary" 
-                                className="px-3 py-2 text-sm flex items-center gap-2 hover:bg-muted transition-colors"
-                              >
-                                {pref.name}
-                                <button
-                                  onClick={() => handleRemovePreference(pref.id)}
-                                  className="hover:text-destructive transition-colors"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="flex flex-wrap gap-2">
+                    {preferences.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No filters added yet. Add some to personalize your experience!
+                      </p>
+                    ) : (
+                      preferences.map((pref) => (
+                        <Badge 
+                          key={pref.id} 
+                          variant="secondary" 
+                          className="px-3 py-2 text-sm flex items-center gap-2 hover:bg-muted transition-colors"
+                        >
+                          {pref.name}
+                          <button
+                            onClick={() => handleRemovePreference(pref.id)}
+                            className="hover:text-destructive transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
