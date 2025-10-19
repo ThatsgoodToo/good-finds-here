@@ -88,7 +88,7 @@ const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack }: PaymentSt
                 </h3>
                 <div className="space-y-2 text-sm text-muted-foreground mb-4">
                   <p>
-                    <strong className="text-foreground">Startup price:</strong> $5/month billed every 6 months
+                    <strong className="text-foreground">Startup price:</strong> $3/month billed every 6 months
                   </p>
                   <p>
                     After this period, the subscription automatically renews at $7/month.
