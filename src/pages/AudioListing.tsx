@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
+import SignupModal from "@/components/SignupModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +23,17 @@ import { toast } from "sonner";
 const AudioListing = () => {
   const navigate = useNavigate();
   const { listingId } = useParams();
+  const { user } = useAuth();
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+
+  useEffect(() => {
+    if (!user) {
+      setShowSignupModal(true);
+    }
+  }, [user]);
 
   // Mock data
   const vendor = {
@@ -371,6 +381,8 @@ const AudioListing = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
   );
 };
