@@ -422,7 +422,12 @@ const ShopperDashboard = () => {
                   </Button>
                 </div>
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold">{shopperName} Goods</h1>
+                  <h1 
+                    className="text-2xl sm:text-3xl font-bold hover:text-primary cursor-pointer transition-colors"
+                    onClick={() => navigate(`/shopper/${shopperName.toLowerCase().replace(/\s/g, '-')}`)}
+                  >
+                    {shopperName} Goods
+                  </h1>
                   <p className="text-sm text-muted-foreground">Shopper Dashboard</p>
                   
                   {/* Location */}
