@@ -16,8 +16,16 @@ interface SignupModalProps {
 const SignupModal = ({ open, onOpenChange }: SignupModalProps) => {
   const navigate = useNavigate();
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      // When modal is closed without signing in, redirect to homepage
+      navigate("/");
+    }
+    onOpenChange(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl">Welcome to That's Good Too!</DialogTitle>

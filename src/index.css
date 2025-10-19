@@ -9,7 +9,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Light Mode - That's Good Too */
-    --background: 210 20% 93%;
+    --background: 60 4% 68%;
     --foreground: 8 10% 11%;
 
     --card: 0 0% 100%;
