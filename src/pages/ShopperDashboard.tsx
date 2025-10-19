@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -25,6 +25,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Hand, 
   FolderHeart, 
@@ -42,12 +49,31 @@ import {
   EyeOff,
   Upload,
   Ticket,
-  ChevronRight
+  ChevronRight,
+  Edit2,
+  Trash2
 } from "lucide-react";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+interface FolderItem {
+  id: string;
+  title: string;
+  vendor: string;
+  vendorId: string;
+  image: string;
+  type: "product" | "service" | "experience";
+  saved: boolean;
+}
+
+interface Folder {
+  id: string;
+  name: string;
+  count: number;
+  items: FolderItem[];
+}
 
 const ShopperDashboard = () => {
   const { user, userRole } = useAuth();
@@ -56,7 +82,11 @@ const ShopperDashboard = () => {
   const [activeTab, setActiveTab] = useState("high-fives");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showAddFolderDialog, setShowAddFolderDialog] = useState(false);
+  const [showEditFolderDialog, setShowEditFolderDialog] = useState(false);
+  const [showAddPreferenceDialog, setShowAddPreferenceDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [profileSettings, setProfileSettings] = useState({
     location: "Portland, Oregon",
     locationEnabled: true,
@@ -65,18 +95,62 @@ const ShopperDashboard = () => {
     activityPublic: false,
   });
 
-  // Mock data - In production, fetch from Supabase
   const shopperName = user?.user_metadata?.display_name || "Your";
   const shopperImage = user?.user_metadata?.avatar_url || "";
 
-  const folders = [
+  // Standard filter categories with options
+  const standardFilters = {
+    "Size": ["XS", "S", "M", "L", "XL", "XXL", "One Size"],
+    "Color": ["Red", "Blue", "Green", "Yellow", "Black", "White", "Brown", "Pink", "Purple", "Orange"],
+    "Material": ["Cotton", "Wool", "Silk", "Leather", "Wood", "Metal", "Glass", "Ceramic", "Plastic"],
+    "Price Range": ["Under $25", "$25-$50", "$50-$100", "$100-$200", "Over $200"],
+    "Shipping": ["Free Shipping", "Ships Worldwide", "Local Pickup", "Same Day"],
+    "Sustainability": ["Eco-friendly", "Recycled Materials", "Low-waste", "Carbon Neutral"],
+    "Ownership": ["Women-Owned", "BIPOC-Owned", "LGBTQ+-Owned", "Veteran-Owned", "Family-Owned"],
+    "Type": ["Handcrafted", "Vintage", "Custom Made", "Small Batch", "Mass Produced"],
+  };
+
+  const [preferences, setPreferences] = useState([
+    { id: "1", name: "Handcrafted", category: "Type" },
+    { id: "2", name: "Eco-friendly", category: "Sustainability" },
+    { id: "3", name: "Local", category: "Location" },
+    { id: "4", name: "Free Shipping", category: "Shipping" },
+    { id: "5", name: "Women-Owned", category: "Ownership" },
+  ]);
+
+  const [folders, setFolders] = useState<Folder[]>([
     { 
       id: "1", 
       name: "Travel", 
       count: 12,
       items: [
-        { id: "1", title: "Portable Speaker", vendor: "Audio Co.", image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=200", type: "product" as const },
-        { id: "2", title: "Travel Journal", vendor: "Paper Goods", image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=200", type: "product" as const },
+        { 
+          id: "1", 
+          title: "Portable Speaker", 
+          vendor: "Audio Co.", 
+          vendorId: "1",
+          image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=200", 
+          type: "product",
+          saved: true
+        },
+        { 
+          id: "2", 
+          title: "Travel Journal", 
+          vendor: "Paper Goods", 
+          vendorId: "2",
+          image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=200", 
+          type: "product",
+          saved: true
+        },
+        { 
+          id: "3", 
+          title: "Hiking Backpack", 
+          vendor: "Outdoor Gear", 
+          vendorId: "3",
+          image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200", 
+          type: "product",
+          saved: true
+        },
       ]
     },
     { 
@@ -84,28 +158,59 @@ const ShopperDashboard = () => {
       name: "Kid Snacks", 
       count: 8,
       items: [
-        { id: "3", title: "Organic Fruit Bars", vendor: "Healthy Bites", image: "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=200", type: "product" as const },
+        { 
+          id: "4", 
+          title: "Organic Fruit Bars", 
+          vendor: "Healthy Bites", 
+          vendorId: "4",
+          image: "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=200", 
+          type: "product",
+          saved: true
+        },
+        { 
+          id: "5", 
+          title: "Trail Mix Variety Pack", 
+          vendor: "Nature's Best", 
+          vendorId: "5",
+          image: "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=200", 
+          type: "product",
+          saved: true
+        },
       ]
     },
     { 
       id: "3", 
       name: "Free Shipping", 
       count: 15,
-      items: []
+      items: [
+        { 
+          id: "6", 
+          title: "Handcrafted Bowl Set", 
+          vendor: "Clay & Co.", 
+          vendorId: "1",
+          image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200", 
+          type: "product",
+          saved: true
+        },
+      ]
     },
     { 
       id: "4", 
       name: "Music", 
       count: 6,
-      items: []
+      items: [
+        { 
+          id: "7", 
+          title: "Vinyl Record Collection", 
+          vendor: "Retro Sounds", 
+          vendorId: "6",
+          image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=200", 
+          type: "product",
+          saved: true
+        },
+      ]
     },
-    { 
-      id: "5", 
-      name: "First Nation Vendors", 
-      count: 10,
-      items: []
-    },
-  ];
+  ]);
 
   const activeCoupons = [
     { 
@@ -128,25 +233,6 @@ const ShopperDashboard = () => {
       claimed: true,
       vendorUrl: "https://ginew.example.com"
     },
-    { 
-      id: "3", 
-      vendor: "Studio Ceramics", 
-      vendorId: "3",
-      code: "FREESHIP", 
-      discount: "Free Shipping", 
-      expires: "Feb 28, 2026",
-      claimed: false,
-      vendorUrl: "https://studioceramics.example.com"
-    },
-  ];
-
-  const preferences = [
-    { id: "1", name: "Handcrafted", category: "Type" },
-    { id: "2", name: "Eco-friendly", category: "Sustainability" },
-    { id: "3", name: "Local", category: "Location" },
-    { id: "4", name: "Budget-friendly", category: "Price" },
-    { id: "5", name: "Free Shipping", category: "Shipping" },
-    { id: "6", name: "Women-Owned", category: "Ownership" },
   ];
 
   const newOffers = [
@@ -168,16 +254,37 @@ const ShopperDashboard = () => {
       image: "https://images.unsplash.com/photo-1587049352846-4a222e784e38?w=300",
       matchedFilters: ["Eco-friendly", "Local"]
     },
-    { 
-      id: "3", 
-      title: "Heritage Shirt Collection", 
-      vendor: "GINEW", 
-      vendorId: "2",
-      discount: "15% off",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300",
-      matchedFilters: ["Handcrafted"]
-    },
   ];
+
+  const getTypeDotColor = (type: "product" | "service" | "experience") => {
+    switch (type) {
+      case "product": return "bg-[hsl(var(--product))]";
+      case "service": return "bg-[hsl(var(--service))]";
+      case "experience": return "bg-[hsl(var(--experience))]";
+    }
+  };
+
+  const handleToggleSave = (folderId: string, itemId: string) => {
+    setFolders(folders.map(folder => {
+      if (folder.id === folderId) {
+        return {
+          ...folder,
+          items: folder.items.map(item => 
+            item.id === itemId ? { ...item, saved: !item.saved } : item
+          ),
+          count: folder.items.filter(item => 
+            item.id === itemId ? !item.saved : item.saved
+          ).length
+        };
+      }
+      return folder;
+    }));
+    
+    const item = folders.find(f => f.id === folderId)?.items.find(i => i.id === itemId);
+    if (item) {
+      toast.success(item.saved ? "Removed from folder" : "Added back to folder");
+    }
+  };
 
   const handleClaimCoupon = (coupon: typeof activeCoupons[0]) => {
     toast.success("Coupon claimed! Redirecting to vendor...", {
@@ -193,22 +300,60 @@ const ShopperDashboard = () => {
       toast.error("Please enter a folder name");
       return;
     }
+    const newFolder: Folder = {
+      id: Date.now().toString(),
+      name: newFolderName,
+      count: 0,
+      items: []
+    };
+    setFolders([...folders, newFolder]);
     toast.success(`Folder "${newFolderName}" created!`);
     setNewFolderName("");
     setShowAddFolderDialog(false);
   };
 
+  const handleEditFolder = () => {
+    if (!editingFolder || !newFolderName.trim()) {
+      toast.error("Please enter a folder name");
+      return;
+    }
+    setFolders(folders.map(f => 
+      f.id === editingFolder.id ? { ...f, name: newFolderName } : f
+    ));
+    toast.success("Folder name updated!");
+    setNewFolderName("");
+    setEditingFolder(null);
+    setShowEditFolderDialog(false);
+  };
+
+  const handleDeleteFolder = (folderId: string) => {
+    const folder = folders.find(f => f.id === folderId);
+    if (folder && window.confirm(`Delete folder "${folder.name}"?`)) {
+      setFolders(folders.filter(f => f.id !== folderId));
+      toast.success("Folder deleted");
+    }
+  };
+
   const handleRemovePreference = (prefId: string) => {
+    setPreferences(preferences.filter(p => p.id !== prefId));
     toast.success("Preference removed");
   };
 
-  const getTypeDotColor = (type: "product" | "service" | "experience") => {
-    switch (type) {
-      case "product": return "bg-green-500";
-      case "service": return "bg-blue-500";
-      case "experience": return "bg-purple-500";
-    }
+  const handleAddPreference = (category: string, value: string) => {
+    const newPref = {
+      id: Date.now().toString(),
+      name: value,
+      category: category
+    };
+    setPreferences([...preferences, newPref]);
+    toast.success(`Added ${value} to preferences`);
   };
+
+  const openFolderDetails = (folderId: string) => {
+    setSelectedFolderId(folderId);
+  };
+
+  const selectedFolder = folders.find(f => f.id === selectedFolderId);
 
   return (
     <div className="min-h-screen bg-background">
@@ -233,7 +378,6 @@ const ShopperDashboard = () => {
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Toggle Vendor/Shopper */}
                 {userRole === "vendor" && (
                   <Button
                     variant="outline"
@@ -247,7 +391,6 @@ const ShopperDashboard = () => {
                   </Button>
                 )}
                 
-                {/* Settings Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -343,21 +486,43 @@ const ShopperDashboard = () => {
                     <Card 
                       key={folder.id} 
                       className="cursor-pointer hover:shadow-lg transition-shadow group"
-                      onClick={() => {
-                        // Navigate to folder contents
-                        toast.info(`Opening ${folder.name} folder`);
-                      }}
                     >
                       <CardHeader>
                         <CardTitle className="flex items-center justify-between text-lg">
-                          <span>{folder.name}</span>
-                          <Badge variant="secondary">{folder.count}</Badge>
+                          <span onClick={() => openFolderDetails(folder.id)}>{folder.name}</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{folder.count}</Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Settings className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  setEditingFolder(folder);
+                                  setNewFolderName(folder.name);
+                                  setShowEditFolderDialog(true);
+                                }}>
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  Edit Name
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteFolder(folder.id)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Folder
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent onClick={() => openFolderDetails(folder.id)}>
                         {folder.items.length > 0 ? (
                           <div className="grid grid-cols-2 gap-2 mb-3">
-                            {folder.items.slice(0, 2).map((item) => (
+                            {folder.items.slice(0, 4).map((item) => (
                               <div key={item.id} className="relative aspect-square rounded-lg overflow-hidden">
                                 <img 
                                   src={item.image} 
@@ -391,6 +556,7 @@ const ShopperDashboard = () => {
                     <Card 
                       key={folder.id}
                       className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => openFolderDetails(folder.id)}
                     >
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between">
@@ -477,7 +643,12 @@ const ShopperDashboard = () => {
             <TabsContent value="preferences" className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">My Preferences</h2>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={() => setShowAddPreferenceDialog(true)}
+                >
                   <Plus className="h-4 w-4" />
                   Add Filter
                 </Button>
@@ -492,7 +663,7 @@ const ShopperDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {["Type", "Sustainability", "Location", "Price", "Shipping", "Ownership"].map((category) => {
+                    {Object.keys(standardFilters).map((category) => {
                       const categoryFilters = preferences.filter(p => p.category === category);
                       if (categoryFilters.length === 0) return null;
                       
@@ -579,6 +750,57 @@ const ShopperDashboard = () => {
         />
       </main>
 
+      {/* Folder Details Dialog */}
+      <Dialog open={!!selectedFolderId} onOpenChange={() => setSelectedFolderId(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedFolder?.name}</DialogTitle>
+            <DialogDescription>
+              {selectedFolder?.count} saved items
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {selectedFolder?.items.map((item) => (
+              <Card key={item.id} className="overflow-hidden">
+                <div className="relative h-40 cursor-pointer" onClick={() => navigate(`/listing/product/${item.id}`)}>
+                  <img 
+                    src={item.image} 
+                    alt={item.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(item.type))} />
+                  </div>
+                  <button
+                    className="absolute top-2 right-2 p-2 bg-background/90 rounded-full hover:bg-background transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleSave(selectedFolder.id, item.id);
+                    }}
+                  >
+                    <Hand 
+                      className={cn(
+                        "h-5 w-5 transition-all",
+                        item.saved ? "fill-[hsl(var(--product))] text-[hsl(var(--product))]" : "text-muted-foreground"
+                      )} 
+                    />
+                  </button>
+                </div>
+                <CardContent className="pt-4">
+                  <h3 className="font-semibold mb-1">{item.title}</h3>
+                  <p 
+                    className="text-sm text-muted-foreground hover:text-primary cursor-pointer"
+                    onClick={() => navigate(`/vendor/${item.vendorId}`)}
+                  >
+                    {item.vendor}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Profile Settings Dialog */}
       <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -590,7 +812,6 @@ const ShopperDashboard = () => {
           </DialogHeader>
           
           <div className="space-y-6">
-            {/* Profile Image */}
             <div className="space-y-2">
               <Label>Profile Image</Label>
               <div className="flex items-center gap-4">
@@ -612,7 +833,6 @@ const ShopperDashboard = () => {
               </div>
             </div>
 
-            {/* Location */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="location">Location</Label>
@@ -638,12 +858,8 @@ const ShopperDashboard = () => {
                 disabled={!profileSettings.locationEnabled}
                 placeholder="City, State"
               />
-              <p className="text-xs text-muted-foreground">
-                Location syncs with map view
-              </p>
             </div>
 
-            {/* External Link */}
             <div className="space-y-2">
               <Label htmlFor="externalLink">External Link (Optional)</Label>
               <div className="flex gap-2">
@@ -661,7 +877,6 @@ const ShopperDashboard = () => {
               </div>
             </div>
 
-            {/* Bio */}
             <div className="space-y-2">
               <Label htmlFor="bio">Bio (Optional)</Label>
               <Textarea
@@ -673,36 +888,30 @@ const ShopperDashboard = () => {
                 placeholder="Tell others about yourself..."
                 rows={4}
               />
-              <p className="text-xs text-muted-foreground">
-                {profileSettings.bio.length}/500 characters
-              </p>
             </div>
 
-            {/* Privacy Controls */}
             <div className="space-y-4">
               <h4 className="font-semibold">Privacy Controls</h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {profileSettings.activityPublic ? (
-                      <Eye className="h-4 w-4 text-primary" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <div>
-                      <Label>Activity Visibility</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Who can see your High Fives and saved items
-                      </p>
-                    </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {profileSettings.activityPublic ? (
+                    <Eye className="h-4 w-4 text-primary" />
+                  ) : (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <div>
+                    <Label>Activity Visibility</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Who can see your High Fives and saved items
+                    </p>
                   </div>
-                  <Switch
-                    checked={profileSettings.activityPublic}
-                    onCheckedChange={(checked) =>
-                      setProfileSettings({ ...profileSettings, activityPublic: checked })
-                    }
-                  />
                 </div>
+                <Switch
+                  checked={profileSettings.activityPublic}
+                  onCheckedChange={(checked) =>
+                    setProfileSettings({ ...profileSettings, activityPublic: checked })
+                  }
+                />
               </div>
             </div>
 
@@ -765,6 +974,94 @@ const ShopperDashboard = () => {
                 Create Folder
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Folder Dialog */}
+      <Dialog open={showEditFolderDialog} onOpenChange={setShowEditFolderDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Folder Name</DialogTitle>
+            <DialogDescription>
+              Rename "{editingFolder?.name}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editFolderName">Folder Name</Label>
+              <Input
+                id="editFolderName"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="Enter new folder name"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setNewFolderName("");
+                  setEditingFolder(null);
+                  setShowEditFolderDialog(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleEditFolder}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Preference Dialog */}
+      <Dialog open={showAddPreferenceDialog} onOpenChange={setShowAddPreferenceDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Filter Preferences</DialogTitle>
+            <DialogDescription>
+              Select from standard filters to customize your experience
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            {Object.entries(standardFilters).map(([category, options]) => (
+              <div key={category} className="space-y-3">
+                <h4 className="font-semibold text-sm">{category}</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {options.map((option) => {
+                    const isSelected = preferences.some(
+                      p => p.category === category && p.name === option
+                    );
+                    return (
+                      <Button
+                        key={option}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className="justify-start"
+                        onClick={() => {
+                          if (isSelected) {
+                            const pref = preferences.find(
+                              p => p.category === category && p.name === option
+                            );
+                            if (pref) handleRemovePreference(pref.id);
+                          } else {
+                            handleAddPreference(category, option);
+                          }
+                        }}
+                      >
+                        {option}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
