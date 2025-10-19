@@ -86,19 +86,15 @@ const VendorHeader = ({
                 <Button
                   variant={userRole === "shopper" ? "default" : "ghost"}
                   size="sm"
-                  className={`px-4 transition-all ${userRole === "shopper" ? "bg-primary text-primary-foreground shadow-sm" : ""}`}
+                  className={`px-4 transition-all ${userRole === "shopper" ? "bg-shopper-active text-shopper-active-foreground shadow-sm" : ""}`}
                   onClick={() => navigate("/dashboard/shopper")}
                 >
                   Shopper
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant={userRole === "vendor" ? "default" : "ghost"}
                   size="sm"
-                  className={`px-4 transition-all ${
-                    userRole === "vendor" 
-                      ? "bg-vendor-active text-vendor-active-foreground shadow-sm hover:bg-vendor-active/90" 
-                      : "hover:bg-muted"
-                  }`}
+                  className={`px-4 transition-all ${userRole === "vendor" ? "bg-vendor-active text-vendor-active-foreground shadow-sm" : ""}`}
                   onClick={() => navigate("/dashboard/vendor")}
                 >
                   Vendor
