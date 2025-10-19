@@ -188,19 +188,6 @@ const Index = () => {
           onWhatsgoodClick={handleWhatsgoodClick}
         />
 
-        {/* Subtitle text under search bar (only on homepage) */}
-        {!hasSearched && (
-          <div className="text-center mt-6 px-4">
-            <p className="text-foreground/70 text-sm sm:text-base flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
-              <span>local goods</span>
-              <span className="hidden sm:inline">•</span>
-              <span>independent artists</span>
-              <span className="hidden sm:inline">•</span>
-              <span>small scale production</span>
-            </p>
-          </div>
-        )}
-
         {/* Content appears after search */}
         {hasSearched && !isMapView && (
           <>

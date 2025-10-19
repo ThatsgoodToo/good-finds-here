@@ -83,6 +83,17 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
             </div>
           </div>
         </div>
+
+        {/* Subtitle text */}
+        <div className="mt-8 text-center">
+          <p className="text-foreground/70 text-sm sm:text-base flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
+            <span>local goods</span>
+            <span className="hidden sm:inline">•</span>
+            <span>independent artists</span>
+            <span className="hidden sm:inline">•</span>
+            <span>small scale production</span>
+          </p>
+        </div>
       </div>
     );
   }
