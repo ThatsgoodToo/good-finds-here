@@ -1,4 +1,4 @@
-import { Store, Hand, Settings, ChevronDown } from "lucide-react";
+import { Store, Hand, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,44 +7,46 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const Header = () => {
+interface HeaderProps {
+  showGoodToday?: boolean;
+}
+
+const Header = ({ showGoodToday = true }: HeaderProps) => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Left: Logo + Dropdown */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-foreground">That's Good Too</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1">
-                Menu <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-card">
-              <DropdownMenuItem>About Us</DropdownMenuItem>
-              <DropdownMenuItem>Contact</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+      <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+        {/* Left: Menu Icon */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-foreground hover:text-primary rounded-full border border-border/50"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="bg-card border-border">
+            <DropdownMenuItem>About Us</DropdownMenuItem>
+            <DropdownMenuItem>Contact</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Center: What's Good Today */}
-        <Button 
-          variant="ghost" 
-          className="hidden md:flex text-foreground hover:text-primary"
-        >
-          What's Good Today
-        </Button>
+        {showGoodToday && (
+          <Button 
+            variant="outline"
+            className="text-foreground hover:text-primary border-border/50 rounded-full px-8 bg-transparent hover:bg-muted/50"
+          >
+            WHAT'S GOOD TODAY
+          </Button>
+        )}
 
         {/* Right: Icons */}
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-foreground hover:text-primary"
-            title="Your Goods"
-          >
-            <Store className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="hidden md:block text-muted-foreground text-sm">
+            your shop
+          </div>
           <Button 
             variant="ghost" 
             size="icon"
@@ -52,14 +54,6 @@ const Header = () => {
             title="High Five"
           >
             <Hand className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-foreground hover:text-primary"
-            title="Settings"
-          >
-            <Settings className="h-5 w-5" />
           </Button>
         </div>
       </div>

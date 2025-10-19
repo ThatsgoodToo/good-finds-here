@@ -11,7 +11,11 @@ type FilterType = "all" | CategoryType;
 const Index = () => {
   const [isMapView, setIsMapView] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleSearch = (query: string) => {
+    setHasSearched(true);
+  };
 
   // Mock products data
   const products = [
@@ -88,16 +92,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header showGoodToday={!hasSearched} />
       
-      <main className="pt-16">
+      <main className="pt-20">
+        {/* Hero search (centered) or bottom search bar */}
         <SearchBar
-          onSearch={setSearchQuery}
+          onSearch={handleSearch}
           onToggleMap={() => setIsMapView(!isMapView)}
           isMapView={isMapView}
+          isCentered={!hasSearched}
         />
 
-        {!isMapView && (
+        {/* Content appears after search */}
+        {hasSearched && !isMapView && (
           <>
             <FilterBar
               activeFilter={activeFilter}
@@ -107,7 +114,7 @@ const Index = () => {
           </>
         )}
 
-        {isMapView && <MapView />}
+        {hasSearched && isMapView && <MapView />}
       </main>
     </div>
   );
