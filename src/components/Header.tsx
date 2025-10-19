@@ -65,7 +65,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
 
           {/* Hi Fives - Hand Icon */}
           <button 
-            onClick={onHighFiveClick}
+            onClick={() => navigate("/high-fives")}
             className="group focus:outline-none"
             type="button"
           >

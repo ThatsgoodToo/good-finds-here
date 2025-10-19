@@ -14,6 +14,8 @@ import VendorProfile from "./pages/VendorProfile";
 import ProductListing from "./pages/ProductListing";
 import AudioListing from "./pages/AudioListing";
 import VideoListing from "./pages/VideoListing";
+import HighFives from "./pages/HighFives";
+import ShopperProfile from "./pages/ShopperProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,8 @@ const App = () => {
               <Route path="/listing/product/:listingId" element={<ProductListing />} />
               <Route path="/listing/audio/:listingId" element={<AudioListing />} />
               <Route path="/listing/video/:listingId" element={<VideoListing />} />
+              <Route path="/high-fives" element={<HighFives />} />
+              <Route path="/shopper/:shopperId" element={<ShopperProfile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
