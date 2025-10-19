@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, RefreshCw, Upload, ExternalLink, MapPin } from "lucide-react";
+import { Settings, Upload, ExternalLink, MapPin } from "lucide-react";
 
 interface VendorHeaderProps {
   vendorName: string;
@@ -23,6 +21,7 @@ interface VendorHeaderProps {
   onUpdateExternalUrl: (url: string) => void;
   onUpdateDescription: (desc: string) => void;
   hasShopperRole: boolean;
+  userRole?: string;
 }
 
 const VendorHeader = ({
@@ -36,6 +35,7 @@ const VendorHeader = ({
   onUpdateExternalUrl,
   onUpdateDescription,
   hasShopperRole,
+  userRole = "vendor",
 }: VendorHeaderProps) => {
   const navigate = useNavigate();
 
@@ -82,23 +82,24 @@ const VendorHeader = ({
 
           <div className="flex items-center gap-3">
             {hasShopperRole && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    <span className="hidden sm:inline">Switch Dashboard</span>
-                    <span className="sm:hidden">Switch</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate("/dashboard/vendor")} className="font-semibold">
-                    Vendor Dashboard
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/dashboard/shopper")}>
-                    Shopper Dashboard
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+                <Button
+                  variant={userRole === "shopper" ? "default" : "ghost"}
+                  size="sm"
+                  className="px-4"
+                  onClick={() => navigate("/dashboard/shopper")}
+                >
+                  Shopper
+                </Button>
+                <Button
+                  variant={userRole === "vendor" ? "default" : "ghost"}
+                  size="sm"
+                  className="px-4"
+                  onClick={() => navigate("/dashboard/vendor")}
+                >
+                  Vendor
+                </Button>
+              </div>
             )}
 
             <DropdownMenu>

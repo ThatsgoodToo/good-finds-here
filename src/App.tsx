@@ -11,6 +11,7 @@ import VendorSignup from "./pages/VendorSignup";
 import ShopperDashboard from "./pages/ShopperDashboard";
 import VendorDashboard from "./pages/VendorDashboard";
 import VendorProfile from "./pages/VendorProfile";
+import VendorNewListing from "./pages/VendorNewListing";
 import ProductListing from "./pages/ProductListing";
 import AudioListing from "./pages/AudioListing";
 import VideoListing from "./pages/VideoListing";
@@ -36,6 +37,7 @@ const App = () => {
               <Route path="/dashboard/shopper" element={<ShopperDashboard />} />
               <Route path="/dashboard/vendor" element={<VendorDashboard />} />
               <Route path="/vendor/:vendorId" element={<VendorProfile />} />
+              <Route path="/vendor/listing/new" element={<VendorNewListing />} />
               <Route path="/listing/product/:listingId" element={<ProductListing />} />
               <Route path="/listing/audio/:listingId" element={<AudioListing />} />
               <Route path="/listing/video/:listingId" element={<VideoListing />} />

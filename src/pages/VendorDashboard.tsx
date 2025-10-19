@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Users, BarChart3, Settings as SettingsIcon, Tag } from "lucide-react";
 import Header from "@/components/Header";
@@ -32,6 +33,7 @@ import {
 
 const VendorDashboard = () => {
   const { user, userRole } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
@@ -157,7 +159,7 @@ const VendorDashboard = () => {
   };
 
   const handleAddListing = () => {
-    toast.success("Listing created! Don't forget to add an active offer for products/services.");
+    navigate("/vendor/listing/new");
   };
 
   const handleEditListing = (id: string) => {
@@ -180,6 +182,7 @@ const VendorDashboard = () => {
           onUpdateExternalUrl={handleUpdateExternalUrl}
           onUpdateDescription={handleUpdateDescription}
           hasShopperRole={hasShopperRole}
+          userRole={userRole as string}
         />
 
         <div className="container mx-auto px-4 sm:px-6 py-8">
@@ -209,25 +212,6 @@ const VendorDashboard = () => {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
-              {/* Vendor Description */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Story</CardTitle>
-                  <CardDescription>Tell shoppers about your brand</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    value={vendorDescription}
-                    onChange={(e) => setVendorDescription(e.target.value)}
-                    rows={3}
-                    className="mb-2"
-                  />
-                  <Button size="sm" onClick={() => handleUpdateDescription(vendorDescription)}>
-                    Save Description
-                  </Button>
-                </CardContent>
-              </Card>
-
               {/* Metrics */}
               <MetricsRow
                 clicks={metrics.clicks}
