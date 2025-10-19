@@ -113,6 +113,319 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_applications: {
+        Row: {
+          additional_info: string | null
+          admin_notes: string | null
+          agrees_to_terms: boolean | null
+          area_of_expertise: string[] | null
+          brand_uniqueness: string | null
+          business_description: string | null
+          business_duration: string | null
+          business_type: string | null
+          business_type_other: string | null
+          certifications_awards: string | null
+          city: string | null
+          country: string | null
+          craft_development: string | null
+          created_at: string
+          creativity_style: string | null
+          exclusive_offers: string | null
+          future_website: string | null
+          id: string
+          info_accurate: boolean | null
+          inspiration: string | null
+          inventory_type: string[] | null
+          payment_method_saved: boolean | null
+          phone_number: string | null
+          pickup_address: string | null
+          pricing_style: string | null
+          products_services: string[] | null
+          promo_code: string | null
+          promotion_social_channels: string | null
+          receive_updates: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shipping_options: string[] | null
+          social_media_links: string[] | null
+          state_region: string | null
+          status: string
+          subscription_type: string | null
+          sustainable_methods: string[] | null
+          understands_review: boolean | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          additional_info?: string | null
+          admin_notes?: string | null
+          agrees_to_terms?: boolean | null
+          area_of_expertise?: string[] | null
+          brand_uniqueness?: string | null
+          business_description?: string | null
+          business_duration?: string | null
+          business_type?: string | null
+          business_type_other?: string | null
+          certifications_awards?: string | null
+          city?: string | null
+          country?: string | null
+          craft_development?: string | null
+          created_at?: string
+          creativity_style?: string | null
+          exclusive_offers?: string | null
+          future_website?: string | null
+          id?: string
+          info_accurate?: boolean | null
+          inspiration?: string | null
+          inventory_type?: string[] | null
+          payment_method_saved?: boolean | null
+          phone_number?: string | null
+          pickup_address?: string | null
+          pricing_style?: string | null
+          products_services?: string[] | null
+          promo_code?: string | null
+          promotion_social_channels?: string | null
+          receive_updates?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shipping_options?: string[] | null
+          social_media_links?: string[] | null
+          state_region?: string | null
+          status?: string
+          subscription_type?: string | null
+          sustainable_methods?: string[] | null
+          understands_review?: boolean | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          additional_info?: string | null
+          admin_notes?: string | null
+          agrees_to_terms?: boolean | null
+          area_of_expertise?: string[] | null
+          brand_uniqueness?: string | null
+          business_description?: string | null
+          business_duration?: string | null
+          business_type?: string | null
+          business_type_other?: string | null
+          certifications_awards?: string | null
+          city?: string | null
+          country?: string | null
+          craft_development?: string | null
+          created_at?: string
+          creativity_style?: string | null
+          exclusive_offers?: string | null
+          future_website?: string | null
+          id?: string
+          info_accurate?: boolean | null
+          inspiration?: string | null
+          inventory_type?: string[] | null
+          payment_method_saved?: boolean | null
+          phone_number?: string | null
+          pickup_address?: string | null
+          pricing_style?: string | null
+          products_services?: string[] | null
+          promo_code?: string | null
+          promotion_social_channels?: string | null
+          receive_updates?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shipping_options?: string[] | null
+          social_media_links?: string[] | null
+          state_region?: string | null
+          status?: string
+          subscription_type?: string | null
+          sustainable_methods?: string[] | null
+          understands_review?: boolean | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      vendor_change_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          current_value: string | null
+          field_name: string
+          id: string
+          reason: string | null
+          requested_value: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+          vendor_profile_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          current_value?: string | null
+          field_name: string
+          id?: string
+          reason?: string | null
+          requested_value: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+          vendor_profile_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          current_value?: string | null
+          field_name?: string
+          id?: string
+          reason?: string | null
+          requested_value?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+          vendor_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_change_requests_vendor_profile_id_fkey"
+            columns: ["vendor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_profiles: {
+        Row: {
+          application_id: string | null
+          area_of_expertise: string[]
+          brand_uniqueness: string | null
+          business_description: string
+          business_duration: string
+          business_type: string
+          business_type_other: string | null
+          certifications_awards: string | null
+          city: string
+          clicks_to_website: number | null
+          country: string
+          craft_development: string | null
+          created_at: string
+          creativity_style: string | null
+          exclusive_offers: string | null
+          future_website: string | null
+          id: string
+          inspiration: string | null
+          inventory_type: string[] | null
+          pending_changes: Json | null
+          phone_number: string | null
+          pickup_address: string | null
+          pricing_style: string | null
+          products_services: string[] | null
+          profile_views: number | null
+          promotion_social_channels: string | null
+          shipping_options: string[] | null
+          social_media_links: string[] | null
+          state_region: string
+          status: string
+          subscription_started_at: string | null
+          subscription_status: string | null
+          subscription_type: string | null
+          sustainable_methods: string[] | null
+          updated_at: string
+          user_id: string
+          website: string
+        }
+        Insert: {
+          application_id?: string | null
+          area_of_expertise: string[]
+          brand_uniqueness?: string | null
+          business_description: string
+          business_duration: string
+          business_type: string
+          business_type_other?: string | null
+          certifications_awards?: string | null
+          city: string
+          clicks_to_website?: number | null
+          country: string
+          craft_development?: string | null
+          created_at?: string
+          creativity_style?: string | null
+          exclusive_offers?: string | null
+          future_website?: string | null
+          id?: string
+          inspiration?: string | null
+          inventory_type?: string[] | null
+          pending_changes?: Json | null
+          phone_number?: string | null
+          pickup_address?: string | null
+          pricing_style?: string | null
+          products_services?: string[] | null
+          profile_views?: number | null
+          promotion_social_channels?: string | null
+          shipping_options?: string[] | null
+          social_media_links?: string[] | null
+          state_region: string
+          status?: string
+          subscription_started_at?: string | null
+          subscription_status?: string | null
+          subscription_type?: string | null
+          sustainable_methods?: string[] | null
+          updated_at?: string
+          user_id: string
+          website: string
+        }
+        Update: {
+          application_id?: string | null
+          area_of_expertise?: string[]
+          brand_uniqueness?: string | null
+          business_description?: string
+          business_duration?: string
+          business_type?: string
+          business_type_other?: string | null
+          certifications_awards?: string | null
+          city?: string
+          clicks_to_website?: number | null
+          country?: string
+          craft_development?: string | null
+          created_at?: string
+          creativity_style?: string | null
+          exclusive_offers?: string | null
+          future_website?: string | null
+          id?: string
+          inspiration?: string | null
+          inventory_type?: string[] | null
+          pending_changes?: Json | null
+          phone_number?: string | null
+          pickup_address?: string | null
+          pricing_style?: string | null
+          products_services?: string[] | null
+          profile_views?: number | null
+          promotion_social_channels?: string | null
+          shipping_options?: string[] | null
+          social_media_links?: string[] | null
+          state_region?: string
+          status?: string
+          subscription_started_at?: string | null
+          subscription_status?: string | null
+          subscription_type?: string | null
+          sustainable_methods?: string[] | null
+          updated_at?: string
+          user_id?: string
+          website?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_profiles_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -124,7 +437,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "vendor" | "shopper"
+      app_role: "vendor" | "shopper" | "admin" | "moderator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -252,7 +565,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["vendor", "shopper"],
+      app_role: ["vendor", "shopper", "admin", "moderator"],
     },
   },
 } as const
