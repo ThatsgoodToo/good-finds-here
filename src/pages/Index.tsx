@@ -51,9 +51,9 @@ const Index = () => {
 
   const handleYourGoodsClick = () => {
     if (userRole === "shopper") {
-      toast.info("Opening your saved items");
+      window.location.href = "/dashboard/shopper";
     } else if (userRole === "vendor") {
-      toast.info("Opening your vendor dashboard");
+      window.location.href = "/dashboard/vendor";
     }
   };
 
