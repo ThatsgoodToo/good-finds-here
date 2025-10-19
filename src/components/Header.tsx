@@ -43,17 +43,6 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
           </button>
         </div>
 
-        {/* Center: What's Good Today */}
-        {showGoodToday && (
-          <Button 
-            onClick={onWhatsgoodClick}
-            variant="outline"
-            className="hidden sm:flex text-foreground hover:text-primary border-border/50 rounded-full px-4 sm:px-8 text-xs sm:text-sm bg-transparent hover:bg-muted/50"
-          >
-            WHAT'S GOOD TODAY
-          </Button>
-        )}
-
         {/* Right: Icons */}
         <div className="flex items-center gap-3 sm:gap-6">
           {/* Your Goods */}
