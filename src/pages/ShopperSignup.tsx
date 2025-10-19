@@ -8,6 +8,7 @@ import WelcomeStep from "@/components/signup/WelcomeStep";
 import AccountCreationStep from "@/components/signup/AccountCreationStep";
 import FilterInputStep from "@/components/signup/FilterInputStep";
 import ReviewFiltersStep from "@/components/signup/ReviewFiltersStep";
+import PaymentStep from "@/components/signup/PaymentStep";
 import TermsStep from "@/components/signup/TermsStep";
 import { Card } from "@/components/ui/card";
 
@@ -18,6 +19,7 @@ export type SignupData = {
   profilePicture: File | null;
   ageVerified: boolean;
   interests: string[];
+  promoCode: string;
   termsAccepted: boolean;
   analyticsConsent: boolean;
 };
@@ -33,6 +35,7 @@ const ShopperSignup = () => {
     profilePicture: null,
     ageVerified: false,
     interests: [],
+    promoCode: "",
     termsAccepted: false,
     analyticsConsent: false,
   });
@@ -102,7 +105,7 @@ const ShopperSignup = () => {
 
         {/* Progress indicator */}
         <div className="flex justify-center gap-2 mb-8">
-          {[1, 2, 3, 4, 5].map((step) => (
+          {[1, 2, 3, 4, 5, 6].map((step) => (
             <div
               key={step}
               className={`h-2 w-12 rounded-full transition-colors ${
@@ -142,6 +145,15 @@ const ShopperSignup = () => {
         )}
         
         {currentStep === 5 && (
+          <PaymentStep
+            promoCode={signupData.promoCode}
+            onPromoCodeChange={(code) => updateSignupData({ promoCode: code })}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        )}
+        
+        {currentStep === 6 && (
           <TermsStep
             data={signupData}
             onUpdate={updateSignupData}
