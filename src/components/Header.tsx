@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import VendorFollowersList from "@/components/VendorFollowersList";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +85,9 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
           >
             <Hand className="h-5 w-5 sm:h-6 sm:w-6 text-foreground opacity-70 group-hover:opacity-100 group-hover:text-primary transition-all" strokeWidth={1.5} />
           </button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
           
           {/* Settings Dropdown */}
           <DropdownMenu>

@@ -8,7 +8,60 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Brand Colors - That's Good Too */
+    /* Light Mode - That's Good Too */
+    --background: 210 20% 93%;
+    --foreground: 8 10% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 8 10% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 8 10% 11%;
+
+    --primary: 1 24% 38%;
+    --primary-foreground: 228 15% 93%;
+
+    --secondary: 60 4% 63%;
+    --secondary-foreground: 8 10% 11%;
+
+    --muted: 210 20% 88%;
+    --muted-foreground: 8 10% 30%;
+
+    --accent: 1 24% 38%;
+    --accent-foreground: 228 15% 93%;
+
+    --destructive: 13 100% 40%;
+    --destructive-foreground: 228 15% 93%;
+
+    --border: 210 20% 82%;
+    --input: 210 20% 85%;
+    --ring: 1 24% 38%;
+
+    --radius: 0.75rem;
+
+    /* Category Indicators */
+    --sale: 13 100% 40%;
+    --experience: 177 38% 64%;
+    --product: 54 50% 62%;
+    --service: 36 66% 70%;
+    
+    /* Role Indicators */
+    --vendor-active: 142 76% 36%;
+    --vendor-active-foreground: 0 0% 100%;
+
+    /* Sidebar (if needed) */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 8 10% 11%;
+    --sidebar-primary: 1 24% 38%;
+    --sidebar-primary-foreground: 228 15% 93%;
+    --sidebar-accent: 210 20% 88%;
+    --sidebar-accent-foreground: 8 10% 11%;
+    --sidebar-border: 210 20% 82%;
+    --sidebar-ring: 1 24% 38%;
+  }
+
+  .dark {
+    /* Dark Mode - That's Good Too */
     --background: 8 10% 11%;
     --foreground: 228 15% 93%;
 
@@ -36,18 +89,6 @@ All colors MUST be HSL.
     --border: 8 10% 20%;
     --input: 8 10% 16%;
     --ring: 1 24% 38%;
-
-    --radius: 0.75rem;
-
-    /* Category Indicators */
-    --sale: 13 100% 40%;
-    --experience: 177 38% 64%;
-    --product: 54 50% 62%;
-    --service: 36 66% 70%;
-    
-    /* Role Indicators */
-    --vendor-active: 142 76% 36%;
-    --vendor-active-foreground: 0 0% 100%;
 
     /* Sidebar (if needed) */
     --sidebar-background: 8 10% 11%;
