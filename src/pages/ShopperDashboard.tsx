@@ -92,10 +92,10 @@ const ShopperDashboard = () => {
   const [customFilterInput, setCustomFilterInput] = useState("");
   const [profileSettings, setProfileSettings] = useState({
     location: "Portland, Oregon",
-    locationEnabled: true,
+    locationPublic: true,
     externalLink: "",
     bio: "",
-    activityPublic: false,
+    highFivesPublic: true,
   });
 
   useEffect(() => {
@@ -443,12 +443,12 @@ const ShopperDashboard = () => {
                       onClick={() => {
                         setProfileSettings({
                           ...profileSettings,
-                          locationEnabled: !profileSettings.locationEnabled
+                          locationPublic: !profileSettings.locationPublic
                         });
-                        toast.success(profileSettings.locationEnabled ? "Location hidden from public" : "Location visible to public");
+                        toast.success(profileSettings.locationPublic ? "Location hidden from public" : "Location visible to public");
                       }}
                     >
-                      {profileSettings.locationEnabled ? (
+                      {profileSettings.locationPublic ? (
                         <Eye className="h-3 w-3 text-muted-foreground" />
                       ) : (
                         <EyeOff className="h-3 w-3 text-muted-foreground" />
@@ -985,34 +985,20 @@ const ShopperDashboard = () => {
             </div>
 
             {/* Location */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="location-toggle">Enable Location</Label>
-                <Switch
-                  id="location-toggle"
-                  checked={profileSettings.locationEnabled}
-                  onCheckedChange={(checked) =>
-                    setProfileSettings({ ...profileSettings, locationEnabled: checked })
-                  }
-                />
-              </div>
-              {profileSettings.locationEnabled && (
-                <div className="space-y-2">
-                  <Label htmlFor="location">Your Location</Label>
-                  <Input
-                    id="location"
-                    value={profileSettings.location}
-                    onChange={(e) =>
-                      setProfileSettings({ ...profileSettings, location: e.target.value })
-                    }
-                    placeholder="City, State"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3 inline mr-1" />
-                    Syncs with map view. Changes require TGT approval for accuracy.
-                  </p>
-                </div>
-              )}
+            <div className="space-y-2">
+              <Label htmlFor="location">Your Location</Label>
+              <Input
+                id="location"
+                value={profileSettings.location}
+                onChange={(e) =>
+                  setProfileSettings({ ...profileSettings, location: e.target.value })
+                }
+                placeholder="City, State"
+              />
+              <p className="text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 inline mr-1" />
+                This will be shown on your profile based on your privacy settings below.
+              </p>
             </div>
 
             {/* External Link */}
@@ -1058,42 +1044,40 @@ const ShopperDashboard = () => {
               <div>
                 <h4 className="font-semibold mb-2">Privacy Controls</h4>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Manage what others can see on your profile
+                  Manage what others can see on your public profile
                 </p>
               </div>
 
-              <div className="space-y-3 p-4 border rounded-lg">
+              <div className="space-y-4 p-4 border rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Public Activity</Label>
+                    <Label>Show Location</Label>
                     <p className="text-xs text-muted-foreground">
-                      Make your activity visible to others
+                      Display your location on your public profile
                     </p>
                   </div>
                   <Switch
-                    checked={profileSettings.activityPublic}
+                    checked={profileSettings.locationPublic}
                     onCheckedChange={(checked) =>
-                      setProfileSettings({ ...profileSettings, activityPublic: checked })
+                      setProfileSettings({ ...profileSettings, locationPublic: checked })
                     }
                   />
                 </div>
 
-                {profileSettings.activityPublic && (
-                  <div className="ml-4 space-y-3 pt-3 border-t">
-                    <div className="flex items-center justify-between">
-                      <Label className="font-normal">Show Who I Follow</Label>
-                      <Checkbox defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label className="font-normal">Show My High-Fives (Saved Items)</Label>
-                      <Checkbox defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label className="font-normal">Show My Folders</Label>
-                      <Checkbox />
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Show High-Fives</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Allow others to see your saved items and activity
+                    </p>
                   </div>
-                )}
+                  <Switch
+                    checked={profileSettings.highFivesPublic}
+                    onCheckedChange={(checked) =>
+                      setProfileSettings({ ...profileSettings, highFivesPublic: checked })
+                    }
+                  />
+                </div>
               </div>
             </div>
 

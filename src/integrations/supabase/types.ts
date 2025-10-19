@@ -131,8 +131,10 @@ export type Database = {
           display_name: string | null
           email: string
           full_name: string | null
+          high_fives_public: boolean | null
           id: string
           interests: string[] | null
+          location_public: boolean | null
           onboarding_completed: boolean | null
           profile_picture_url: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -148,8 +150,10 @@ export type Database = {
           display_name?: string | null
           email: string
           full_name?: string | null
+          high_fives_public?: boolean | null
           id: string
           interests?: string[] | null
+          location_public?: boolean | null
           onboarding_completed?: boolean | null
           profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -165,8 +169,10 @@ export type Database = {
           display_name?: string | null
           email?: string
           full_name?: string | null
+          high_fives_public?: boolean | null
           id?: string
           interests?: string[] | null
+          location_public?: boolean | null
           onboarding_completed?: boolean | null
           profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["app_role"]

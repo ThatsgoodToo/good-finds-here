@@ -37,15 +37,17 @@ const ShopperProfile = () => {
     }
   }, [user]);
 
-  // Mock shopper data
+  // Mock shopper data - In production, fetch from database
   const shopper = {
     id: "1",
     name: "Sarah Johnson",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300",
     location: "Portland, Oregon",
+    locationPublic: true, // Fetch from profiles.location_public
     bio: "Food lover, sustainable living enthusiast, and supporter of local artisans. Always on the lookout for unique handcrafted items and ethical brands.",
     website: "https://sarahjohnson.example.com",
     highFives: 247,
+    highFivesPublic: true, // Fetch from profiles.high_fives_public
   };
 
   // Mock saved items
@@ -148,7 +150,7 @@ const ShopperProfile = () => {
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold">{shopper.name}</h1>
                 
-                {shopper.location && (
+                {shopper.location && shopper.locationPublic && (
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
                     <span>{shopper.location}</span>
@@ -179,28 +181,44 @@ const ShopperProfile = () => {
         {/* Main Content */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="max-w-4xl mx-auto space-y-6">
-            {/* Activity Section */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Hand className="h-5 w-5 text-primary" />
-                    <div>
-                      <h3 className="font-semibold">High Fives</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {shopper.highFives} saved items
-                      </p>
+            {/* Activity Section - Only show if high fives are public */}
+            {shopper.highFivesPublic && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Hand className="h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-semibold">High Fives</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {shopper.highFives} saved items
+                        </p>
+                      </div>
                     </div>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowActivityDialog(true)}
+                    >
+                      View Activity
+                    </Button>
                   </div>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setShowActivityDialog(true)}
-                  >
-                    View Activity
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Privacy Notice - Show when high fives are private */}
+            {!shopper.highFivesPublic && (
+              <Card className="border-dashed">
+                <CardContent className="pt-6">
+                  <div className="text-center text-muted-foreground">
+                    <Hand className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">
+                      This shopper has chosen to keep their activity private
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Vendor-only: Offer Coupon Button */}
             {user && userRole === "vendor" && (
