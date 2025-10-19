@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
+import Header from "@/components/Header";
+import SearchBar from "@/components/SearchBar";
 import WelcomeStep from "@/components/signup/WelcomeStep";
 import AccountCreationStep from "@/components/signup/AccountCreationStep";
 import FilterInputStep from "@/components/signup/FilterInputStep";
@@ -92,11 +93,19 @@ const ShopperSignup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl p-6">
-        <div className="flex justify-center mb-6">
-          <img src={logo} alt="That's Good Too" className="h-16 w-16" />
-        </div>
+    <div className="min-h-screen bg-background">
+      <Header showGoodToday={false} />
+      
+      <main className="pt-16 sm:pt-20">
+        <SearchBar
+          onSearch={() => {}}
+          onToggleMap={() => {}}
+          isMapView={false}
+          isCentered={true}
+        />
+        
+        <div className="flex items-center justify-center p-4 pt-8">
+          <Card className="w-full max-w-2xl p-6">
 
         {/* Progress indicator */}
         <div className="flex justify-center gap-2 mb-8">
@@ -148,7 +157,9 @@ const ShopperSignup = () => {
             loading={loading}
           />
         )}
-      </Card>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 };
