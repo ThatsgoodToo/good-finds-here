@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
@@ -6,10 +7,12 @@ import MasonryGallery from "@/components/MasonryGallery";
 import ListView from "@/components/ListView";
 import MapView from "@/components/MapView";
 import { CategoryType } from "@/components/ProductCard";
+import { toast } from "sonner";
 
 type FilterType = "all" | CategoryType;
 
 const Index = () => {
+  const { user, userRole } = useAuth();
   const [isMapView, setIsMapView] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [hasSearched, setHasSearched] = useState(false);
@@ -22,6 +25,36 @@ const Index = () => {
   const handleBack = () => {
     setHasSearched(false);
     setIsMapView(false);
+  };
+
+  const handleWhatsgoodClick = () => {
+    if (user) {
+      toast.info(`Showing curated listings for ${userRole}s`);
+    } else {
+      toast.info("Showing highly rated, new, and lowest rated listings");
+    }
+    setHasSearched(true);
+  };
+
+  const handleHighFiveClick = () => {
+    if (!user) {
+      toast.info("Showing highly rated vendors and listings");
+      setHasSearched(true);
+    } else if (userRole === "shopper") {
+      toast.info("Showing your favorite vendors and listings");
+      setHasSearched(true);
+    } else if (userRole === "vendor") {
+      toast.info("Showing your followers");
+      setHasSearched(true);
+    }
+  };
+
+  const handleYourGoodsClick = () => {
+    if (userRole === "shopper") {
+      toast.info("Opening your saved items");
+    } else if (userRole === "vendor") {
+      toast.info("Opening your vendor dashboard");
+    }
   };
 
   // Mock products data
@@ -99,9 +132,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header showGoodToday={!hasSearched} />
+      <Header 
+        showGoodToday={!hasSearched}
+        onWhatsgoodClick={handleWhatsgoodClick}
+        onHighFiveClick={handleHighFiveClick}
+        onYourGoodsClick={handleYourGoodsClick}
+      />
       
-      <main className="pt-20">
+      <main className="pt-16 sm:pt-20">
         {/* Hero search (centered) or bottom search bar */}
         <SearchBar
           onSearch={handleSearch}

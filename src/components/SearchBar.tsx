@@ -53,7 +53,7 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered }: SearchBarPr
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               placeholder="WHAT ARE YOU LOOKING FOR?"
-              className="pl-12 pr-24 h-14 bg-foreground text-background placeholder:text-background/50 border-none rounded-full text-sm uppercase tracking-wide"
+              className="pl-12 pr-24 h-14 bg-foreground text-background placeholder:text-muted-foreground/60 border-none rounded-full text-sm uppercase tracking-wide"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <Button
