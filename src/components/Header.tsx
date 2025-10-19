@@ -100,8 +100,10 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
             <DropdownMenuContent align="end" className="bg-card border-border w-48">
               {user && (
                 <>
-                  <DropdownMenuItem className="text-xs text-muted-foreground">
-                    Signed in as {userRole}
+                  <DropdownMenuItem className="text-xs font-medium">
+                    <div className={`px-2 py-1 rounded ${userRole === 'vendor' ? 'bg-primary text-primary-foreground' : userRole === 'shopper' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      Signed in as {userRole}
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>Account Settings</DropdownMenuItem>
