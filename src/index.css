@@ -9,10 +9,10 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Light Mode - That's Good Too */
-    --background: 60 4% 68%;
+    --background: 60 8% 94%;
     --foreground: 8 10% 11%;
 
-    --card: 0 0% 100%;
+    --card: 60 4% 63%;
     --card-foreground: 8 10% 11%;
 
     --popover: 0 0% 100%;
@@ -34,7 +34,7 @@ All colors MUST be HSL.
     --destructive-foreground: 228 15% 93%;
 
     --border: 210 20% 82%;
-    --input: 210 20% 85%;
+    --input: 60 4% 63%;
     --ring: 1 24% 38%;
 
     --radius: 0.75rem;

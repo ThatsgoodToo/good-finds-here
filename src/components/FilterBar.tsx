@@ -23,6 +23,7 @@ const FilterBar = ({
   onViewModeChange 
 }: FilterBarProps) => {
   const [searchFilter, setSearchFilter] = useState("");
+  const [customFilters, setCustomFilters] = useState<string[]>([]);
   
   const filters: { type: FilterType; label: string; color: string }[] = [
     { type: "all", label: "All", color: "bg-foreground" },
@@ -36,27 +37,59 @@ const FilterBar = ({
     filter.label.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchFilter.trim()) {
+      if (!customFilters.includes(searchFilter.trim())) {
+        setCustomFilters([...customFilters, searchFilter.trim()]);
+      }
+      setSearchFilter("");
+    }
+  };
+
+  const removeCustomFilter = (filter: string) => {
+    setCustomFilters(customFilters.filter(f => f !== filter));
+  };
+
   return (
     <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm border-b border-border py-4 animate-fade-in">
       <div className="container mx-auto px-4 space-y-3">
         {/* Active Filters Display */}
-        {activeFilter !== "all" && (
+        {(activeFilter !== "all" || customFilters.length > 0) && (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-muted-foreground">Active filters:</span>
-            <Badge 
-              variant="secondary" 
-              className="flex items-center gap-1 px-3 py-1"
-            >
-              {filters.find(f => f.type === activeFilter)?.label}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 p-0 hover:bg-transparent"
-                onClick={() => onFilterChange("all")}
+            {activeFilter !== "all" && (
+              <Badge 
+                variant="secondary" 
+                className="flex items-center gap-1 px-3 py-1"
               >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
+                {filters.find(f => f.type === activeFilter)?.label}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  onClick={() => onFilterChange("all")}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            )}
+            {customFilters.map((filter) => (
+              <Badge 
+                key={filter}
+                variant="secondary" 
+                className="flex items-center gap-1 px-3 py-1"
+              >
+                {filter}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  onClick={() => removeCustomFilter(filter)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
           </div>
         )}
         {/* Top Row: Back Button, Search Input, Edit Filters, View Toggle */}
@@ -75,10 +108,11 @@ const FilterBar = ({
           
           <Input
             type="text"
-            placeholder="Search filters..."
+            placeholder="Search filters... (Press Enter to add)"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="max-w-xs bg-card border-border"
+            onKeyDown={handleKeyDown}
+            className="max-w-xs"
           />
           
           <Button
