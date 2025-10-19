@@ -70,6 +70,13 @@ const VendorSignup = () => {
   const [loading, setLoading] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
+  const [isLogin, setIsLogin] = useState(false);
+  const [authData, setAuthData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+  });
   
   const [formData, setFormData] = useState<VendorApplication>({
     website: "",
@@ -169,6 +176,55 @@ const VendorSignup = () => {
     setCurrentStep(prev => Math.max(prev - 1, 0));
   };
 
+  const handleAuthSubmit = async () => {
+    try {
+      if (isLogin) {
+        // Handle login
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authData.email,
+          password: authData.password,
+        });
+
+        if (error) {
+          toast.error("Login failed: " + error.message);
+          return;
+        }
+
+        toast.success("Logged in successfully!");
+        setShowAuth(false);
+      } else {
+        // Handle signup
+        if (!authData.fullName || !authData.email || !authData.password) {
+          toast.error("Please fill in all fields");
+          return;
+        }
+
+        const { error } = await supabase.auth.signUp({
+          email: authData.email,
+          password: authData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/vendor-signup`,
+            data: {
+              full_name: authData.fullName,
+              role: "vendor",
+            },
+          },
+        });
+
+        if (error) {
+          toast.error("Signup failed: " + error.message);
+          return;
+        }
+
+        toast.success("Account created successfully!");
+        setShowAuth(false);
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+      console.error(error);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateStep()) return;
 
@@ -202,13 +258,14 @@ const VendorSignup = () => {
     }
   };
 
-  if (showWelcome) {
+  if (showWelcome || showAuth) {
     return (
       <div className="min-h-screen bg-background">
         <Header showGoodToday={false} />
         
         <main className="pt-16 sm:pt-20 pb-24">
           <div className="flex items-center justify-center p-4 pt-8">
+            {showWelcome && (
             <Card className="w-full max-w-3xl">
               <CardHeader className="text-center pb-4">
                 <div className="flex justify-center mb-4">
@@ -248,7 +305,10 @@ const VendorSignup = () => {
                 
                 <Button 
                   size="lg" 
-                  onClick={() => setShowWelcome(false)} 
+                  onClick={() => {
+                    setShowWelcome(false);
+                    setShowAuth(true);
+                  }} 
                   className="w-full"
                 >
                   Get Started
@@ -256,6 +316,78 @@ const VendorSignup = () => {
                 </Button>
               </CardContent>
             </Card>
+            )}
+
+            {showAuth && (
+            <Card className="w-full max-w-md">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold">
+                  {isLogin ? "Sign In" : "Create Your Account"}
+                </CardTitle>
+                <CardDescription>
+                  {isLogin 
+                    ? "Already have a shopper account? Sign in to continue." 
+                    : "Create a new account to get started."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="John Doe"
+                      value={authData.fullName}
+                      onChange={(e) => setAuthData({ ...authData, fullName: e.target.value })}
+                      required
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={authData.email}
+                    onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={authData.password}
+                    onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <Button onClick={handleAuthSubmit} className="w-full">
+                  {isLogin ? "Sign In & Continue" : "Create Account & Continue"}
+                </Button>
+
+                <div className="text-center">
+                  <Button
+                    variant="link"
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="text-sm"
+                  >
+                    {isLogin 
+                      ? "Don't have an account? Sign up" 
+                      : "Already have a shopper account? Sign in"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            )}
           </div>
         </main>
       </div>
