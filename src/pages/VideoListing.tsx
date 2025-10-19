@@ -13,7 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExternalLink, CheckCircle, Hand, ChevronLeft, ChevronRight, Ticket } from "lucide-react";
+import { ExternalLink, CheckCircle, Hand, ChevronLeft, ChevronRight, Ticket, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
@@ -100,9 +101,11 @@ const VideoListing = () => {
         <div className="border-b border-border bg-card">
           <div className="container mx-auto px-4 sm:px-6 py-6">
             <div className="flex flex-col items-center text-center gap-4">
-              <div className="h-16 w-32 bg-white rounded flex items-center justify-center">
-                <span className="text-2xl font-bold text-black">{vendor.name}</span>
-              </div>
+              <Link to={`/vendor/${vendor.id}`}>
+                <div className="h-16 w-32 bg-white rounded flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                  <span className="text-2xl font-bold text-black">{vendor.name}</span>
+                </div>
+              </Link>
               
               <div className="space-y-2">
                 <Button
@@ -120,6 +123,17 @@ const VideoListing = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Back Button */}
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
+          </button>
         </div>
 
         {/* Main Content */}

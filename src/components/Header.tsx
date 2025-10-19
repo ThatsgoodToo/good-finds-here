@@ -1,4 +1,4 @@
-import { Hand, Settings, ArrowLeft } from "lucide-react";
+import { Hand, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,16 +37,8 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/50">
       <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
-        {/* Left: Back Button and Logo */}
+        {/* Left: Logo */}
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="focus:outline-none group"
-            type="button"
-            title="Go back"
-          >
-            <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6 text-foreground opacity-70 group-hover:opacity-100 transition-opacity" />
-          </button>
           <button 
             onClick={() => navigate("/")} 
             className="focus:outline-none"

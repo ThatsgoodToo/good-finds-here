@@ -13,8 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExternalLink, CheckCircle, Hand, Ticket } from "lucide-react";
+import { ExternalLink, CheckCircle, Hand, Ticket, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 const AudioListing = () => {
@@ -95,10 +96,12 @@ const AudioListing = () => {
         <div className="border-b border-border bg-card">
           <div className="container mx-auto px-4 sm:px-6 py-6">
             <div className="flex flex-col items-center text-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={vendor.logo} alt={vendor.name} />
-                <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
-              </Avatar>
+              <Link to={`/vendor/${vendor.id}`}>
+                <Avatar className="h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
+                  <AvatarImage src={vendor.logo} alt={vendor.name} />
+                  <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+              </Link>
               
               <div className="space-y-2">
                 <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -131,6 +134,17 @@ const AudioListing = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Back Button */}
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
+          </button>
         </div>
 
         {/* Main Content */}

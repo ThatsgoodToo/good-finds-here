@@ -194,6 +194,17 @@ const VendorProfile = () => {
           </div>
         </div>
 
+        {/* Back Button */}
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <ChevronLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
+          </button>
+        </div>
+
         {/* Main Content Area */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -217,29 +228,37 @@ const VendorProfile = () => {
                     {listings.images.map((listing) => (
                       <div
                         key={listing.id}
-                        className="relative group cursor-pointer rounded-lg overflow-hidden aspect-square"
+                        className="flex sm:block relative group cursor-pointer rounded-lg overflow-hidden"
                       >
-                        <img
-                          src={listing.url}
-                          alt={listing.title}
-                          loading="lazy"
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        />
-                        
-                        {/* Top-left type indicator */}
-                        <div className="absolute top-2 left-2">
-                          <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
+                        <div className="w-1/2 sm:w-full aspect-square relative"
+                      >
+                          <img
+                            src={listing.url}
+                            alt={listing.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          
+                          {/* Top-left type indicator */}
+                          <div className="absolute top-2 left-2">
+                            <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
+                          </div>
+                          
+                          {/* Exclusive offer badge */}
+                          {listing.hasOffer && (
+                            <Badge className="absolute top-2 right-2 bg-red-500">
+                              Exclusive Offer
+                            </Badge>
+                          )}
+                          
+                          {/* Bottom title overlay - visible on desktop */}
+                          <div className="hidden sm:block absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/90 p-3">
+                            <p className="text-sm font-medium">{listing.title}</p>
+                          </div>
                         </div>
                         
-                        {/* Exclusive offer badge */}
-                        {listing.hasOffer && (
-                          <Badge className="absolute top-2 right-2 bg-red-500">
-                            Exclusive Offer
-                          </Badge>
-                        )}
-                        
-                        {/* Bottom title overlay */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/90 p-3">
+                        {/* Title on right for mobile */}
+                        <div className="sm:hidden w-1/2 flex items-center p-4">
                           <p className="text-sm font-medium">{listing.title}</p>
                         </div>
                       </div>
