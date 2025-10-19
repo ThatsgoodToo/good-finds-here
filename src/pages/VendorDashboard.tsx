@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Users, BarChart3, Settings as SettingsIcon, Tag } from "lucide-react";
+import { Package, Users, BarChart3, Tag, Hand } from "lucide-react";
 import Header from "@/components/Header";
 import { toast } from "sonner";
 import VendorHeader from "@/components/dashboard/vendor/VendorHeader";
@@ -12,6 +12,7 @@ import RecentVisitors from "@/components/dashboard/vendor/RecentVisitors";
 import VendorFilters from "@/components/dashboard/vendor/VendorFilters";
 import ManageListings from "@/components/dashboard/vendor/ManageListings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -187,7 +188,7 @@ const VendorDashboard = () => {
 
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-8">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-8">
               <TabsTrigger value="overview" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -198,15 +199,11 @@ const VendorDashboard = () => {
               </TabsTrigger>
               <TabsTrigger value="coupons" className="gap-2">
                 <Tag className="h-4 w-4" />
-                <span className="hidden sm:inline">Coupons</span>
+                <span className="hidden sm:inline">Active Offers</span>
               </TabsTrigger>
-              <TabsTrigger value="visitors" className="gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Visitors</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2">
-                <SettingsIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Settings</span>
+              <TabsTrigger value="hifives" className="gap-2">
+                <Hand className="h-4 w-4" />
+                <span className="hidden sm:inline">Your Hi Fives</span>
               </TabsTrigger>
             </TabsList>
 
@@ -238,69 +235,82 @@ const VendorDashboard = () => {
               />
             </TabsContent>
 
-            {/* Coupons Tab */}
+            {/* Active Offers Tab */}
             <TabsContent value="coupons" className="space-y-6">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Coupon Management</CardTitle>
-                      <CardDescription>Create and manage your coupon offers</CardDescription>
+                      <CardTitle>Active Offers</CardTitle>
+                      <CardDescription>View and manage your active coupon offers</CardDescription>
                     </div>
-                    <Button onClick={() => setShowCouponDialog(true)}>Create Coupon</Button>
+                    <Button onClick={() => setShowCouponDialog(true)}>Add New Offer</Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">SAVE15</h4>
-                        <span className="text-sm text-muted-foreground">23 claims</span>
+                  <div className="grid gap-4">
+                    {listings.filter(l => l.activeOffer).map((listing) => (
+                      <div key={listing.id} className="flex gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                        <div className="w-20 h-20 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
+                          <img 
+                            src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200" 
+                            alt={listing.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold">{listing.title}</h4>
+                              <p className="text-sm text-muted-foreground">{listing.offerDetails}</p>
+                            </div>
+                            <Badge variant="secondary">{listing.couponClaims} claims</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{listing.price}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">15% off all items</p>
-                      <p className="text-xs text-muted-foreground mt-1">Expires: Dec 31, 2025</p>
-                    </div>
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">FIRST20</h4>
-                        <span className="text-sm text-muted-foreground">8 claims</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">20% off first purchase</p>
-                      <p className="text-xs text-muted-foreground mt-1">Expires: Jan 31, 2026</p>
-                    </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Visitors Tab */}
-            <TabsContent value="visitors" className="space-y-6">
-              <RecentVisitors
-                visitors={recentVisitors}
-                onSendOffer={handleSendOffer}
-                offersRemaining={17}
-              />
-            </TabsContent>
-
-            {/* Settings Tab */}
-            <TabsContent value="settings" className="space-y-6">
+            {/* Your Hi Fives Tab */}
+            <TabsContent value="hifives" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
-                  <CardDescription>Manage your vendor account preferences</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive notifications about new followers, offers claimed, and messages
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Your Hi Fives</CardTitle>
+                      <CardDescription>Shoppers who saved you to their favorites</CardDescription>
+                    </div>
+                    <Badge variant="secondary">20 offers remaining this month</Badge>
                   </div>
-                  <div>
-                    <Label>Platform Messages</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Direct contact with TGT for support and updates
-                    </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {recentVisitors.map((visitor) => (
+                      <div key={visitor.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={visitor.image} 
+                            alt={visitor.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="font-medium">{visitor.name}</p>
+                            <p className="text-xs text-muted-foreground">Saved {visitor.lastVisit}</p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleSendOffer(visitor.id)}
+                        >
+                          Send Offer
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
+import VendorFollowersList from "@/components/VendorFollowersList";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
   const navigate = useNavigate();
   const { user, userRole, signOut } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showFollowersList, setShowFollowersList] = useState(false);
   
   const handleYourGoodsClick = () => {
     if (!user) {
@@ -70,7 +72,13 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
 
           {/* Hi Fives - Hand Icon */}
           <button 
-            onClick={() => navigate("/high-fives")}
+            onClick={() => {
+              if (userRole === "vendor") {
+                setShowFollowersList(true);
+              } else {
+                navigate("/high-fives");
+              }
+            }}
             className="group focus:outline-none"
             type="button"
           >
@@ -120,6 +128,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
         </div>
       </div>
       <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
+      <VendorFollowersList open={showFollowersList} onOpenChange={setShowFollowersList} />
     </header>
   );
 };

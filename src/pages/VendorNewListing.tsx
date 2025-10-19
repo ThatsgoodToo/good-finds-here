@@ -40,6 +40,8 @@ const VendorNewListing = () => {
   const [newImageUrl, setNewImageUrl] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newAudioUrl, setNewAudioUrl] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
+  const [customSubcategory, setCustomSubcategory] = useState("");
   
   // Mock: Check if vendor has existing active offers
   const hasExistingActiveOffers = false; // This would come from backend
@@ -206,7 +208,7 @@ const VendorNewListing = () => {
                     <SelectContent>
                       <SelectItem value="product">Product</SelectItem>
                       <SelectItem value="service">Service</SelectItem>
-                      <SelectItem value="viewerbase">Viewerbase</SelectItem>
+                      <SelectItem value="viewerbase">Viewer Base</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -238,7 +240,7 @@ const VendorNewListing = () => {
                       
                       {/* Images */}
                       <div className="mb-4">
-                        <Label className="text-sm">Images (Max 5)</Label>
+                        <Label className="text-sm">Images (Max 5) - Upload or URL</Label>
                         <div className="flex gap-2 mt-2">
                           <Input
                             placeholder="Image URL"
@@ -248,6 +250,29 @@ const VendorNewListing = () => {
                           />
                           <Button type="button" onClick={handleAddImage} size="icon" variant="secondary">
                             <Plus className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            type="button" 
+                            size="icon" 
+                            variant="secondary"
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = (e) => {
+                                const file = (e.target as HTMLInputElement).files?.[0];
+                                if (file && images.length < 5) {
+                                  const url = URL.createObjectURL(file);
+                                  setImages([...images, url]);
+                                  toast.success("Image added");
+                                } else if (images.length >= 5) {
+                                  toast.error("Maximum 5 images allowed");
+                                }
+                              };
+                              input.click();
+                            }}
+                          >
+                            <Upload className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="grid grid-cols-5 gap-2 mt-3">
@@ -405,6 +430,34 @@ const VendorNewListing = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="Or add custom category..."
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && customCategory.trim()) {
+                          setCategory(customCategory.trim());
+                          setCustomCategory("");
+                          toast.success("Custom category added");
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        if (customCategory.trim()) {
+                          setCategory(customCategory.trim());
+                          setCustomCategory("");
+                          toast.success("Custom category added");
+                        }
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
                 </div>
 
                 <div>
@@ -425,6 +478,49 @@ const VendorNewListing = () => {
                       )
                     )}
                   </div>
+                  <div className="flex gap-2 mt-3">
+                    <Input
+                      placeholder="Or add custom subcategory..."
+                      value={customSubcategory}
+                      onChange={(e) => setCustomSubcategory(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && customSubcategory.trim() && !subcategories.includes(customSubcategory.trim())) {
+                          setSubcategories([...subcategories, customSubcategory.trim()]);
+                          setCustomSubcategory("");
+                          toast.success("Custom subcategory added");
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        if (customSubcategory.trim() && !subcategories.includes(customSubcategory.trim())) {
+                          setSubcategories([...subcategories, customSubcategory.trim()]);
+                          setCustomSubcategory("");
+                          toast.success("Custom subcategory added");
+                        }
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {subcategories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {subcategories.map((sub) => (
+                        <Badge key={sub} variant="secondary" className="gap-1">
+                          {sub}
+                          <button
+                            onClick={() => setSubcategories(subcategories.filter(s => s !== sub))}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
