@@ -60,13 +60,13 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               placeholder="WHAT ARE YOU LOOKING FOR?"
-              className="pl-12 pr-24 h-14 bg-foreground text-background placeholder:text-muted-foreground/60 border-none rounded-full text-sm uppercase tracking-wide w-full"
+              className="pl-12 pr-24 h-14 bg-card text-foreground placeholder:text-muted-foreground/60 border-none rounded-full text-sm uppercase tracking-wide w-full"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 text-background/60 hover:text-background hover:bg-transparent"
+                className="h-10 w-10 text-foreground/60 hover:text-foreground hover:bg-transparent"
                 title="Location"
               >
                 <MapPin className="h-5 w-5" />
@@ -75,7 +75,7 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
                 variant="ghost"
                 size="icon"
                 onClick={handleSearch}
-                className="h-10 w-10 text-background/60 hover:text-background hover:bg-transparent"
+                className="h-10 w-10 text-foreground/60 hover:text-foreground hover:bg-transparent"
                 title="Voice search"
               >
                 <Mic className="h-5 w-5" />
@@ -89,7 +89,7 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
 
   // Bottom sticky search bar layout
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/98 backdrop-blur-sm border-t border-border py-3 animate-slide-up">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/98 backdrop-blur-sm border-t border-border py-3 animate-slide-up">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-2 max-w-4xl mx-auto">
           {/* Map toggle */}
