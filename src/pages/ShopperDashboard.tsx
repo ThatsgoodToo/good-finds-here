@@ -866,121 +866,143 @@ const ShopperDashboard = () => {
           </DialogHeader>
           
           <div className="space-y-6">
+            {/* Profile Image */}
             <div className="space-y-2">
               <Label>Profile Image</Label>
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={shopperImage} />
-                  <AvatarFallback className="text-xl">
+                  <AvatarFallback className="text-xl bg-primary text-primary-foreground">
                     {shopperName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload Photo
+                </Button>
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="location-toggle">Enable Location</Label>
+                <Switch
+                  id="location-toggle"
+                  checked={profileSettings.locationEnabled}
+                  onCheckedChange={(checked) =>
+                    setProfileSettings({ ...profileSettings, locationEnabled: checked })
+                  }
+                />
+              </div>
+              {profileSettings.locationEnabled && (
                 <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Upload className="h-4 w-4" />
-                    Upload Image
-                  </Button>
+                  <Label htmlFor="location">Your Location</Label>
+                  <Input
+                    id="location"
+                    value={profileSettings.location}
+                    onChange={(e) =>
+                      setProfileSettings({ ...profileSettings, location: e.target.value })
+                    }
+                    placeholder="City, State"
+                  />
                   <p className="text-xs text-muted-foreground">
-                    Or choose from TGT templates
+                    <MapPin className="h-3 w-3 inline mr-1" />
+                    Syncs with map view. Changes require TGT approval for accuracy.
                   </p>
                 </div>
-              </div>
+              )}
             </div>
 
+            {/* External Link */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="location">Location</Label>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="location-toggle"
-                    checked={profileSettings.locationEnabled}
-                    onCheckedChange={(checked) =>
-                      setProfileSettings({ ...profileSettings, locationEnabled: checked })
-                    }
-                  />
-                  <Label htmlFor="location-toggle" className="text-sm text-muted-foreground">
-                    {profileSettings.locationEnabled ? "Visible" : "Hidden"}
-                  </Label>
-                </div>
-              </div>
-              <Input
-                id="location"
-                value={profileSettings.location}
-                onChange={(e) =>
-                  setProfileSettings({ ...profileSettings, location: e.target.value })
-                }
-                disabled={!profileSettings.locationEnabled}
-                placeholder="City, State"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="externalLink">External Link (Optional)</Label>
+              <Label htmlFor="external-link">External Link</Label>
               <div className="flex gap-2">
                 <Input
-                  id="externalLink"
+                  id="external-link"
                   value={profileSettings.externalLink}
                   onChange={(e) =>
                     setProfileSettings({ ...profileSettings, externalLink: e.target.value })
                   }
-                  placeholder="https://yourwebsite.com"
+                  placeholder="https://yourwebsite.com or @username"
                 />
                 <Button variant="outline" size="icon">
                   <ExternalLink className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Add a link to your website, social profile, or portfolio
+              </p>
             </div>
 
+            {/* Bio/Description */}
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio (Optional)</Label>
+              <Label htmlFor="bio">Description</Label>
               <Textarea
                 id="bio"
                 value={profileSettings.bio}
                 onChange={(e) =>
                   setProfileSettings({ ...profileSettings, bio: e.target.value })
                 }
-                placeholder="Tell others about yourself..."
+                placeholder="Write a short bio about yourself..."
                 rows={4}
               />
+              <p className="text-xs text-muted-foreground">
+                Share a little about yourself (optional)
+              </p>
             </div>
 
+            {/* Privacy Controls */}
             <div className="space-y-4">
-              <h4 className="font-semibold">Privacy Controls</h4>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {profileSettings.activityPublic ? (
-                    <Eye className="h-4 w-4 text-primary" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <div>
-                    <Label>Activity Visibility</Label>
+              <div>
+                <h4 className="font-semibold mb-2">Privacy Controls</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Manage what others can see on your profile
+                </p>
+              </div>
+
+              <div className="space-y-3 p-4 border rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Public Activity</Label>
                     <p className="text-xs text-muted-foreground">
-                      Who can see your High Fives and saved items
+                      Make your activity visible to others
                     </p>
                   </div>
+                  <Switch
+                    checked={profileSettings.activityPublic}
+                    onCheckedChange={(checked) =>
+                      setProfileSettings({ ...profileSettings, activityPublic: checked })
+                    }
+                  />
                 </div>
-                <Switch
-                  checked={profileSettings.activityPublic}
-                  onCheckedChange={(checked) =>
-                    setProfileSettings({ ...profileSettings, activityPublic: checked })
-                  }
-                />
+
+                {profileSettings.activityPublic && (
+                  <div className="ml-4 space-y-3 pt-3 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal">Show Who I Follow</Label>
+                      <Checkbox defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal">Show My High-Fives (Saved Items)</Label>
+                      <Checkbox defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="font-normal">Show My Folders</Label>
+                      <Checkbox />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex gap-2 pt-4">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowSettingsDialog(false)}
-              >
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowSettingsDialog(false)}>
                 Cancel
               </Button>
               <Button
-                className="flex-1"
                 onClick={() => {
-                  toast.success("Settings saved!");
+                  toast.success("Profile settings saved!");
                   setShowSettingsDialog(false);
                 }}
               >
