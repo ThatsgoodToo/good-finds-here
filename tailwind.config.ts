@@ -67,6 +67,10 @@ export default {
           DEFAULT: "hsl(var(--vendor-active))",
           foreground: "hsl(var(--vendor-active-foreground))",
         },
+        "shopper-active": {
+          DEFAULT: "hsl(var(--shopper-active))",
+          foreground: "hsl(var(--shopper-active-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

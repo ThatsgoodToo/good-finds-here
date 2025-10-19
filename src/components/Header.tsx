@@ -52,7 +52,11 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
             className="focus:outline-none"
             type="button"
           >
-            <img src={logo} alt="That's Good Too" className="h-8 w-8 sm:h-10 sm:w-10 hover:opacity-80 transition-opacity cursor-pointer" />
+            <img 
+              src={logo} 
+              alt="That's Good Too" 
+              className="h-8 w-8 sm:h-10 sm:w-10 hover:opacity-80 transition-opacity cursor-pointer brightness-0 dark:brightness-100" 
+            />
           </button>
         </div>
 
@@ -67,7 +71,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
             <img 
               src={squirrelIcon} 
               alt="Your goods" 
-              className="h-6 w-6 sm:h-7 sm:w-7 opacity-70 group-hover:opacity-100 transition-opacity"
+              className="h-6 w-6 sm:h-7 sm:w-7 object-contain opacity-70 group-hover:opacity-100 transition-opacity brightness-0 dark:brightness-100"
             />
           </button>
 
@@ -105,7 +109,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
               {user && (
                 <>
                   <DropdownMenuItem className="text-xs font-medium pointer-events-none">
-                    <div className={`px-2 py-1 rounded ${userRole === 'vendor' ? 'bg-vendor-active text-vendor-active-foreground' : userRole === 'shopper' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <div className={`px-2 py-1 rounded ${userRole === 'vendor' ? 'bg-vendor-active text-vendor-active-foreground' : userRole === 'shopper' ? 'bg-shopper-active text-shopper-active-foreground' : 'bg-muted text-muted-foreground'}`}>
                       Signed in as {userRole}
                     </div>
                   </DropdownMenuItem>

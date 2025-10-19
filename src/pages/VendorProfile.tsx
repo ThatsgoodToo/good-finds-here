@@ -31,6 +31,7 @@ import {
   Ticket
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const VendorProfile = () => {
   const navigate = useNavigate();
@@ -254,9 +255,23 @@ const VendorProfile = () => {
                           <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
                         </div>
                         
+                        {/* High-Five Button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedListing(listing.id);
+                            setShowFolderDialog(true);
+                          }}
+                          className="absolute top-2 right-2 z-10 bg-background/90 hover:bg-background text-foreground shadow-md"
+                        >
+                          <Hand className="h-5 w-5" />
+                        </Button>
+                        
                         {/* Exclusive offer badge */}
                         {listing.hasOffer && (
-                          <Badge className="absolute top-2 right-2 bg-red-500">
+                          <Badge className="absolute top-12 right-2 bg-red-500">
                             Exclusive Offer
                           </Badge>
                         )}
@@ -478,7 +493,7 @@ const VendorProfile = () => {
           <DialogHeader>
             <DialogTitle>Add to Folder</DialogTitle>
             <DialogDescription>
-              Choose a folder to save {vendor.name} or create a new one.
+              Choose a folder to save this item or create a new one.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -488,8 +503,8 @@ const VendorProfile = () => {
                 variant="outline"
                 className="w-full justify-start"
                 onClick={() => {
+                  toast.success(`Added to ${folder.name}!`);
                   setShowFolderDialog(false);
-                  // Handle folder selection
                 }}
               >
                 {folder.name}
@@ -502,9 +517,10 @@ const VendorProfile = () => {
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Folder name"
-                  className="flex-1 px-3 py-2 rounded-md border border-input bg-background"
+                  className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-foreground"
                 />
                 <Button onClick={() => {
+                  toast.success(`Folder "${newFolderName}" created!`);
                   setShowFolderDialog(false);
                   setNewFolderName("");
                 }}>

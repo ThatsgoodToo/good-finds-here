@@ -48,6 +48,8 @@ All colors MUST be HSL.
     /* Role Indicators */
     --vendor-active: 142 76% 36%;
     --vendor-active-foreground: 0 0% 100%;
+    --shopper-active: 220 70% 55%;
+    --shopper-active-foreground: 0 0% 100%;
 
     /* Sidebar (if needed) */
     --sidebar-background: 0 0% 100%;
@@ -119,5 +121,20 @@ All colors MUST be HSL.
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+  
+  @keyframes slide-in-bottom {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .animate-slide-in-bottom {
+    animation: slide-in-bottom 0.3s ease-out;
   }
 }
