@@ -95,8 +95,8 @@ const ShopperDashboard = () => {
     activityPublic: false,
   });
 
-  const shopperName = user?.user_metadata?.display_name || "Your";
-  const shopperImage = user?.user_metadata?.avatar_url || "";
+  const shopperName = "Sarah Martinez"; // Demo name
+  const shopperImage = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200";
 
   // Standard filter categories with options
   const standardFilters = {
@@ -221,7 +221,9 @@ const ShopperDashboard = () => {
       discount: "15% off", 
       expires: "Dec 31, 2025",
       claimed: false,
-      vendorUrl: "https://clayandco.example.com"
+      vendorUrl: "https://clayandco.example.com",
+      thumbnail: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300",
+      listingTitle: "Handcrafted Bowl Set"
     },
     { 
       id: "2", 
@@ -231,7 +233,21 @@ const ShopperDashboard = () => {
       discount: "20% off heritage items", 
       expires: "Jan 15, 2026",
       claimed: true,
-      vendorUrl: "https://ginew.example.com"
+      vendorUrl: "https://ginew.example.com",
+      thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300",
+      listingTitle: "Heritage Striped Shirt"
+    },
+    { 
+      id: "3", 
+      vendor: "Studio Ceramics", 
+      vendorId: "3",
+      code: "FREESHIP", 
+      discount: "Free Shipping", 
+      expires: "Feb 28, 2026",
+      claimed: false,
+      vendorUrl: "https://studioceramics.example.com",
+      thumbnail: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300",
+      listingTitle: "Pottery Workshop Experience"
     },
   ];
 
@@ -367,7 +383,7 @@ const ShopperDashboard = () => {
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
                   <AvatarImage src={shopperImage} />
-                  <AvatarFallback className="text-lg">
+                  <AvatarFallback className="text-lg bg-primary text-primary-foreground">
                     {shopperName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -378,19 +394,30 @@ const ShopperDashboard = () => {
               </div>
               
               <div className="flex items-center gap-3">
-                {userRole === "vendor" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => navigate("/dashboard/vendor")}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    <span className="hidden sm:inline">Switch to Vendor</span>
-                    <span className="sm:hidden">Vendor</span>
-                  </Button>
-                )}
+                {/* Toggle between Vendor and Shopper - Show if user has both roles */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      <span className="hidden sm:inline">Switch Dashboard</span>
+                      <span className="sm:hidden">Switch</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/shopper")} className="font-semibold">
+                      Shopper Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard/vendor")}>
+                      Vendor Dashboard
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 
+                {/* Settings Gear Icon */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -401,8 +428,12 @@ const ShopperDashboard = () => {
                     <DropdownMenuItem onClick={() => setShowSettingsDialog(true)}>
                       Account Settings
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Notification Settings</DropdownMenuItem>
-                    <DropdownMenuItem>Platform Messages</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      Notification Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      Platform Messages
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowSettingsDialog(true)}>
                       Profile Settings
@@ -603,35 +634,58 @@ const ShopperDashboard = () => {
                     coupon.claimed && "opacity-60"
                   )}>
                     <CardContent className="pt-6">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 
-                              className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors"
-                              onClick={() => navigate(`/vendor/${coupon.vendorId}`)}
-                            >
-                              {coupon.vendor}
-                            </h3>
-                            {coupon.claimed && (
-                              <Badge variant="secondary">Claimed</Badge>
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">
-                              Code: <span className="font-mono font-bold text-foreground">{coupon.code}</span>
-                            </p>
-                            <p className="text-sm text-primary font-medium">{coupon.discount}</p>
-                            <p className="text-xs text-muted-foreground">Expires: {coupon.expires}</p>
-                          </div>
-                        </div>
-                        <Button 
-                          className="w-full sm:w-auto gap-2"
-                          onClick={() => handleClaimCoupon(coupon)}
-                          disabled={coupon.claimed}
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        {/* Listing Thumbnail */}
+                        <div 
+                          className="relative w-full sm:w-32 h-32 rounded-lg overflow-hidden cursor-pointer group shrink-0"
+                          onClick={() => navigate(`/listing/product/${coupon.id}`)}
                         >
-                          <Ticket className="h-4 w-4" />
-                          {coupon.claimed ? "Visit Store" : "Claim & Visit"}
-                        </Button>
+                          <img 
+                            src={coupon.thumbnail} 
+                            alt={coupon.listingTitle}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <Badge className="absolute top-2 right-2 bg-primary text-xs">
+                            {coupon.discount}
+                          </Badge>
+                        </div>
+                        
+                        {/* Coupon Details */}
+                        <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 
+                                className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors"
+                                onClick={() => navigate(`/vendor/${coupon.vendorId}`)}
+                              >
+                                {coupon.vendor}
+                              </h3>
+                              {coupon.claimed && (
+                                <Badge variant="secondary">Claimed</Badge>
+                              )}
+                            </div>
+                            <p 
+                              className="text-sm text-muted-foreground hover:text-foreground cursor-pointer mb-2"
+                              onClick={() => navigate(`/listing/product/${coupon.id}`)}
+                            >
+                              {coupon.listingTitle}
+                            </p>
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground">
+                                Code: <span className="font-mono font-bold text-foreground">{coupon.code}</span>
+                              </p>
+                              <p className="text-xs text-muted-foreground">Expires: {coupon.expires}</p>
+                            </div>
+                          </div>
+                          <Button 
+                            className="w-full sm:w-auto gap-2"
+                            onClick={() => handleClaimCoupon(coupon)}
+                            disabled={coupon.claimed}
+                          >
+                            <Ticket className="h-4 w-4" />
+                            {coupon.claimed ? "Visit Store" : "Claim & Visit"}
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
