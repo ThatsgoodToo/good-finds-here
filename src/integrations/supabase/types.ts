@@ -61,33 +61,54 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age_verified: boolean | null
+          analytics_consent: boolean | null
           avatar_url: string | null
           bio: string | null
           created_at: string
           display_name: string | null
           email: string
+          full_name: string | null
           id: string
+          interests: string[] | null
+          onboarding_completed: boolean | null
+          profile_picture_url: string | null
           role: Database["public"]["Enums"]["app_role"]
+          terms_accepted: boolean | null
           updated_at: string
         }
         Insert: {
+          age_verified?: boolean | null
+          analytics_consent?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
           email: string
+          full_name?: string | null
           id: string
+          interests?: string[] | null
+          onboarding_completed?: boolean | null
+          profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          terms_accepted?: boolean | null
           updated_at?: string
         }
         Update: {
+          age_verified?: boolean | null
+          analytics_consent?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
           email?: string
+          full_name?: string | null
           id?: string
+          interests?: string[] | null
+          onboarding_completed?: boolean | null
+          profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          terms_accepted?: boolean | null
           updated_at?: string
         }
         Relationships: []
