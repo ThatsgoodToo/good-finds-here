@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
@@ -17,6 +18,22 @@ const Index = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [hasSearched, setHasSearched] = useState(false);
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
+  const [dbListings, setDbListings] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("status", "active");
+      
+      if (data) {
+        setDbListings(data);
+      }
+    };
+    
+    fetchListings();
+  }, []);
 
   const handleSearch = (query: string) => {
     setHasSearched(true);
@@ -133,10 +150,24 @@ const Index = () => {
     },
   ];
 
+  // Map database listings to product format
+  const dbProducts = dbListings.map((listing) => ({
+    id: listing.id,
+    title: listing.title,
+    price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
+    image: listing.image_url || "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=500",
+    category: listing.listing_type as CategoryType,
+    vendor: "Local Vendor",
+    vendorId: listing.vendor_id,
+  }));
+
+  // Combine mock products with database listings
+  const allProducts = [...products, ...dbProducts];
+
   const filteredProducts =
     activeFilter === "all"
-      ? products
-      : products.filter((p) => p.category === activeFilter);
+      ? allProducts
+      : allProducts.filter((p) => p.category === activeFilter);
 
   return (
     <div className="min-h-screen bg-background">
