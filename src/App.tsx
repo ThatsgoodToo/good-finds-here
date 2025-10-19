@@ -10,6 +10,7 @@ import ShopperSignup from "./pages/ShopperSignup";
 import VendorSignup from "./pages/VendorSignup";
 import ShopperDashboard from "./pages/ShopperDashboard";
 import VendorDashboard from "./pages/VendorDashboard";
+import VendorProfile from "./pages/VendorProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => {
               <Route path="/signup/vendor" element={<VendorSignup />} />
               <Route path="/dashboard/shopper" element={<ShopperDashboard />} />
               <Route path="/dashboard/vendor" element={<VendorDashboard />} />
+              <Route path="/vendor/:vendorId" element={<VendorProfile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
