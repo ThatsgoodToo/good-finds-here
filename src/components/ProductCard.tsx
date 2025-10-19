@@ -45,7 +45,7 @@ const ProductCard = ({ id, title, price, image, category, vendor }: ProductCardP
 
   return (
     <>
-      <div className="group relative overflow-hidden rounded-lg bg-card border border-border transition-all hover:shadow-lg hover:scale-[1.02] animate-scale-in">
+      <div className="group relative overflow-hidden rounded-lg bg-transparent border-none transition-all hover:shadow-lg animate-scale-in">
         {/* Category Dot */}
         <div className="absolute top-3 left-3 z-10">
           <div className={cn("w-3 h-3 rounded-full", categoryColors[category])} />
@@ -56,26 +56,26 @@ const ProductCard = ({ id, title, price, image, category, vendor }: ProductCardP
           variant="ghost"
           size="icon"
           onClick={handleHighFive}
-          className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background/90 text-foreground"
+          className="absolute top-2 right-2 z-10 bg-background/90 hover:bg-background text-foreground shadow-md"
         >
-          <Hand className="h-4 w-4" />
+          <Hand className="h-5 w-5" />
         </Button>
 
-        {/* Image */}
-        <div className="relative aspect-[3/4] overflow-hidden">
+        {/* Image with max width constraint */}
+        <div className="relative w-full max-w-[400px] overflow-hidden rounded-lg">
           <img
             src={image}
             alt={title}
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            className="w-full h-auto object-cover transition-transform group-hover:scale-105"
+            style={{ maxWidth: '400px' }}
           />
           
-          {/* Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-foreground/90 backdrop-blur-sm p-4">
-            <h3 className="text-background font-semibold text-sm mb-1 truncate">
-              {title}
+          {/* Bottom Right Overlay */}
+          <div className="absolute bottom-3 right-3 bg-background/95 backdrop-blur-sm rounded-md p-2 shadow-md">
+            <p className="font-bold text-foreground text-sm leading-tight">{price}</p>
+            <h3 className="text-muted-foreground text-xs leading-tight truncate max-w-[120px]">
+              {vendor}
             </h3>
-            <p className="text-background/80 text-xs">{vendor}</p>
-            <p className="text-background font-bold mt-1">{price}</p>
           </div>
         </div>
       </div>

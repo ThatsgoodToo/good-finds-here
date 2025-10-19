@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import MasonryGallery from "@/components/MasonryGallery";
+import ListView from "@/components/ListView";
 import MapView from "@/components/MapView";
 import { CategoryType } from "@/components/ProductCard";
 
@@ -12,9 +13,15 @@ const Index = () => {
   const [isMapView, setIsMapView] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [hasSearched, setHasSearched] = useState(false);
+  const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
 
   const handleSearch = (query: string) => {
     setHasSearched(true);
+  };
+
+  const handleBack = () => {
+    setHasSearched(false);
+    setIsMapView(false);
   };
 
   // Mock products data
@@ -109,8 +116,15 @@ const Index = () => {
             <FilterBar
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
+              onBack={handleBack}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
             />
-            <MasonryGallery products={filteredProducts} />
+            {viewMode === "gallery" ? (
+              <MasonryGallery products={filteredProducts} />
+            ) : (
+              <ListView products={filteredProducts} />
+            )}
           </>
         )}
 
