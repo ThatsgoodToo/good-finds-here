@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Hand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -20,10 +21,20 @@ interface ProductCardProps {
   image: string;
   category: CategoryType;
   vendor: string;
+  vendorId: string;
 }
 
-const ProductCard = ({ id, title, price, image, category, vendor }: ProductCardProps) => {
+const ProductCard = ({ id, title, price, image, category, vendor, vendorId }: ProductCardProps) => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  // Determine listing path based on category
+  const getListingPath = () => {
+    // For demo purposes, map categories to listing types
+    if (category === "service" || category === "experience") {
+      return `/listing/video/${id}`;
+    }
+    return `/listing/product/${id}`;
+  };
 
   const categoryColors: Record<CategoryType, string> = {
     product: "bg-category-product",
@@ -62,7 +73,7 @@ const ProductCard = ({ id, title, price, image, category, vendor }: ProductCardP
         </Button>
 
         {/* Image with max width constraint */}
-        <div className="relative w-full max-w-[400px] overflow-hidden rounded-lg">
+        <Link to={getListingPath()} className="block relative w-full max-w-[400px] overflow-hidden rounded-lg">
           <img
             src={image}
             alt={title}
@@ -73,11 +84,15 @@ const ProductCard = ({ id, title, price, image, category, vendor }: ProductCardP
           {/* Bottom Right Overlay */}
           <div className="absolute bottom-3 right-3 bg-background/95 backdrop-blur-sm rounded-md p-2 shadow-md">
             <p className="font-bold text-foreground text-sm leading-tight">{price}</p>
-            <h3 className="text-muted-foreground text-xs leading-tight truncate max-w-[120px]">
+            <Link 
+              to={`/vendor/${vendorId}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-muted-foreground hover:text-foreground text-xs leading-tight truncate max-w-[120px] block transition-colors"
+            >
               {vendor}
-            </h3>
+            </Link>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Save Dialog */}

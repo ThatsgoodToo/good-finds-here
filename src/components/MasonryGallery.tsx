@@ -7,6 +7,7 @@ interface Product {
   image: string;
   category: CategoryType;
   vendor: string;
+  vendorId: string;
 }
 
 interface MasonryGalleryProps {

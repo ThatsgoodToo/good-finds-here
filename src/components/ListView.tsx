@@ -1,4 +1,5 @@
-import ProductCard, { CategoryType } from "./ProductCard";
+import { CategoryType } from "./ProductCard";
+import { Link } from "react-router-dom";
 
 interface Product {
   id: string;
@@ -7,6 +8,7 @@ interface Product {
   image: string;
   category: CategoryType;
   vendor: string;
+  vendorId: string;
 }
 
 interface ListViewProps {
@@ -14,11 +16,22 @@ interface ListViewProps {
 }
 
 const ListView = ({ products }: ListViewProps) => {
+  const getListingPath = (category: CategoryType, id: string) => {
+    if (category === "service" || category === "experience") {
+      return `/listing/video/${id}`;
+    }
+    return `/listing/product/${id}`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col gap-6 max-w-4xl mx-auto">
         {products.map((product) => (
-          <div key={product.id} className="flex gap-4 bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-shadow">
+          <Link 
+            key={product.id} 
+            to={getListingPath(product.category, product.id)}
+            className="flex gap-4 bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-shadow"
+          >
             <div className="w-32 h-32 shrink-0">
               <img
                 src={product.image}
@@ -29,11 +42,17 @@ const ListView = ({ products }: ListViewProps) => {
             <div className="flex-1 flex flex-col justify-between">
               <div>
                 <h3 className="font-semibold text-foreground text-lg mb-1">{product.title}</h3>
-                <p className="text-muted-foreground text-sm">{product.vendor}</p>
+                <Link 
+                  to={`/vendor/${product.vendorId}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                >
+                  {product.vendor}
+                </Link>
               </div>
               <p className="font-bold text-foreground text-xl">{product.price}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
