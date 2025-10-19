@@ -397,15 +397,64 @@ const ShopperDashboard = () => {
           <div className="container mx-auto px-4 sm:px-6 py-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
-                  <AvatarImage src={shopperImage} />
-                  <AvatarFallback className="text-lg bg-primary text-primary-foreground">
-                    {shopperName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative group">
+                  <Avatar className="h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
+                    <AvatarImage src={shopperImage} />
+                    <AvatarFallback className="text-lg bg-primary text-primary-foreground">
+                      {shopperName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="absolute bottom-0 right-0 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => toast.info("Image upload feature coming soon")}
+                  >
+                    <Upload className="h-3 w-3" />
+                  </Button>
+                </div>
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold">{shopperName} Goods</h1>
                   <p className="text-sm text-muted-foreground">Shopper Dashboard</p>
+                  
+                  {/* Location */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{profileSettings.location}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => {
+                        setProfileSettings({
+                          ...profileSettings,
+                          locationEnabled: !profileSettings.locationEnabled
+                        });
+                        toast.success(profileSettings.locationEnabled ? "Location hidden from public" : "Location visible to public");
+                      }}
+                    >
+                      {profileSettings.locationEnabled ? (
+                        <Eye className="h-3 w-3 text-muted-foreground" />
+                      ) : (
+                        <EyeOff className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {/* External Link */}
+                  {profileSettings.externalLink && (
+                    <a
+                      href={profileSettings.externalLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-primary hover:underline mt-1"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Visit Website
+                    </a>
+                  )}
                 </div>
               </div>
               

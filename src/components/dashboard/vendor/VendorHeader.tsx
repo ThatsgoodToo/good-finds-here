@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Upload, ExternalLink, MapPin } from "lucide-react";
+import { Settings, Upload, ExternalLink, MapPin, Edit2 } from "lucide-react";
 
 interface VendorHeaderProps {
   vendorName: string;
@@ -125,7 +125,22 @@ const VendorHeader = ({
         </div>
 
         {description && (
-          <p className="text-sm text-muted-foreground max-w-2xl">{description}</p>
+          <div className="max-w-2xl group relative">
+            <p className="text-sm text-muted-foreground pr-8">{description}</p>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => {
+                const newDesc = prompt("Edit description:", description);
+                if (newDesc !== null && newDesc.trim()) {
+                  onUpdateDescription(newDesc);
+                }
+              }}
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+          </div>
         )}
       </div>
     </div>
