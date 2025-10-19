@@ -3,48 +3,918 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Header from "@/components/Header";
-import SearchBar from "@/components/SearchBar";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+interface VendorApplication {
+  // Page 1
+  website: string;
+  social_media_links: string[];
+  city: string;
+  state_region: string;
+  country: string;
+  phone_number: string;
+  business_type: string;
+  business_type_other: string;
+  
+  // Page 2
+  business_description: string;
+  products_services: string[];
+  inventory_type: string[];
+  shipping_options: string[];
+  pickup_address: string;
+  
+  // Page 3
+  area_of_expertise: string[];
+  business_duration: string;
+  craft_development: string;
+  certifications_awards: string;
+  
+  // Page 4
+  creativity_style: string;
+  inspiration: string;
+  brand_uniqueness: string;
+  sustainable_methods: string[];
+  
+  // Page 5
+  pricing_style: string;
+  exclusive_offers: string;
+  promotion_social_channels: string;
+  future_website: string;
+  
+  // Page 6
+  promo_code: string;
+  subscription_type: string;
+  payment_method_saved: boolean;
+  
+  // Page 7
+  additional_info: string;
+  info_accurate: boolean;
+  understands_review: boolean;
+  agrees_to_terms: boolean;
+  receive_updates: boolean;
+}
 
 const VendorSignup = () => {
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+  
+  const [formData, setFormData] = useState<VendorApplication>({
+    website: "",
+    social_media_links: [],
+    city: "",
+    state_region: "",
+    country: "",
+    phone_number: "",
+    business_type: "",
+    business_type_other: "",
+    business_description: "",
+    products_services: [],
+    inventory_type: [],
+    shipping_options: [],
+    pickup_address: "",
+    area_of_expertise: [],
+    business_duration: "",
+    craft_development: "",
+    certifications_awards: "",
+    creativity_style: "",
+    inspiration: "",
+    brand_uniqueness: "",
+    sustainable_methods: [],
+    pricing_style: "",
+    exclusive_offers: "",
+    promotion_social_channels: "",
+    future_website: "",
+    promo_code: "",
+    subscription_type: "standard",
+    payment_method_saved: false,
+    additional_info: "",
+    info_accurate: false,
+    understands_review: false,
+    agrees_to_terms: false,
+    receive_updates: false,
+  });
 
-  const handleGetStarted = () => {
-    toast.info("Vendor application coming soon!");
+  const totalSteps = 7;
+  const progress = ((currentStep + 1) / totalSteps) * 100;
+
+  const updateField = (field: keyof VendorApplication, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const toggleArrayItem = (field: keyof VendorApplication, item: string) => {
+    const currentArray = formData[field] as string[];
+    if (currentArray.includes(item)) {
+      updateField(field, currentArray.filter(i => i !== item));
+    } else {
+      updateField(field, [...currentArray, item]);
+    }
+  };
+
+  const validateStep = () => {
+    switch (currentStep) {
+      case 0: // Basic Info
+        if (!formData.website || !formData.city || !formData.state_region || !formData.country || !formData.business_type) {
+          toast.error("Please fill in all required fields");
+          return false;
+        }
+        break;
+      case 1: // About Your Business
+        if (!formData.business_description || formData.products_services.length === 0 || formData.inventory_type.length === 0) {
+          toast.error("Please fill in all required fields");
+          return false;
+        }
+        break;
+      case 2: // Expertise
+        if (formData.area_of_expertise.length === 0 || !formData.business_duration || !formData.craft_development) {
+          toast.error("Please fill in all required fields");
+          return false;
+        }
+        break;
+      case 5: // Subscription
+        // Validate payment if no promo code
+        if (!formData.promo_code && !formData.payment_method_saved) {
+          // Allow continuing without payment, but inform user
+        }
+        break;
+      case 6: // Agreements
+        if (!formData.info_accurate || !formData.understands_review || !formData.agrees_to_terms) {
+          toast.error("Please agree to all required terms");
+          return false;
+        }
+        break;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep()) {
+      setCurrentStep(prev => Math.min(prev + 1, totalSteps - 1));
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep()) return;
+
+    setLoading(true);
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please sign in to submit your application");
+        navigate("/auth");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('vendor_applications')
+        .insert([{
+          user_id: user.id,
+          ...formData,
+          status: 'pending'
+        }]);
+
+      if (error) throw error;
+
+      toast.success("Application submitted successfully!");
+      setCurrentStep(totalSteps); // Show thank you page
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit application");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showWelcome) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header showGoodToday={false} />
+        
+        <main className="pt-16 sm:pt-20 pb-24">
+          <div className="flex items-center justify-center p-4 pt-8">
+            <Card className="w-full max-w-3xl">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <Sparkles className="h-12 w-12 text-primary" />
+                </div>
+                <CardTitle className="text-3xl sm:text-4xl font-bold mb-2">
+                  Welcome to That's Good Too!
+                </CardTitle>
+                <CardDescription className="text-base sm:text-lg">
+                  Become a Vendor
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="prose prose-sm sm:prose-base text-muted-foreground space-y-4">
+                  <p>
+                    We promote local goods, independent artists, and small-scale producers by giving you five spaces to showcase your products, services, or experiences, directing customers straight to your existing site.
+                  </p>
+                  <p>
+                    Our subscription-based platform is affordable, designed to save you time, and has no ad fees, making it easy to promote your work and connect with your community.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+                  <div className="text-center p-4 bg-muted rounded-lg">
+                    <div className="text-2xl font-bold text-primary mb-1">5</div>
+                    <div className="text-sm text-muted-foreground">Showcase Spaces</div>
+                  </div>
+                  <div className="text-center p-4 bg-muted rounded-lg">
+                    <div className="text-2xl font-bold text-primary mb-1">$5/mo</div>
+                    <div className="text-sm text-muted-foreground">Startup Price</div>
+                  </div>
+                  <div className="text-center p-4 bg-muted rounded-lg">
+                    <div className="text-2xl font-bold text-primary mb-1">0%</div>
+                    <div className="text-sm text-muted-foreground">Ad Fees</div>
+                  </div>
+                </div>
+                
+                <Button 
+                  size="lg" 
+                  onClick={() => setShowWelcome(false)} 
+                  className="w-full"
+                >
+                  Get Started
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Thank You Page
+  if (currentStep === totalSteps) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header showGoodToday={false} />
+        
+        <main className="pt-16 sm:pt-20 pb-24">
+          <div className="flex items-center justify-center p-4 pt-8">
+            <Card className="w-full max-w-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Check className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <CardTitle className="text-3xl font-bold mb-2">
+                  Thank You for Applying! ✨
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 text-center">
+                <p className="text-lg">
+                  We've received your application and are excited to learn more about you!
+                </p>
+                <p className="text-muted-foreground">
+                  At TGT, we keep things authentic — every application is reviewed by a real person, not an automated system. Please allow up to 5 business days for review.
+                </p>
+                <p className="text-muted-foreground">
+                  If approved, you'll receive a confirmation email with next steps.
+                </p>
+                <p className="text-sm font-medium text-primary">
+                  Thank you for helping us support small-scale makers, independent artists, and authentic experiences!
+                </p>
+                <Button onClick={() => navigate("/")} className="w-full sm:w-auto">
+                  Return Home
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header showGoodToday={false} />
       
       <main className="pt-16 sm:pt-20 pb-24">
-        <div className="flex items-center justify-center p-4 pt-8">
-          <Card className="w-full max-w-2xl p-6">
-            <div className="text-center space-y-6">
-              <h1 className="text-3xl font-bold">Become a Vendor</h1>
-              <p className="text-lg text-muted-foreground">
-                Share your unique goods, services, and experiences with our community.
-              </p>
-              <p className="text-muted-foreground">
-                Join local vendors, independent artists, and small businesses who are already part of That's Good Too.
-              </p>
-              <Button size="lg" onClick={handleGetStarted} className="w-full sm:w-auto">
-                Get Started
-              </Button>
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">
+                Step {currentStep + 1} of {totalSteps}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {Math.round(progress)}% Complete
+              </span>
             </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {currentStep === 0 && "Basic Info"}
+                {currentStep === 1 && "About Your Business"}
+                {currentStep === 2 && "Expertise"}
+                {currentStep === 3 && "Practices & Creativity"}
+                {currentStep === 4 && "Pricing & Accessibility"}
+                {currentStep === 5 && "Subscription"}
+                {currentStep === 6 && "Confirmation & Agreements"}
+              </CardTitle>
+              <CardDescription>
+                {currentStep === 0 && "Where can we find you?"}
+                {currentStep === 1 && "Tell us about what you offer"}
+                {currentStep === 2 && "Share your experience and expertise"}
+                {currentStep === 3 && "What makes your work unique?"}
+                {currentStep === 4 && "Help us understand your pricing and offerings"}
+                {currentStep === 5 && "Choose your subscription plan"}
+                {currentStep === 6 && "Review and confirm your application"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Page 1: Basic Info */}
+              {currentStep === 0 && (
+                <>
+                  <div>
+                    <Label htmlFor="website">Website / Social Media Link *</Label>
+                    <Input
+                      id="website"
+                      value={formData.website}
+                      onChange={(e) => updateField('website', e.target.value)}
+                      placeholder="https://yourwebsite.com or @username"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => updateField('city', e.target.value)}
+                        placeholder="Portland"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">State/Region *</Label>
+                      <Input
+                        id="state"
+                        value={formData.state_region}
+                        onChange={(e) => updateField('state_region', e.target.value)}
+                        placeholder="Oregon"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="country">Country *</Label>
+                    <Input
+                      id="country"
+                      value={formData.country}
+                      onChange={(e) => updateField('country', e.target.value)}
+                      placeholder="United States"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone">Phone Number (Optional)</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone_number}
+                      onChange={(e) => updateField('phone_number', e.target.value)}
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="businessType">Business Type *</Label>
+                    <Select value={formData.business_type} onValueChange={(val) => updateField('business_type', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="independent">Independent artist / maker</SelectItem>
+                        <SelectItem value="nonprofit">Nonprofit / mission-driven</SelectItem>
+                        <SelectItem value="family">Family Owned</SelectItem>
+                        <SelectItem value="collaborative">Collaborative</SelectItem>
+                        <SelectItem value="diverse">Diverse-owned</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(formData.business_type === "diverse" || formData.business_type === "other") && (
+                    <div>
+                      <Label htmlFor="businessTypeOther">Please Specify</Label>
+                      <Input
+                        id="businessTypeOther"
+                        value={formData.business_type_other}
+                        onChange={(e) => updateField('business_type_other', e.target.value)}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Page 2: About Your Business */}
+              {currentStep === 1 && (
+                <>
+                  <div>
+                    <Label htmlFor="description">Brief Description of Business *</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.business_description}
+                      onChange={(e) => updateField('business_description', e.target.value)}
+                      placeholder="Tell us about your business..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Products or Services Offered *</Label>
+                    <div className="space-y-2 mt-2">
+                      {["Designed, made, grown, or collected", "Services offered", "An Experience"].map(item => (
+                        <div key={item} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={formData.products_services.includes(item)}
+                            onCheckedChange={() => toggleArrayItem('products_services', item)}
+                          />
+                          <Label className="font-normal">{item}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Inventory Type *</Label>
+                    <div className="space-y-2 mt-2">
+                      {["Regular", "Overstocked", "Odd Balls / One-Offs / Misfits", "Viewer-based", "Other"].map(item => (
+                        <div key={item} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={formData.inventory_type.includes(item)}
+                            onCheckedChange={() => toggleArrayItem('inventory_type', item)}
+                          />
+                          <Label className="font-normal">{item}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Shipping Options</Label>
+                    <div className="space-y-2 mt-2">
+                      {["Shipping", "Pick Up", "In Person", "Virtual", "Other"].map(item => (
+                        <div key={item} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={formData.shipping_options.includes(item)}
+                            onCheckedChange={() => toggleArrayItem('shipping_options', item)}
+                          />
+                          <Label className="font-normal">{item}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {formData.shipping_options.includes("Pick Up") && (
+                    <div>
+                      <Label htmlFor="pickupAddress">Pickup Address</Label>
+                      <Input
+                        id="pickupAddress"
+                        value={formData.pickup_address}
+                        onChange={(e) => updateField('pickup_address', e.target.value)}
+                        placeholder="Street address for pickup"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Page 3: Expertise */}
+              {currentStep === 2 && (
+                <>
+                  <div>
+                    <Label>Area of Expertise *</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      {["Art & Design", "Fashion & Accessories", "Food & Beverage", "Home & Lifestyle", "Wellness & Body Care", "Tech & Innovation", "Education & Experiences", "Other"].map(item => (
+                        <div key={item} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={formData.area_of_expertise.includes(item)}
+                            onCheckedChange={() => toggleArrayItem('area_of_expertise', item)}
+                          />
+                          <Label className="font-normal text-sm">{item}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="duration">Business Duration *</Label>
+                    <Select value={formData.business_duration} onValueChange={(val) => updateField('business_duration', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="<1">&lt;1 year</SelectItem>
+                        <SelectItem value="1-3">1–3 years</SelectItem>
+                        <SelectItem value="3-5">3–5 years</SelectItem>
+                        <SelectItem value="5-10">5–10 years</SelectItem>
+                        <SelectItem value="10+">10+ years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="craftDev">Craft Development *</Label>
+                    <Select value={formData.craft_development} onValueChange={(val) => updateField('craft_development', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="How did you develop your craft?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="self-taught">Self-taught</SelectItem>
+                        <SelectItem value="formal">Formally trained</SelectItem>
+                        <SelectItem value="apprentice">Apprenticeship/mentorship</SelectItem>
+                        <SelectItem value="family">Family tradition</SelectItem>
+                        <SelectItem value="learning">Still learning</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="certs">Certifications / Awards (Optional)</Label>
+                    <Textarea
+                      id="certs"
+                      value={formData.certifications_awards}
+                      onChange={(e) => updateField('certifications_awards', e.target.value)}
+                      placeholder="List any relevant certifications or awards..."
+                      rows={3}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Page 4: Practices & Creativity */}
+              {currentStep === 3 && (
+                <>
+                  <div>
+                    <Label htmlFor="creativity">Creativity Style/Level</Label>
+                    <Select value={formData.creativity_style} onValueChange={(val) => updateField('creativity_style', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inventive">🎨 Inventive</SelectItem>
+                        <SelectItem value="refined">🌿 Refined</SelectItem>
+                        <SelectItem value="resourceful">🔄 Resourceful</SelectItem>
+                        <SelectItem value="expressive">✨ Expressive</SelectItem>
+                        <SelectItem value="practical">⚙️ Practical</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="inspiration">Inspiration (Optional)</Label>
+                    <Textarea
+                      id="inspiration"
+                      value={formData.inspiration}
+                      onChange={(e) => updateField('inspiration', e.target.value)}
+                      placeholder="What inspires your work?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="uniqueness">Brand Uniqueness (Optional)</Label>
+                    <Textarea
+                      id="uniqueness"
+                      value={formData.brand_uniqueness}
+                      onChange={(e) => updateField('brand_uniqueness', e.target.value)}
+                      placeholder="What makes your brand unique?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Sustainable / Local / Small-Scale Methods</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      {[
+                        "♻️ Upcycled/recycled", 
+                        "🌿 Eco-friendly", 
+                        "🧵 Handcrafted/small-batch", 
+                        "🏠 Locally made", 
+                        "🚜 Locally sourced", 
+                        "🔋 Low-waste/zero-waste",
+                        "🌞 Ethical labor",
+                        "💧 Energy-conscious",
+                        "🌎 Community-based",
+                        "🪴 Regenerative/circular",
+                        "🧡 Social impact",
+                        "🪡 Made-to-order"
+                      ].map(item => (
+                        <div key={item} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={formData.sustainable_methods.includes(item)}
+                            onCheckedChange={() => toggleArrayItem('sustainable_methods', item)}
+                          />
+                          <Label className="font-normal text-sm">{item}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Page 5: Pricing & Accessibility */}
+              {currentStep === 4 && (
+                <>
+                  <div>
+                    <Label htmlFor="pricing">Pricing Style</Label>
+                    <Select value={formData.pricing_style} onValueChange={(val) => updateField('pricing_style', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select pricing style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="budget">Budget-friendly</SelectItem>
+                        <SelectItem value="accessible">Accessible</SelectItem>
+                        <SelectItem value="cost-effective">Cost-effective</SelectItem>
+                        <SelectItem value="high-end">High-end/Designer</SelectItem>
+                        <SelectItem value="no-budget">No set budget</SelectItem>
+                        <SelectItem value="viewership">Viewership-based</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="offers">Exclusive Offers {formData.products_services.includes("Designed, made, grown, or collected") || formData.products_services.includes("Services offered") ? "*" : "(Optional)"}</Label>
+                    <Select value={formData.exclusive_offers} onValueChange={(val) => updateField('exclusive_offers', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Absolutely (e.g., free shipping, 15%+ discount, BOGO)</SelectItem>
+                        <SelectItem value="maybe">Maybe</SelectItem>
+                        <SelectItem value="no">Nope</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Required for products/services; optional for content
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="promotion">Promotion on TGT Social Channels</Label>
+                    <Select value={formData.promotion_social_channels} onValueChange={(val) => updateField('promotion_social_channels', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Yes</SelectItem>
+                        <SelectItem value="maybe">Maybe</SelectItem>
+                        <SelectItem value="no">No thanks</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="futureWebsite">Future Website</Label>
+                    <Select value={formData.future_website} onValueChange={(val) => updateField('future_website', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="have">Already have one</SelectItem>
+                        <SelectItem value="maybe">Maybe</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {/* Page 6: Subscription */}
+              {currentStep === 5 && (
+                <>
+                  <div className="bg-muted p-6 rounded-lg space-y-4">
+                    <h3 className="font-semibold text-lg">Subscription Details</h3>
+                    <div className="space-y-2">
+                      <p className="text-sm">
+                        <strong>Startup Price:</strong> $5/month billed every 6 months
+                      </p>
+                      <p className="text-sm">
+                        After this period, the subscription automatically renews at $7/month
+                      </p>
+                      <Badge variant="secondary" className="mt-2">14-day refund available</Badge>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="promo">Founding Member / Promo Code</Label>
+                    <Input
+                      id="promo"
+                      value={formData.promo_code}
+                      onChange={(e) => updateField('promo_code', e.target.value)}
+                      placeholder="Enter code (if applicable)"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      If you have a promo or founding member code, you can sign up for free
+                    </p>
+                  </div>
+
+                  {!formData.promo_code && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.payment_method_saved}
+                          onCheckedChange={(checked) => updateField('payment_method_saved', checked)}
+                        />
+                        <Label className="font-normal">
+                          I'll enter payment details now (or I can do this after approval)
+                        </Label>
+                      </div>
+                      
+                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                        <p className="text-sm text-amber-800 dark:text-amber-200">
+                          <strong>Note:</strong> Your subscription will only be charged after your application is approved. You can choose to enter payment details now or wait until approval.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Page 7: Confirmation & Agreements */}
+              {currentStep === 6 && (
+                <>
+                  <div>
+                    <Label htmlFor="additional">Anything else you'd like to add? (Optional)</Label>
+                    <Textarea
+                      id="additional"
+                      value={formData.additional_info}
+                      onChange={(e) => updateField('additional_info', e.target.value)}
+                      placeholder="Share any additional information..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="font-semibold">Required Agreements</h3>
+                    
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        checked={formData.info_accurate}
+                        onCheckedChange={(checked) => updateField('info_accurate', checked)}
+                      />
+                      <Label className="font-normal">
+                        I confirm the information is accurate
+                      </Label>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        checked={formData.understands_review}
+                        onCheckedChange={(checked) => updateField('understands_review', checked)}
+                      />
+                      <Label className="font-normal">
+                        I understand TGT reviews applications and approval is at our discretion
+                      </Label>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        checked={formData.agrees_to_terms}
+                        onCheckedChange={(checked) => updateField('agrees_to_terms', checked)}
+                      />
+                      <Label className="font-normal">
+                        I agree to TGT Vendor Guidelines & Terms of Use{" "}
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto"
+                          onClick={() => setShowTermsDialog(true)}
+                        >
+                          (Read Terms)
+                        </Button>
+                      </Label>
+                    </div>
+
+                    <div className="flex items-start gap-2 pt-2 border-t">
+                      <Checkbox
+                        checked={formData.receive_updates}
+                        onCheckedChange={(checked) => updateField('receive_updates', checked)}
+                      />
+                      <Label className="font-normal">
+                        Yes, I'd like to receive updates, tips, and promotional opportunities (Optional)
+                      </Label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between pt-6 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  disabled={currentStep === 0}
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+                
+                {currentStep < totalSteps - 1 ? (
+                  <Button onClick={handleNext}>
+                    Next
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button onClick={handleSubmit} disabled={loading}>
+                    {loading ? "Submitting..." : "Submit Application"}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
           </Card>
         </div>
-        
-        <SearchBar
-          onSearch={() => {}}
-          onToggleMap={() => {}}
-          isMapView={false}
-          isCentered={false}
-          onWhatsgoodClick={() => navigate("/")}
-        />
       </main>
+
+      {/* Terms Dialog */}
+      <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>TGT Vendor Guidelines & Terms of Use</DialogTitle>
+            <DialogDescription>
+              Please read and understand these terms before agreeing
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="prose prose-sm space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold">1. Platform Purpose</h3>
+              <p>TGT is a promotional and discovery platform. We do not process payments or handle sales. All transactions happen directly on the vendor's website or third-party platform.</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">2. Vendor Eligibility</h3>
+              <p>You must be the legal owner or authorized representative of your brand, business, or content. All information you provide must be accurate and truthful.</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">3. Listings & Offers</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Product or service listings must have at least one active exclusive offer</li>
+                <li>Exclusive offers are optional for content-based/creator listings</li>
+                <li>Offers must be described accurately. Misrepresentation may result in removal</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">4. Tracking & Analytics</h3>
+              <p>By participating, you consent to TGT tracking clicks, visits, coupon usage, and referrals from our platform to your checkout site. This data is used to measure performance and improve the platform.</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">5. Intellectual Property</h3>
+              <p>You retain ownership of your content. By submitting content to TGT, you grant a non-exclusive, worldwide license for TGT to display and promote your work on the platform and social channels.</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">6. Prohibited Items</h3>
+              <p>Vendors may not promote or sell alcohol, tobacco, or age-restricted products.</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">7. Responsibilities</h3>
+              <p>You agree to keep listings and offers accurate and up-to-date, comply with all applicable laws, and respect TGT community guidelines.</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">8. Liability</h3>
+              <p>TGT is not responsible for sales, transactions, or disputes. Vendors assume all financial, legal, and transactional responsibilities.</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">9. Termination & Updates</h3>
+              <p>TGT may remove listings, suspend, or terminate accounts at our discretion. Terms may be updated, and major changes will be communicated.</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
