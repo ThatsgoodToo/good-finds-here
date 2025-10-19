@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import logo from "@/assets/logo.png";
 
 const Auth = () => {
@@ -15,7 +14,6 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"shopper" | "vendor">("shopper");
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,31 +28,6 @@ const Auth = () => {
       toast.error(error.message);
     } else {
       toast.success("Welcome back!");
-      navigate("/");
-    }
-    setLoading(false);
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          role: role,
-          display_name: email.split("@")[0],
-        },
-      },
-    });
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(`Welcome! Your ${role} account has been created.`);
       navigate("/");
     }
     setLoading(false);
