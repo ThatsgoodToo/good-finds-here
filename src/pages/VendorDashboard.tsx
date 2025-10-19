@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import SignupModal from "@/components/SignupModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Users, BarChart3, Tag, Hand } from "lucide-react";
 import Header from "@/components/Header";
@@ -38,9 +39,16 @@ const VendorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [vendorDescription, setVendorDescription] = useState(
     "Handcrafted ceramics and pottery made with sustainable practices. Family-owned business since 2015."
   );
+
+  useEffect(() => {
+    if (!user) {
+      setShowSignupModal(true);
+    }
+  }, [user]);
 
   // Demo vendor data
   const vendorName = "Clay & Co.";
@@ -409,6 +417,8 @@ const VendorDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
   );
 };

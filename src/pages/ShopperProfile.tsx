@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
+import SignupModal from "@/components/SignupModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,8 +27,15 @@ const ShopperProfile = () => {
   const { user, userRole } = useAuth();
   const [showActivityDialog, setShowActivityDialog] = useState(false);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponDescription, setCouponDescription] = useState("");
+
+  useEffect(() => {
+    if (!user) {
+      setShowSignupModal(true);
+    }
+  }, [user]);
 
   // Mock shopper data
   const shopper = {
@@ -319,6 +327,8 @@ const ShopperProfile = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
   );
 };

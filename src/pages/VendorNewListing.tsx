@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import SignupModal from "@/components/SignupModal";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ type ListingType = "product" | "service" | "viewerbase";
 
 const VendorNewListing = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [listingType, setListingType] = useState<ListingType | "">("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -44,6 +47,13 @@ const VendorNewListing = () => {
   const [customCategory, setCustomCategory] = useState("");
   const [customSubcategory, setCustomSubcategory] = useState("");
   const [selectedPreviewImage, setSelectedPreviewImage] = useState(0);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setShowSignupModal(true);
+    }
+  }, [user]);
   
   // Mock vendor data
   const vendor = {
@@ -762,6 +772,8 @@ const VendorNewListing = () => {
           </div>
         </div>
       </main>
+
+      <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
   );
 };

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
+import SignupModal from "@/components/SignupModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,13 @@ import { cn } from "@/lib/utils";
 const HighFives = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
+  const [showSignupModal, setShowSignupModal] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setShowSignupModal(true);
+    }
+  }, [user]);
 
   // Mock data for highly rated vendors (shown to signed-out users)
   const topVendors = [
@@ -621,6 +629,8 @@ const HighFives = () => {
           onWhatsgoodClick={() => navigate("/")}
         />
       </main>
+
+      <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
   );
 };

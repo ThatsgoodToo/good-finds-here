@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import SignupModal from "@/components/SignupModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ const ShopperDashboard = () => {
   const [showAddFolderDialog, setShowAddFolderDialog] = useState(false);
   const [showEditFolderDialog, setShowEditFolderDialog] = useState(false);
   const [showAddPreferenceDialog, setShowAddPreferenceDialog] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -95,6 +97,12 @@ const ShopperDashboard = () => {
     bio: "",
     activityPublic: false,
   });
+
+  useEffect(() => {
+    if (!user) {
+      setShowSignupModal(true);
+    }
+  }, [user]);
 
   const shopperName = "Sarah Martinez"; // Demo name
   const shopperImage = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200";
@@ -1225,6 +1233,8 @@ const ShopperDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
   );
 };
