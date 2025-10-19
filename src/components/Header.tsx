@@ -97,7 +97,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-card border-border w-48">
+            <DropdownMenuContent align="end" className="bg-card border-border w-48 z-[100]">
               {user && (
                 <>
                   <DropdownMenuItem className="text-xs font-medium">
@@ -107,8 +107,8 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>Account Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Preferences</DropdownMenuItem>
                   <DropdownMenuItem>Notifications</DropdownMenuItem>
+                  <DropdownMenuItem>Messages</DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
               )}

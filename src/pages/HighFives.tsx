@@ -261,15 +261,9 @@ const HighFives = () => {
                       <h3 className="font-semibold">{vendor.name}</h3>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{vendor.category}</p>
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{vendor.rating}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Hand className="h-4 w-4 text-primary" />
-                        <span>{vendor.highFives}</span>
-                      </div>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Hand className="h-4 w-4 text-primary" />
+                      <span>{vendor.highFives} High Fives</span>
                     </div>
                   </div>
                 </div>

@@ -216,22 +216,22 @@ const ProductListing = () => {
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-2">description of item:</h3>
+                  <h3 className="font-semibold mb-2">Description:</h3>
                   <p className="text-sm text-muted-foreground">{product.description}</p>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-1">shops ownership</h3>
+                  <h3 className="font-semibold mb-1">Ownership</h3>
                   <p className="text-sm text-muted-foreground">{vendor.ownership}</p>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-1">shops exerptise</h3>
+                  <h3 className="font-semibold mb-1">Expertise</h3>
                   <p className="text-sm text-muted-foreground">{vendor.expertise}</p>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">Shops shipping optoin</h3>
+                  <h3 className="font-semibold mb-2">Shipping Options</h3>
                   <div className="flex flex-wrap gap-2">
                     {product.shipping.map((option, index) => (
                       <Badge key={index} variant="secondary">{option}</Badge>
@@ -240,13 +240,13 @@ const ProductListing = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">item desciption</h3>
+                  <h3 className="font-semibold mb-2">Details</h3>
                   <div className="text-sm space-y-1">
-                    <p>size, color , material</p>
+                    <p>Size, color, material</p>
                     <p className="text-muted-foreground">
                       {product.details.sizes.join(", ")} | {product.details.colors.join(", ")} | {product.details.material}
                     </p>
-                    <p className="text-muted-foreground">info as applicaable</p>
+                    <p className="text-muted-foreground">Info as applicable</p>
                   </div>
                 </div>
 
