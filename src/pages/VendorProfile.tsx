@@ -228,38 +228,30 @@ const VendorProfile = () => {
                     {listings.images.map((listing) => (
                       <div
                         key={listing.id}
-                        className="flex sm:block relative group cursor-pointer rounded-lg overflow-hidden"
+                        className="relative group cursor-pointer rounded-lg overflow-hidden aspect-square"
                       >
-                        <div className="w-1/2 sm:w-full aspect-square relative"
-                      >
-                          <img
-                            src={listing.url}
-                            alt={listing.title}
-                            loading="lazy"
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          />
-                          
-                          {/* Top-left type indicator */}
-                          <div className="absolute top-2 left-2">
-                            <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
-                          </div>
-                          
-                          {/* Exclusive offer badge */}
-                          {listing.hasOffer && (
-                            <Badge className="absolute top-2 right-2 bg-red-500">
-                              Exclusive Offer
-                            </Badge>
-                          )}
-                          
-                          {/* Bottom title overlay - visible on desktop */}
-                          <div className="hidden sm:block absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/90 p-3">
-                            <p className="text-sm font-medium">{listing.title}</p>
-                          </div>
+                        <img
+                          src={listing.url}
+                          alt={listing.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        
+                        {/* Top-left type indicator */}
+                        <div className="absolute top-2 left-2">
+                          <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
                         </div>
                         
-                        {/* Title on right for mobile */}
-                        <div className="sm:hidden w-1/2 flex items-center p-4">
-                          <p className="text-sm font-medium">{listing.title}</p>
+                        {/* Exclusive offer badge */}
+                        {listing.hasOffer && (
+                          <Badge className="absolute top-2 right-2 bg-red-500">
+                            Exclusive Offer
+                          </Badge>
+                        )}
+                        
+                        {/* Title overlay - always visible on all screen sizes */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                          <p className="text-sm font-medium text-white">{listing.title}</p>
                         </div>
                       </div>
                     ))}
@@ -282,6 +274,27 @@ const VendorProfile = () => {
 
             {/* Right Side - Profile Details */}
             <div className="space-y-4">
+              {/* High Fives */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Hand className="h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-semibold">High Fives</h3>
+                        <p className="text-sm text-muted-foreground">{vendor.highFives.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleHighFive}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      add
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Location */}
               <Card>
                 <CardContent className="pt-6">
@@ -324,13 +337,13 @@ const VendorProfile = () => {
                 </CardContent>
               </Card>
 
-              {/* Shipping Options */}
+              {/* Shipping */}
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-3">
                     <Truck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-semibold mb-2">Shipping Options</h3>
+                      <h3 className="font-semibold mb-2">Shipping</h3>
                       <div className="flex flex-wrap gap-2">
                         {vendor.shipping.map((option, index) => (
                           <Badge key={index} variant="secondary">{option}</Badge>
@@ -392,23 +405,6 @@ const VendorProfile = () => {
                 </CardContent>
               </Card>
 
-              {/* High Fives */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Hand className="h-5 w-5 text-primary" />
-                      <div>
-                        <h3 className="font-semibold">High Fives</h3>
-                        <p className="text-sm text-muted-foreground">{vendor.highFives} shoppers</p>
-                      </div>
-                    </div>
-                    <Button onClick={handleHighFive} size="sm">
-                      Add to Folder
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
 
