@@ -13,12 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExternalLink, CheckCircle, Heart } from "lucide-react";
+import { ExternalLink, CheckCircle, Hand, Ticket } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const AudioListing = () => {
   const navigate = useNavigate();
   const { listingId } = useParams();
   const [showFolderDialog, setShowFolderDialog] = useState(false);
+  const [showCouponDialog, setShowCouponDialog] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
 
   // Mock data
   const vendor = {
@@ -66,6 +70,21 @@ const AudioListing = () => {
     { id: "2", name: "Meditation" },
     { id: "3", name: "Favorites" },
   ];
+
+  const activeOffer = {
+    title: "Free bonus track with purchase",
+    description: "Download exclusive content",
+  };
+
+  const handleClaimCoupon = () => {
+    setShowCouponDialog(true);
+  };
+
+  const handleConfirmClaim = () => {
+    toast.success("Coupon claimed! Redirecting...");
+    window.open(vendor.website, "_blank");
+    setShowCouponDialog(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,7 +158,7 @@ const AudioListing = () => {
                     className="gap-2"
                     onClick={() => setShowFolderDialog(true)}
                   >
-                    <Heart className="h-4 w-4" />
+                    <Hand className="h-4 w-4" />
                     {audio.highFives.toLocaleString()}
                   </Button>
                 </div>
@@ -191,8 +210,21 @@ const AudioListing = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-1">any active offers</h3>
-                  <p className="text-sm text-muted-foreground">No active offers at this time</p>
+                  <h3 className="font-semibold mb-2">Active Offer</h3>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{activeOffer.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{activeOffer.description}</p>
+                        </div>
+                        <Button size="sm" onClick={handleClaimCoupon} className="gap-2 shrink-0">
+                          <Ticket className="h-4 w-4" />
+                          Claim
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
                 <div>
@@ -272,9 +304,56 @@ const AudioListing = () => {
                 {folder.name}
               </Button>
             ))}
-            <Button variant="default" className="w-full">
-              Create New Folder
-            </Button>
+            {newFolderName ? (
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="Folder name"
+                />
+                <Button onClick={() => {
+                  toast.success(`Folder "${newFolderName}" created!`);
+                  setShowFolderDialog(false);
+                  setNewFolderName("");
+                }}>
+                  Save
+                </Button>
+              </div>
+            ) : (
+              <Button variant="default" className="w-full" onClick={() => setNewFolderName("New Folder")}>
+                + Create New Folder
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Coupon Claim Dialog */}
+      <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Claim Exclusive Offer</DialogTitle>
+            <DialogDescription>
+              {activeOffer.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {activeOffer.description}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              This will redirect you to {vendor.name}'s profile where you can access this exclusive offer.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowCouponDialog(false)}>
+                Cancel
+              </Button>
+              <Button className="flex-1 gap-2" onClick={handleConfirmClaim}>
+                <Ticket className="h-4 w-4" />
+                Claim & Visit
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

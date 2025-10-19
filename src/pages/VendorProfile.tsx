@@ -22,9 +22,10 @@ import {
   DollarSign, 
   Package, 
   Truck, 
-  Heart,
+  Hand,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Ticket
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,9 @@ const VendorProfile = () => {
   const { vendorId } = useParams();
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
+  const [showCouponDialog, setShowCouponDialog] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [newFolderName, setNewFolderName] = useState("");
 
   // Mock vendor data
   const vendor = {
@@ -133,6 +137,19 @@ const VendorProfile = () => {
 
   const handleHighFive = () => {
     setShowFolderDialog(true);
+  };
+
+  const handleClaimCoupon = (offer: any) => {
+    setSelectedOffer(offer);
+    setShowCouponDialog(true);
+  };
+
+  const handleConfirmClaim = () => {
+    // Track coupon claim
+    console.log("Coupon claimed:", selectedOffer);
+    // Redirect to vendor website/checkout
+    window.open(vendor.website, "_blank");
+    setShowCouponDialog(false);
   };
 
   return (
@@ -334,9 +351,20 @@ const VendorProfile = () => {
                       <h3 className="font-semibold mb-2">Active Offers ({vendor.activeOffers})</h3>
                       <div className="space-y-2">
                         {offers.map((offer) => (
-                          <div key={offer.id} className="flex items-center gap-2 text-sm">
-                            <div className={cn("h-2 w-2 rounded-full shrink-0", getTypeDotColor(offer.type as any))} />
-                            <span className="text-muted-foreground">{offer.title}</span>
+                          <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <div className={cn("h-2 w-2 rounded-full shrink-0", getTypeDotColor(offer.type as any))} />
+                              <span className="text-muted-foreground truncate">{offer.title}</span>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="shrink-0 gap-1"
+                              onClick={() => handleClaimCoupon(offer)}
+                            >
+                              <Ticket className="h-3 w-3" />
+                              Claim
+                            </Button>
                           </div>
                         ))}
                       </div>
@@ -350,7 +378,7 @@ const VendorProfile = () => {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Heart className="h-5 w-5 text-primary" />
+                      <Hand className="h-5 w-5 text-primary" />
                       <div>
                         <h3 className="font-semibold">High Fives</h3>
                         <p className="text-sm text-muted-foreground">{vendor.highFives} shoppers</p>
@@ -430,9 +458,53 @@ const VendorProfile = () => {
                 {folder.name}
               </Button>
             ))}
-            <Button variant="default" className="w-full">
-              Create New Folder
-            </Button>
+            {newFolderName ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="Folder name"
+                  className="flex-1 px-3 py-2 rounded-md border border-input bg-background"
+                />
+                <Button onClick={() => {
+                  setShowFolderDialog(false);
+                  setNewFolderName("");
+                }}>
+                  Save
+                </Button>
+              </div>
+            ) : (
+              <Button variant="default" className="w-full" onClick={() => setNewFolderName("New Folder")}>
+                + Create New Folder
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Coupon Claim Dialog */}
+      <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Claim Exclusive Offer</DialogTitle>
+            <DialogDescription>
+              You're about to claim: {selectedOffer?.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This will redirect you to {vendor.name}'s website where you can use this exclusive offer.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowCouponDialog(false)}>
+                Cancel
+              </Button>
+              <Button className="flex-1 gap-2" onClick={handleConfirmClaim}>
+                <Ticket className="h-4 w-4" />
+                Claim & Visit Site
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
