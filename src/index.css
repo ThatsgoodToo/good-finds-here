@@ -64,7 +64,7 @@ All colors MUST be HSL.
 
   .dark {
     /* Dark Mode - That's Good Too */
-    --background: 8 10% 11%;
+    --background: 30 18% 7%;
     --foreground: 228 15% 93%;
 
     --card: 8 10% 13%;
