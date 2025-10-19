@@ -30,7 +30,12 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
     if (!user) {
       setShowSignupModal(true);
     } else {
-      onYourGoodsClick?.();
+      // Navigate based on user role
+      if (userRole === "vendor") {
+        navigate("/dashboard/vendor");
+      } else {
+        navigate("/dashboard/shopper");
+      }
     }
   };
 
