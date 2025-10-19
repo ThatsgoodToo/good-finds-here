@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Hand, Star, TrendingUp, Award } from "lucide-react";
+import { Hand, Star, TrendingUp, Award, Sparkles, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const HighFives = () => {
@@ -127,6 +127,77 @@ const HighFives = () => {
     ],
   };
 
+  // Mock data for relatable listings (shown to logged-in shoppers)
+  const relatableListings = [
+    {
+      id: "4",
+      title: "Organic Cotton Tote",
+      vendor: "Eco Goods",
+      vendorId: "4",
+      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300",
+      highFives: 234,
+      price: "$35",
+      type: "product" as const,
+      matchedFilters: ["Eco-friendly", "Handcrafted"]
+    },
+    {
+      id: "5",
+      title: "Local Honey Set",
+      vendor: "Bee Happy Farms",
+      vendorId: "5",
+      image: "https://images.unsplash.com/photo-1587049352846-4a222e784e38?w=300",
+      highFives: 198,
+      price: "$42",
+      type: "product" as const,
+      matchedFilters: ["Local", "Sustainable"]
+    },
+    {
+      id: "6",
+      title: "Wood Carving Workshop",
+      vendor: "Artisan Studio",
+      vendorId: "6",
+      image: "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=300",
+      highFives: 156,
+      price: "$85",
+      type: "experience" as const,
+      matchedFilters: ["Handcrafted", "Local"]
+    },
+  ];
+
+  // Mock data for overlooked items (least popular)
+  const overlookedItems = [
+    {
+      id: "7",
+      title: "Vintage Record Player",
+      vendor: "Retro Audio",
+      vendorId: "7",
+      image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=300",
+      highFives: 12,
+      price: "$145",
+      type: "product" as const,
+    },
+    {
+      id: "8",
+      title: "Hand-Knit Scarf",
+      vendor: "Cozy Creations",
+      vendorId: "8",
+      image: "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=300",
+      highFives: 8,
+      price: "$55",
+      type: "product" as const,
+    },
+    {
+      id: "9",
+      title: "Calligraphy Class",
+      vendor: "Write Beautiful",
+      vendorId: "9",
+      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=300",
+      highFives: 15,
+      price: "$65",
+      type: "service" as const,
+    },
+  ];
+
   // Mock data for vendor followers (shown to signed-in vendors)
   const vendorFollowers = [
     {
@@ -208,14 +279,54 @@ const HighFives = () => {
         </div>
       </section>
 
-      {/* Top Listings */}
+      {/* Featured Listings */}
       <section>
         <div className="flex items-center gap-3 mb-6">
-          <TrendingUp className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Trending Listings</h2>
+          <Sparkles className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Featured Listings</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {topListings.map((listing) => (
+            <Card
+              key={listing.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+              onClick={() => navigate(`/listing/product/${listing.id}`)}
+            >
+              <div className="relative">
+                <img
+                  src={listing.image}
+                  alt={listing.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-2 left-2">
+                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
+                </div>
+              </div>
+              <CardContent className="pt-4">
+                <h3 className="font-semibold mb-1">{listing.title}</h3>
+                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">{listing.price}</span>
+                  <div className="flex items-center gap-1 text-sm">
+                    <Hand className="h-4 w-4 text-primary" />
+                    <span>{listing.highFives}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Overlooked Items */}
+      <section>
+        <div className="flex items-center gap-3 mb-6">
+          <Heart className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Hidden Gems</h2>
+          <Badge variant="secondary">Give them some love!</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {overlookedItems.map((listing) => (
             <Card
               key={listing.id}
               className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
@@ -327,6 +438,95 @@ const HighFives = () => {
                 <Badge className="absolute top-2 right-2">
                   {listing.folder}
                 </Badge>
+              </div>
+              <CardContent className="pt-4">
+                <h3 className="font-semibold mb-1">{listing.title}</h3>
+                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">{listing.price}</span>
+                  <div className="flex items-center gap-1 text-sm">
+                    <Hand className="h-4 w-4 text-primary" />
+                    <span>{listing.highFives}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Relatable Listings */}
+      <section>
+        <div className="flex items-center gap-3 mb-6">
+          <Sparkles className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">You Might Also Like</h2>
+          <Badge variant="secondary">Based on your preferences</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {relatableListings.map((listing) => (
+            <Card
+              key={listing.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+              onClick={() => navigate(`/listing/product/${listing.id}`)}
+            >
+              <div className="relative">
+                <img
+                  src={listing.image}
+                  alt={listing.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-2 left-2">
+                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
+                </div>
+                <div className="absolute bottom-2 left-2 right-2">
+                  <div className="flex flex-wrap gap-1">
+                    {listing.matchedFilters.map((filter, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {filter}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <CardContent className="pt-4">
+                <h3 className="font-semibold mb-1">{listing.title}</h3>
+                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">{listing.price}</span>
+                  <div className="flex items-center gap-1 text-sm">
+                    <Hand className="h-4 w-4 text-primary" />
+                    <span>{listing.highFives}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Overlooked Items */}
+      <section>
+        <div className="flex items-center gap-3 mb-6">
+          <Heart className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Hidden Gems</h2>
+          <Badge variant="secondary">Give them some love!</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {overlookedItems.map((listing) => (
+            <Card
+              key={listing.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+              onClick={() => navigate(`/listing/product/${listing.id}`)}
+            >
+              <div className="relative">
+                <img
+                  src={listing.image}
+                  alt={listing.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-2 left-2">
+                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
+                </div>
               </div>
               <CardContent className="pt-4">
                 <h3 className="font-semibold mb-1">{listing.title}</h3>
