@@ -59,6 +59,68 @@ export type Database = {
         }
         Relationships: []
       }
+      listings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          is_featured: boolean | null
+          listing_type: string
+          location: string | null
+          price: number | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          vendor_id: string
+          website_url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          listing_type?: string
+          location?: string | null
+          price?: number | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          vendor_id: string
+          website_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          listing_type?: string
+          location?: string | null
+          price?: number | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          vendor_id?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age_verified: boolean | null
