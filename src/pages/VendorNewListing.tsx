@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Upload, X, Plus, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
-type ListingType = "product" | "service" | "content";
+type ListingType = "product" | "service" | "viewerbase";
 
 const VendorNewListing = () => {
   const navigate = useNavigate();
@@ -27,7 +27,6 @@ const VendorNewListing = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [isFree, setIsFree] = useState(false);
-  const [isNonProfit, setIsNonProfit] = useState(false);
   const [inventory, setInventory] = useState("");
   const [category, setCategory] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
@@ -41,6 +40,9 @@ const VendorNewListing = () => {
   const [newImageUrl, setNewImageUrl] = useState("");
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [newAudioUrl, setNewAudioUrl] = useState("");
+  
+  // Mock: Check if vendor has existing active offers
+  const hasExistingActiveOffers = false; // This would come from backend
 
   const categories = [
     "Textiles & Apparel",
@@ -63,12 +65,34 @@ const VendorNewListing = () => {
     "Other",
   ];
 
-  const requiresActiveOffer = listingType === "product" || listingType === "service";
-  const isOfferExempt = isFree || isNonProfit;
+  const requiresActiveOffer = (listingType === "product" || listingType === "service") && !hasExistingActiveOffers;
+  const isOfferExempt = listingType === "viewerbase" && isFree;
+
+  // Auto-fill content from URL metadata
+  const autoFillFromUrl = async (url: string) => {
+    try {
+      // Simple auto-fill based on URL pattern
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.replace('www.', '');
+      
+      if (!title) {
+        const pathParts = urlObj.pathname.split('/').filter(Boolean);
+        const suggestedTitle = pathParts[pathParts.length - 1]?.replace(/[-_]/g, ' ') || hostname;
+        setTitle(suggestedTitle.charAt(0).toUpperCase() + suggestedTitle.slice(1));
+      }
+      
+      if (!description) {
+        setDescription(`Content from ${hostname}`);
+      }
+    } catch (e) {
+      // Invalid URL, skip auto-fill
+    }
+  };
 
   const handleAddImage = () => {
     if (newImageUrl && images.length < 5) {
       setImages([...images, newImageUrl]);
+      autoFillFromUrl(newImageUrl);
       setNewImageUrl("");
     } else if (images.length >= 5) {
       toast.error("Maximum 5 images allowed");
@@ -78,6 +102,7 @@ const VendorNewListing = () => {
   const handleAddVideo = () => {
     if (newVideoUrl && videoEmbeds.length < 5) {
       setVideoEmbeds([...videoEmbeds, newVideoUrl]);
+      autoFillFromUrl(newVideoUrl);
       setNewVideoUrl("");
     } else if (videoEmbeds.length >= 5) {
       toast.error("Maximum 5 videos allowed");
@@ -87,6 +112,7 @@ const VendorNewListing = () => {
   const handleAddAudio = () => {
     if (newAudioUrl && audioEmbeds.length < 5) {
       setAudioEmbeds([...audioEmbeds, newAudioUrl]);
+      autoFillFromUrl(newAudioUrl);
       setNewAudioUrl("");
     } else if (audioEmbeds.length >= 5) {
       toast.error("Maximum 5 audio embeds allowed (including 1 playlist)");
@@ -124,7 +150,7 @@ const VendorNewListing = () => {
       return;
     }
     if (requiresActiveOffer && !isOfferExempt && !hasActiveOffer) {
-      toast.error("Products and Services require an active offer (unless free or non-profit)");
+      toast.error("Products and Services require an active offer when you have no existing offers");
       return;
     }
     if (hasActiveOffer && !offerDetails.trim()) {
@@ -156,58 +182,155 @@ const VendorNewListing = () => {
             <span>Back to Dashboard</span>
           </button>
 
-          <h1 className="text-3xl font-bold mb-2">Create New Listing</h1>
-          <p className="text-muted-foreground mb-8">
-            Add a new product, service, or content listing to your vendor profile
-          </p>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">Create New Listing</h1>
+            <p className="text-muted-foreground">
+              Add a new listing to your vendor profile
+            </p>
+          </div>
 
           <div className="space-y-6">
-            {/* Listing Type */}
+            {/* Listing Type & Media - Combined Section */}
             <Card>
               <CardHeader>
-                <CardTitle>Listing Type *</CardTitle>
-                <CardDescription>Choose the type of listing you're creating</CardDescription>
+                <CardTitle>Listing Type & Media *</CardTitle>
+                <CardDescription>Choose type and add media to showcase your listing</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Select value={listingType} onValueChange={(val) => setListingType(val as ListingType)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select listing type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                    <SelectItem value="content">Content/Media (Music, Video, Art)</SelectItem>
-                  </SelectContent>
-                </Select>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="listingType">Listing Type *</Label>
+                  <Select value={listingType} onValueChange={(val) => setListingType(val as ListingType)}>
+                    <SelectTrigger id="listingType">
+                      <SelectValue placeholder="Select listing type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="product">Product</SelectItem>
+                      <SelectItem value="service">Service</SelectItem>
+                      <SelectItem value="viewerbase">Viewerbase</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                {requiresActiveOffer && !isOfferExempt && (
-                  <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      Products and Services require at least one active offer unless marked as free or
-                      non-profit
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex gap-4">
+                {listingType && (
                   <div className="flex items-center gap-2">
                     <Checkbox id="free" checked={isFree} onCheckedChange={(checked) => setIsFree(checked as boolean)} />
                     <Label htmlFor="free" className="text-sm font-normal">
                       Free/No Cost
                     </Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="nonprofit"
-                      checked={isNonProfit}
-                      onCheckedChange={(checked) => setIsNonProfit(checked as boolean)}
-                    />
-                    <Label htmlFor="nonprofit" className="text-sm font-normal">
-                      Non-Profit/Viewer-Based
-                    </Label>
+                )}
+
+                {requiresActiveOffer && !isOfferExempt && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      {hasExistingActiveOffers 
+                        ? "You can skip adding an offer since you have active offers on other listings"
+                        : "You must add at least one active offer since you have no existing active offers"}
+                    </p>
                   </div>
-                </div>
+                )}
+
+                {listingType && (
+                  <>
+                    <div className="border-t pt-4">
+                      <Label className="text-base font-semibold mb-3 block">Media (At least 1 image required)</Label>
+                      
+                      {/* Images */}
+                      <div className="mb-4">
+                        <Label className="text-sm">Images (Max 5)</Label>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            placeholder="Image URL"
+                            value={newImageUrl}
+                            onChange={(e) => setNewImageUrl(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAddImage()}
+                          />
+                          <Button type="button" onClick={handleAddImage} size="icon" variant="secondary">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-5 gap-2 mt-3">
+                          {images.map((img, idx) => (
+                            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border">
+                              <img src={img} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                                className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Video Embeds */}
+                      <div className="mb-4">
+                        <Label className="text-sm">Video Embeds (Max 5, YouTube/Vimeo)</Label>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            placeholder="YouTube or Vimeo URL"
+                            value={newVideoUrl}
+                            onChange={(e) => setNewVideoUrl(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
+                          />
+                          <Button type="button" onClick={handleAddVideo} size="icon" variant="secondary">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {videoEmbeds.length > 0 && (
+                          <div className="space-y-2 mt-3">
+                            {videoEmbeds.map((url, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-2 border rounded-lg text-sm">
+                                <span className="truncate flex-1">{url}</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => setVideoEmbeds(videoEmbeds.filter((_, i) => i !== idx))}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Audio Embeds */}
+                      <div>
+                        <Label className="text-sm">Audio Embeds (Max 5, Spotify/SoundCloud/Apple Music/Bandcamp)</Label>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            placeholder="Audio platform URL"
+                            value={newAudioUrl}
+                            onChange={(e) => setNewAudioUrl(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAddAudio()}
+                          />
+                          <Button type="button" onClick={handleAddAudio} size="icon" variant="secondary">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {audioEmbeds.length > 0 && (
+                          <div className="space-y-2 mt-3">
+                            {audioEmbeds.map((url, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-2 border rounded-lg text-sm">
+                                <span className="truncate flex-1">{url}</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => setAudioEmbeds(audioEmbeds.filter((_, i) => i !== idx))}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -325,16 +448,18 @@ const VendorNewListing = () => {
             </Card>
 
             {/* Active Offer */}
-            {listingType && (
+            {listingType && !isOfferExempt && (
               <Card>
                 <CardHeader>
                   <CardTitle>
-                    Active Offer {requiresActiveOffer && !isOfferExempt && "*"}
+                    Active Offer {requiresActiveOffer && "*"}
                   </CardTitle>
                   <CardDescription>
-                    {requiresActiveOffer && !isOfferExempt
-                      ? "Required for products and services"
-                      : "Optional for content listings"}
+                    {requiresActiveOffer
+                      ? hasExistingActiveOffers
+                        ? "Optional since you have active offers on other listings"
+                        : "Required - you must add an offer to this listing"
+                      : "Add an optional offer to this listing"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -372,108 +497,6 @@ const VendorNewListing = () => {
                 </CardContent>
               </Card>
             )}
-
-            {/* Media Upload */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Media * (At least 1 image required)</CardTitle>
-                <CardDescription>Add images, videos, and audio to showcase your listing</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Images */}
-                <div>
-                  <Label>Images (Max 5)</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      placeholder="Image URL or upload"
-                      value={newImageUrl}
-                      onChange={(e) => setNewImageUrl(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddImage()}
-                    />
-                    <Button type="button" onClick={handleAddImage} variant="secondary">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mt-3">
-                    {images.map((img, idx) => (
-                      <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border">
-                        <img src={img} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                          className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Video Embeds */}
-                <div>
-                  <Label>Video Embeds (Max 5, YouTube/Vimeo)</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      placeholder="YouTube or Vimeo URL"
-                      value={newVideoUrl}
-                      onChange={(e) => setNewVideoUrl(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
-                    />
-                    <Button type="button" onClick={handleAddVideo} variant="secondary">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {videoEmbeds.length > 0 && (
-                    <div className="space-y-2 mt-3">
-                      {videoEmbeds.map((url, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 border rounded-lg">
-                          <span className="text-sm truncate flex-1">{url}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setVideoEmbeds(videoEmbeds.filter((_, i) => i !== idx))}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Audio Embeds */}
-                <div>
-                  <Label>Audio Embeds (Max 5, Spotify/SoundCloud/Apple Music/Bandcamp)</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      placeholder="Audio platform URL"
-                      value={newAudioUrl}
-                      onChange={(e) => setNewAudioUrl(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddAudio()}
-                    />
-                    <Button type="button" onClick={handleAddAudio} variant="secondary">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {audioEmbeds.length > 0 && (
-                    <div className="space-y-2 mt-3">
-                      {audioEmbeds.map((url, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 border rounded-lg">
-                          <span className="text-sm truncate flex-1">{url}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setAudioEmbeds(audioEmbeds.filter((_, i) => i !== idx))}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Submit */}
             <div className="flex gap-4">
