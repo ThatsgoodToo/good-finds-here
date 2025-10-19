@@ -84,7 +84,7 @@ const ShopperSignup = () => {
       if (updateError) throw updateError;
 
       toast.success("Welcome to That's Good Too! Your account has been created.");
-      navigate("/");
+      navigate("/dashboard/shopper");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -96,15 +96,7 @@ const ShopperSignup = () => {
     <div className="min-h-screen bg-background">
       <Header showGoodToday={false} />
       
-      <main className="pt-16 sm:pt-20">
-        <SearchBar
-          onSearch={() => {}}
-          onToggleMap={() => {}}
-          isMapView={false}
-          isCentered={true}
-          onWhatsgoodClick={() => navigate("/")}
-        />
-        
+      <main className="pt-16 sm:pt-20 pb-24">
         <div className="flex items-center justify-center p-4 pt-8">
           <Card className="w-full max-w-2xl p-6">
 
@@ -160,6 +152,14 @@ const ShopperSignup = () => {
         )}
           </Card>
         </div>
+        
+        <SearchBar
+          onSearch={() => {}}
+          onToggleMap={() => {}}
+          isMapView={false}
+          isCentered={false}
+          onWhatsgoodClick={() => navigate("/")}
+        />
       </main>
     </div>
   );

@@ -19,15 +19,7 @@ const VendorSignup = () => {
     <div className="min-h-screen bg-background">
       <Header showGoodToday={false} />
       
-      <main className="pt-16 sm:pt-20">
-        <SearchBar
-          onSearch={() => {}}
-          onToggleMap={() => {}}
-          isMapView={false}
-          isCentered={true}
-          onWhatsgoodClick={() => navigate("/")}
-        />
-        
+      <main className="pt-16 sm:pt-20 pb-24">
         <div className="flex items-center justify-center p-4 pt-8">
           <Card className="w-full max-w-2xl p-6">
             <div className="text-center space-y-6">
@@ -44,6 +36,14 @@ const VendorSignup = () => {
             </div>
           </Card>
         </div>
+        
+        <SearchBar
+          onSearch={() => {}}
+          onToggleMap={() => {}}
+          isMapView={false}
+          isCentered={false}
+          onWhatsgoodClick={() => navigate("/")}
+        />
       </main>
     </div>
   );
