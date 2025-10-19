@@ -63,6 +63,10 @@ export default {
           product: "hsl(var(--product))",
           service: "hsl(var(--service))",
         },
+        "vendor-active": {
+          DEFAULT: "hsl(var(--vendor-active))",
+          foreground: "hsl(var(--vendor-active-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

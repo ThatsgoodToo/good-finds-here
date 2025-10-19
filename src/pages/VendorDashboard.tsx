@@ -242,35 +242,67 @@ const VendorDashboard = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle>Active Offers</CardTitle>
-                      <CardDescription>View and manage your active coupon offers</CardDescription>
+                      <CardDescription>Manage your active coupon offers across all listings</CardDescription>
                     </div>
-                    <Button onClick={() => setShowCouponDialog(true)}>Add New Offer</Button>
+                    <Button onClick={() => setShowCouponDialog(true)} className="gap-2">
+                      <Tag className="h-4 w-4" />
+                      New Offer
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4">
-                    {listings.filter(l => l.activeOffer).map((listing) => (
-                      <div key={listing.id} className="flex gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                        <div className="w-20 h-20 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
-                          <img 
-                            src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200" 
-                            alt={listing.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-semibold">{listing.title}</h4>
-                              <p className="text-sm text-muted-foreground">{listing.offerDetails}</p>
-                            </div>
-                            <Badge variant="secondary">{listing.couponClaims} claims</Badge>
+                  {listings.filter(l => l.activeOffer).length === 0 ? (
+                    <div className="text-center py-12">
+                      <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                      <h3 className="text-lg font-semibold mb-2">No Active Offers</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Create your first offer to attract more customers
+                      </p>
+                      <Button onClick={() => setShowCouponDialog(true)}>Create Offer</Button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {listings.filter(l => l.activeOffer).map((listing) => (
+                        <div key={listing.id} className="flex gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                          <div className="w-20 h-20 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
+                            <img 
+                              src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200" 
+                              alt={listing.title}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                          <p className="text-sm text-muted-foreground">{listing.price}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold truncate">{listing.title}</h4>
+                                <p className="text-sm text-muted-foreground">{listing.offerDetails}</p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <Badge variant="secondary">{listing.couponClaims} claims</Badge>
+                                <Badge 
+                                  variant="outline" 
+                                  className={
+                                    listing.type === "product" 
+                                      ? "border-category-product text-category-product" 
+                                      : "border-category-service text-category-service"
+                                  }
+                                >
+                                  {listing.type}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm text-muted-foreground">{listing.price}</p>
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm">Edit</Button>
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">Deactivate</Button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

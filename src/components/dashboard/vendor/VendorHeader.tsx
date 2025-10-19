@@ -92,9 +92,13 @@ const VendorHeader = ({
                   Shopper
                 </Button>
                 <Button
-                  variant={userRole === "vendor" ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className={`px-4 transition-all ${userRole === "vendor" ? "bg-primary text-primary-foreground shadow-sm" : ""}`}
+                  className={`px-4 transition-all ${
+                    userRole === "vendor" 
+                      ? "bg-vendor-active text-vendor-active-foreground shadow-sm hover:bg-vendor-active/90" 
+                      : "hover:bg-muted"
+                  }`}
                   onClick={() => navigate("/dashboard/vendor")}
                 >
                   Vendor

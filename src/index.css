@@ -44,6 +44,10 @@ All colors MUST be HSL.
     --experience: 177 38% 64%;
     --product: 54 50% 62%;
     --service: 36 66% 70%;
+    
+    /* Role Indicators */
+    --vendor-active: 142 76% 36%;
+    --vendor-active-foreground: 0 0% 100%;
 
     /* Sidebar (if needed) */
     --sidebar-background: 8 10% 11%;
