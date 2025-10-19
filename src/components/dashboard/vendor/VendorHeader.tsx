@@ -109,6 +109,10 @@ const VendorHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => navigate(`/vendor/${vendorName.toLowerCase().replace(/\s/g, '-')}`)}>
+                  View Public Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem>Account Settings</DropdownMenuItem>
                 <DropdownMenuItem>Notification Settings</DropdownMenuItem>
                 <DropdownMenuItem>Platform Messages</DropdownMenuItem>

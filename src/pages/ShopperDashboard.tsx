@@ -495,6 +495,10 @@ const ShopperDashboard = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => navigate(`/shopper/${shopperName.toLowerCase().replace(/\s/g, '-')}`)}>
+                      View Public Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowSettingsDialog(true)}>
                       Account Settings
                     </DropdownMenuItem>
