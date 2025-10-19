@@ -97,30 +97,53 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-card border-border w-48 z-[100]">
+            <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-sm border-border w-56 z-[100] shadow-lg">
               {user && (
                 <>
-                  <DropdownMenuItem className="text-xs font-medium">
-                    <div className={`px-2 py-1 rounded ${userRole === 'vendor' ? 'bg-primary text-primary-foreground' : userRole === 'shopper' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  <DropdownMenuItem className="text-xs font-medium pointer-events-none">
+                    <div className={`px-2 py-1 rounded ${userRole === 'vendor' ? 'bg-vendor-active text-vendor-active-foreground' : userRole === 'shopper' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                       Signed in as {userRole}
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Account Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Notifications</DropdownMenuItem>
-                  <DropdownMenuItem>Messages</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    Account Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    Notifications
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    Messages
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    Profile Settings
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem>About Us</DropdownMenuItem>
-              <DropdownMenuItem>Contact</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                About Us
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Contact Support
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Help & FAQ
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Privacy Policy</DropdownMenuItem>
-              <DropdownMenuItem>Terms of Service</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Privacy Policy
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Terms of Service
+              </DropdownMenuItem>
               {user && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="text-destructive">
+                  <DropdownMenuItem 
+                    onClick={signOut} 
+                    className="text-destructive cursor-pointer font-medium"
+                  >
                     Sign Out
                   </DropdownMenuItem>
                 </>
