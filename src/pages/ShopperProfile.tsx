@@ -161,7 +161,7 @@ const ShopperProfile = () => {
                   <Button
                     variant="link"
                     className="text-primary gap-1"
-                    onClick={() => window.open(shopper.website, "_blank")}
+                    onClick={() => window.open("https://bandcamp.com/", "_blank")}
                   >
                     <ExternalLink className="h-4 w-4" />
                     Visit Website

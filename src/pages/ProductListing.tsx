@@ -97,7 +97,7 @@ const ProductListing = () => {
 
   const handleConfirmClaim = () => {
     toast.success("Coupon claimed! Redirecting to vendor site...");
-    window.open(vendor.website, "_blank");
+    window.open("https://bandcamp.com/", "_blank");
     setShowCouponDialog(false);
   };
 
@@ -136,7 +136,7 @@ const ProductListing = () => {
                 <Button
                   variant="link"
                   className="text-sm gap-1"
-                  onClick={() => window.open(vendor.website, "_blank")}
+                  onClick={() => window.open("https://bandcamp.com/", "_blank")}
                 >
                   <ExternalLink className="h-3 w-3" />
                   website

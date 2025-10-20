@@ -646,7 +646,7 @@ const VendorNewListing = () => {
                         <Button
                           variant="link"
                           className="text-xs gap-1 h-auto p-0"
-                          onClick={() => window.open(vendor.website, "_blank")}
+                          onClick={() => window.open("https://bandcamp.com/", "_blank")}
                         >
                           <ExternalLink className="h-3 w-3" />
                           website
