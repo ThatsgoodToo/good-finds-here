@@ -44,7 +44,7 @@ const ShopperProfile = () => {
 
   // Mock shopper data - In production, fetch from database
   const shopper = {
-    id: "1",
+    id: shopperId || "1",
     name: "Sarah Johnson",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300",
     location: "Honolulu, Hawaii",
@@ -187,7 +187,7 @@ const ShopperProfile = () => {
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Privacy Settings - Only show when viewing own profile */}
-            {user && user.id === shopper.id && (
+            {user && user.id === shopperId && (
               <Card className="bg-muted/30 border-dashed">
                 <CardContent className="pt-6">
                   <h3 className="font-semibold mb-4 flex items-center gap-2">
