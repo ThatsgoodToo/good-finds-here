@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 
 const VendorDashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
@@ -50,12 +50,18 @@ const VendorDashboard = () => {
     }
   }, [user]);
 
+  // Set active role to vendor when on this page
+  useEffect(() => {
+    if (roles.includes("vendor") && activeRole !== "vendor") {
+      setActiveRole("vendor");
+    }
+  }, [roles, activeRole, setActiveRole]);
+
   // Demo vendor data
   const vendorName = "Clay & Co.";
   const vendorImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200";
   const location = "Portland, Oregon";
   const externalUrl = "https://clayandco.example.com";
-  const hasShopperRole = true; // Demo: user has both roles
 
   // Metrics
   const metrics = {
@@ -190,8 +196,6 @@ const VendorDashboard = () => {
           onUpdateLocation={handleUpdateLocation}
           onUpdateExternalUrl={handleUpdateExternalUrl}
           onUpdateDescription={handleUpdateDescription}
-          hasShopperRole={hasShopperRole}
-          userRole={userRole as string}
         />
 
         <div className="container mx-auto px-4 sm:px-6 py-8">

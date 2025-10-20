@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Settings, Upload, ExternalLink, MapPin, Edit2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VendorHeaderProps {
   vendorName: string;
@@ -20,8 +21,6 @@ interface VendorHeaderProps {
   onUpdateLocation: (location: string) => void;
   onUpdateExternalUrl: (url: string) => void;
   onUpdateDescription: (desc: string) => void;
-  hasShopperRole: boolean;
-  userRole?: string;
 }
 
 const VendorHeader = ({
@@ -34,10 +33,9 @@ const VendorHeader = ({
   onUpdateLocation,
   onUpdateExternalUrl,
   onUpdateDescription,
-  hasShopperRole,
-  userRole = "vendor",
 }: VendorHeaderProps) => {
   const navigate = useNavigate();
+  const { roles, activeRole, setActiveRole } = useAuth();
 
   return (
     <div className="border-b border-border bg-card">
@@ -86,21 +84,27 @@ const VendorHeader = ({
           </div>
 
           <div className="flex items-center gap-3">
-            {hasShopperRole && (
-              <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+            {roles.length > 1 && (
+              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
                 <Button
-                  variant="ghost"
+                  variant={activeRole === "shopper" ? "default" : "ghost"}
                   size="sm"
-                  className={`px-4 transition-all ${userRole === "shopper" ? "bg-shopper-active text-shopper-active-foreground shadow-sm" : "bg-transparent"}`}
-                  onClick={() => navigate("/dashboard/shopper")}
+                  className="px-4"
+                  onClick={() => {
+                    setActiveRole("shopper");
+                    navigate("/dashboard/shopper");
+                  }}
                 >
                   Shopper
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant={activeRole === "vendor" ? "default" : "ghost"}
                   size="sm"
-                  className={`px-4 transition-all ${userRole === "vendor" ? "bg-vendor-active text-vendor-active-foreground shadow-sm" : "bg-transparent"}`}
-                  onClick={() => navigate("/dashboard/vendor")}
+                  className="px-4"
+                  onClick={() => {
+                    setActiveRole("vendor");
+                    navigate("/dashboard/vendor");
+                  }}
                 >
                   Vendor
                 </Button>

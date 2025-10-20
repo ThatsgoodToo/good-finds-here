@@ -58,6 +58,7 @@ import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FolderItem {
   id: string;
@@ -77,7 +78,7 @@ interface Folder {
 }
 
 const ShopperDashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [activeTab, setActiveTab] = useState("high-fives");
@@ -102,6 +103,36 @@ const ShopperDashboard = () => {
     if (!user) {
       setShowSignupModal(true);
     }
+  }, [user]);
+
+  // Set active role to shopper when on this page
+  useEffect(() => {
+    if (roles.includes("shopper") && activeRole !== "shopper") {
+      setActiveRole("shopper");
+    }
+  }, [roles, activeRole, setActiveRole]);
+
+  // Load privacy settings from backend
+  useEffect(() => {
+    const loadPrivacySettings = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("location_public, high_fives_public")
+        .eq("id", user.id)
+        .single();
+
+      if (data && !error) {
+        setProfileSettings((prev) => ({
+          ...prev,
+          locationPublic: data.location_public ?? true,
+          highFivesPublic: data.high_fives_public ?? true,
+        }));
+      }
+    };
+
+    loadPrivacySettings();
   }, [user]);
 
   const shopperName = "Sarah Martinez"; // Demo name
@@ -440,12 +471,31 @@ const ShopperDashboard = () => {
                       variant="ghost"
                       size="icon"
                       className="h-5 w-5"
-                      onClick={() => {
+                      title={profileSettings.locationPublic ? "Visible to public" : "Hidden from public"}
+                      onClick={async () => {
+                        const newValue = !profileSettings.locationPublic;
+                        // Optimistic update
                         setProfileSettings({
                           ...profileSettings,
-                          locationPublic: !profileSettings.locationPublic
+                          locationPublic: newValue
                         });
-                        toast.success(profileSettings.locationPublic ? "Location hidden from public" : "Location visible to public");
+                        
+                        // Update backend
+                        const { error } = await supabase
+                          .from("profiles")
+                          .update({ location_public: newValue })
+                          .eq("id", user?.id);
+                        
+                        if (error) {
+                          // Revert on error
+                          setProfileSettings({
+                            ...profileSettings,
+                            locationPublic: !newValue
+                          });
+                          toast.error("Failed to update location visibility");
+                        } else {
+                          toast.success(newValue ? "Location visible to public" : "Location hidden from public");
+                        }
                       }}
                     >
                       {profileSettings.locationPublic ? (
@@ -473,24 +523,32 @@ const ShopperDashboard = () => {
               
               <div className="flex items-center gap-3">
                 {/* Toggle between Vendor and Shopper - Show if user has both roles */}
-                <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
-                  <Button
-                    variant={userRole === "shopper" ? "default" : "ghost"}
-                    size="sm"
-                    className="px-4"
-                    onClick={() => navigate("/dashboard/shopper")}
-                  >
-                    Shopper
-                  </Button>
-                  <Button
-                    variant={userRole === "vendor" ? "default" : "ghost"}
-                    size="sm"
-                    className="px-4"
-                    onClick={() => navigate("/dashboard/vendor")}
-                  >
-                    Vendor
-                  </Button>
-                </div>
+                {roles.length > 1 && (
+                  <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+                    <Button
+                      variant={activeRole === "shopper" ? "default" : "ghost"}
+                      size="sm"
+                      className="px-4"
+                      onClick={() => {
+                        setActiveRole("shopper");
+                        navigate("/dashboard/shopper");
+                      }}
+                    >
+                      Shopper
+                    </Button>
+                    <Button
+                      variant={activeRole === "vendor" ? "default" : "ghost"}
+                      size="sm"
+                      className="px-4"
+                      onClick={() => {
+                        setActiveRole("vendor");
+                        navigate("/dashboard/vendor");
+                      }}
+                    >
+                      Vendor
+                    </Button>
+                  </div>
+                )}
                 
                 {/* Settings Gear Icon */}
                 <DropdownMenu>
@@ -555,7 +613,46 @@ const ShopperDashboard = () => {
             {/* My Shop (High Fives) */}
             <TabsContent value="high-fives" className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">My Shop</h2>
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Hand className="h-6 w-6" />
+                  My Shop
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={profileSettings.highFivesPublic ? "Shop visible to public" : "Shop hidden from public"}
+                    onClick={async () => {
+                      const newValue = !profileSettings.highFivesPublic;
+                      // Optimistic update
+                      setProfileSettings({
+                        ...profileSettings,
+                        highFivesPublic: newValue
+                      });
+                      
+                      // Update backend
+                      const { error } = await supabase
+                        .from("profiles")
+                        .update({ high_fives_public: newValue })
+                        .eq("id", user?.id);
+                      
+                      if (error) {
+                        // Revert on error
+                        setProfileSettings({
+                          ...profileSettings,
+                          highFivesPublic: !newValue
+                        });
+                        toast.error("Failed to update shop visibility");
+                      } else {
+                        toast.success(newValue ? "Shop visible to public" : "Shop hidden from public");
+                      }
+                    }}
+                  >
+                    {profileSettings.highFivesPublic ? (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </h2>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"

@@ -25,16 +25,18 @@ interface HeaderProps {
 
 const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYourGoodsClick }: HeaderProps) => {
   const navigate = useNavigate();
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, activeRole, signOut } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showFollowersList, setShowFollowersList] = useState(false);
+  
+  const effectiveRole = activeRole ?? userRole;
   
   const handleYourGoodsClick = () => {
     if (!user) {
       setShowSignupModal(true);
     } else {
-      // Navigate based on user role
-      if (userRole === "vendor") {
+      // Navigate based on effective role
+      if (effectiveRole === "vendor") {
         navigate("/dashboard/vendor");
       } else {
         navigate("/dashboard/shopper");
@@ -78,7 +80,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
           {/* Hi Fives - Hand Icon */}
           <button 
             onClick={() => {
-              if (userRole === "vendor") {
+              if (effectiveRole === "vendor") {
                 setShowFollowersList(true);
               } else {
                 navigate("/high-fives");
@@ -109,8 +111,8 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
               {user && (
                 <>
                   <DropdownMenuItem className="text-xs font-medium pointer-events-none">
-                    <div className={`px-2 py-1 rounded ${userRole === 'vendor' ? 'bg-vendor-active text-vendor-active-foreground' : userRole === 'shopper' ? 'bg-shopper-active text-shopper-active-foreground' : 'bg-muted text-muted-foreground'}`}>
-                      Signed in as {userRole}
+                    <div className={`px-2 py-1 rounded ${effectiveRole === 'vendor' ? 'bg-vendor-active text-vendor-active-foreground' : effectiveRole === 'shopper' ? 'bg-shopper-active text-shopper-active-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      Signed in as {effectiveRole}
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

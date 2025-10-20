@@ -224,56 +224,6 @@ const ShopperProfile = () => {
         {/* Main Content */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="max-w-4xl mx-auto space-y-6">
-            {/* Privacy Settings - Only show when viewing own profile */}
-            {isOwnProfile && (
-              <Card className="bg-muted/30 border-dashed">
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-primary" />
-                    Privacy Settings
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Hand className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">High Fives Activity</p>
-                          <p className="text-xs text-muted-foreground">
-                            {privacySettings.highFivesPublic ? "Visible to everyone" : "Only visible to you"}
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={privacySettings.highFivesPublic}
-                        onCheckedChange={(checked) => {
-                          setPrivacySettings({ ...privacySettings, highFivesPublic: checked });
-                          toast.success(checked ? "High Fives are now public" : "High Fives are now private");
-                        }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">Location</p>
-                          <p className="text-xs text-muted-foreground">
-                            {privacySettings.locationPublic ? "Visible to everyone" : "Only visible to you"}
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={privacySettings.locationPublic}
-                        onCheckedChange={(checked) => {
-                          setPrivacySettings({ ...privacySettings, locationPublic: checked });
-                          toast.success(checked ? "Location is now public" : "Location is now private");
-                        }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Activity Section - Only show if high fives are public */}
             {privacySettings.highFivesPublic && (
               <Card>

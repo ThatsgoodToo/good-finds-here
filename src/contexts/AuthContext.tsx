@@ -9,6 +9,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: UserRole | null;
+  roles: UserRole[];
+  activeRole: UserRole | null;
+  setActiveRole: (role: UserRole) => void;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -19,6 +22,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [roles, setRoles] = useState<UserRole[]>([]);
+  const [activeRole, setActiveRoleState] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -55,7 +60,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    // Use the secure get_user_role function
+    // Fetch all roles
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    const userRoles = rolesData?.map((r) => r.role as UserRole) || [];
+    setRoles(userRoles);
+
+    // Use the secure get_user_role function for primary role
     const { data, error } = await supabase
       .rpc("get_user_role", { _user_id: userId });
 
@@ -64,6 +78,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setUserRole(null);
     }
+
+    // Initialize activeRole
+    const savedActiveRole = localStorage.getItem("activeRole") as UserRole | null;
+    if (savedActiveRole && userRoles.includes(savedActiveRole)) {
+      setActiveRoleState(savedActiveRole);
+    } else {
+      // Fallback to primary role
+      const initialRole = data ? (data as UserRole) : userRoles[0] || null;
+      setActiveRoleState(initialRole);
+      if (initialRole) {
+        localStorage.setItem("activeRole", initialRole);
+      }
+    }
+  };
+
+  const setActiveRole = (role: UserRole) => {
+    setActiveRoleState(role);
+    localStorage.setItem("activeRole", role);
   };
 
   const signOut = async () => {
@@ -71,11 +103,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
     setSession(null);
     setUserRole(null);
+    setRoles([]);
+    setActiveRoleState(null);
+    localStorage.removeItem("activeRole");
     navigate("/");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, userRole, roles, activeRole, setActiveRole, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
