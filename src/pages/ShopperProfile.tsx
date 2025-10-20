@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { ExternalLink, MapPin, Hand, ChevronLeft, Gift, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ShopperProfile = () => {
   const navigate = useNavigate();
@@ -35,12 +36,49 @@ const ShopperProfile = () => {
     highFivesPublic: true,
     locationPublic: true,
   });
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setShowSignupModal(true);
     }
   }, [user]);
+
+  useEffect(() => {
+    const checkOwner = async () => {
+      if (!user || !shopperId) {
+        setIsOwnProfile(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('display_name, high_fives_public, location_public')
+          .eq('id', user.id)
+          .maybeSingle();
+        const slugify = (s: string) => s
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        const candidateSlugs = [
+          user.id,
+          data?.display_name ? slugify(data.display_name) : undefined,
+          user.email ? slugify(user.email.split('@')[0]) : undefined,
+        ].filter(Boolean) as string[];
+        setIsOwnProfile(candidateSlugs.includes((shopperId as string).toLowerCase()));
+        if (data) {
+          setPrivacySettings((prev) => ({
+            highFivesPublic: (data as any).high_fives_public ?? prev.highFivesPublic,
+            locationPublic: (data as any).location_public ?? prev.locationPublic,
+          }));
+        }
+      } catch (e) {
+        console.error('Failed to determine profile ownership', e);
+      }
+    };
+    checkOwner();
+  }, [user, shopperId]);
 
   // Mock shopper data - In production, fetch from database
   const shopper = {
@@ -155,13 +193,13 @@ const ShopperProfile = () => {
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold">{shopper.name}</h1>
                 
-                {shopper.location && shopper.locationPublic && (
+                {shopper.location && privacySettings.locationPublic && (
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
                     <span>{shopper.location}</span>
                   </div>
                 )}
-                
+
                 {shopper.website && (
                   <Button
                     variant="link"
@@ -187,7 +225,7 @@ const ShopperProfile = () => {
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Privacy Settings - Only show when viewing own profile */}
-            {user && user.id === shopperId && (
+            {isOwnProfile && (
               <Card className="bg-muted/30 border-dashed">
                 <CardContent className="pt-6">
                   <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -237,7 +275,7 @@ const ShopperProfile = () => {
             )}
 
             {/* Activity Section - Only show if high fives are public */}
-            {shopper.highFivesPublic && (
+            {privacySettings.highFivesPublic && (
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
@@ -262,7 +300,7 @@ const ShopperProfile = () => {
             )}
 
             {/* Privacy Notice - Show when high fives are private */}
-            {!shopper.highFivesPublic && (
+            {!privacySettings.highFivesPublic && (
               <Card className="border-dashed">
                 <CardContent className="pt-6">
                   <div className="text-center text-muted-foreground">
