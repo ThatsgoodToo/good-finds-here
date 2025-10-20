@@ -55,21 +55,21 @@ const FilterBar = ({
       <div className="container mx-auto px-4 space-y-3">
         {/* Active Filters Display */}
         {(activeFilter !== "all" || customFilters.length > 0) && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground">Active filters:</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <span className="text-xs sm:text-sm text-muted-foreground">Active filters:</span>
             {activeFilter !== "all" && (
               <Badge 
                 variant="secondary" 
-                className="flex items-center gap-1 px-3 py-1"
+                className="flex items-center gap-1 px-2 py-0.5 text-xs sm:px-3 sm:py-1 sm:text-sm"
               >
                 {filters.find(f => f.type === activeFilter)?.label}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  className="h-3 w-3 p-0 hover:bg-transparent"
                   onClick={() => onFilterChange("all")}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-2.5 w-2.5" />
                 </Button>
               </Badge>
             )}
@@ -77,16 +77,16 @@ const FilterBar = ({
               <Badge 
                 key={filter}
                 variant="secondary" 
-                className="flex items-center gap-1 px-3 py-1"
+                className="flex items-center gap-1 px-2 py-0.5 text-xs sm:px-3 sm:py-1 sm:text-sm"
               >
                 {filter}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  className="h-3 w-3 p-0 hover:bg-transparent"
                   onClick={() => removeCustomFilter(filter)}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-2.5 w-2.5" />
                 </Button>
               </Badge>
             ))}
@@ -148,7 +148,7 @@ const FilterBar = ({
         </div>
 
         {/* Bottom Row: Category Filters */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {filteredFilters.map((filter) => (
             <Button
               key={filter.type}
@@ -156,13 +156,13 @@ const FilterBar = ({
               size="sm"
               onClick={() => onFilterChange(filter.type)}
               className={cn(
-                "flex items-center gap-2 whitespace-nowrap transition-all",
+                "flex items-center gap-1.5 sm:gap-2 whitespace-nowrap transition-all px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm",
                 activeFilter === filter.type
                   ? "bg-primary text-primary-foreground"
                   : "bg-card text-foreground border-border hover:bg-muted"
               )}
             >
-              <span className={cn("w-2 h-2 rounded-full", filter.color)} />
+              <span className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full", filter.color)} />
               {filter.label}
             </Button>
           ))}

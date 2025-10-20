@@ -17,7 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink, MapPin, Hand, ChevronLeft, Gift } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ExternalLink, MapPin, Hand, ChevronLeft, Gift, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -30,6 +31,10 @@ const ShopperProfile = () => {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponDescription, setCouponDescription] = useState("");
+  const [privacySettings, setPrivacySettings] = useState({
+    highFivesPublic: true,
+    locationPublic: true,
+  });
 
   useEffect(() => {
     if (!user) {
@@ -42,7 +47,7 @@ const ShopperProfile = () => {
     id: "1",
     name: "Sarah Johnson",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300",
-    location: "Portland, Oregon",
+    location: "Honolulu, Hawaii",
     locationPublic: true, // Fetch from profiles.location_public
     bio: "Food lover, sustainable living enthusiast, and supporter of local artisans. Always on the lookout for unique handcrafted items and ethical brands.",
     website: "https://sarahjohnson.example.com",
@@ -181,6 +186,56 @@ const ShopperProfile = () => {
         {/* Main Content */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="max-w-4xl mx-auto space-y-6">
+            {/* Privacy Settings - Only show when viewing own profile */}
+            {user && user.id === shopper.id && (
+              <Card className="bg-muted/30 border-dashed">
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-primary" />
+                    Privacy Settings
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Hand className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">High Fives Activity</p>
+                          <p className="text-xs text-muted-foreground">
+                            {privacySettings.highFivesPublic ? "Visible to everyone" : "Only visible to you"}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={privacySettings.highFivesPublic}
+                        onCheckedChange={(checked) => {
+                          setPrivacySettings({ ...privacySettings, highFivesPublic: checked });
+                          toast.success(checked ? "High Fives are now public" : "High Fives are now private");
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Location</p>
+                          <p className="text-xs text-muted-foreground">
+                            {privacySettings.locationPublic ? "Visible to everyone" : "Only visible to you"}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={privacySettings.locationPublic}
+                        onCheckedChange={(checked) => {
+                          setPrivacySettings({ ...privacySettings, locationPublic: checked });
+                          toast.success(checked ? "Location is now public" : "Location is now private");
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Activity Section - Only show if high fives are public */}
             {shopper.highFivesPublic && (
               <Card>

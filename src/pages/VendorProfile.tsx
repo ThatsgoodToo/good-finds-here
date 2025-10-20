@@ -58,7 +58,7 @@ const VendorProfile = () => {
     website: "https://clayandco.example.com",
     bio: "Handcrafted ceramic pieces inspired by nature. Each item is uniquely made with sustainable practices and local materials. We specialize in functional pottery that brings beauty to everyday life.",
     profileImage: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300",
-    location: "Portland, Oregon",
+    location: "Boise, Idaho",
     priceRange: "Accessible - $15-$150",
     category: "Handcrafted Ceramics",
     expertise: "10+ years",

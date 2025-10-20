@@ -91,7 +91,7 @@ const ShopperDashboard = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [customFilterInput, setCustomFilterInput] = useState("");
   const [profileSettings, setProfileSettings] = useState({
-    location: "Portland, Oregon",
+    location: "Honolulu, Hawaii",
     locationPublic: true,
     externalLink: "",
     bio: "",
