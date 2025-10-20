@@ -17,19 +17,17 @@ interface PaymentStepProps {
 const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack }: PaymentStepProps) => {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [hasPromoCode, setHasPromoCode] = useState(false);
+  const [isTrial, setIsTrial] = useState(false);
 
   const handleContinue = () => {
-    // If promo code is entered, no payment needed
-    if (promoCode) {
+    // If trial, promo code, or payment method selected, allow continue
+    if (isTrial || promoCode || paymentMethod) {
       onNext();
-      return;
     }
-    
-    // Otherwise validate payment method is selected
-    if (!paymentMethod) {
-      return;
-    }
-    
+  };
+
+  const handleTrialClick = () => {
+    setIsTrial(true);
     onNext();
   };
 
@@ -43,6 +41,27 @@ const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack }: PaymentSt
       </CardHeader>
       
       <CardContent className="space-y-6">
+        {/* Trial Button */}
+        <div className="space-y-4 p-6 bg-primary/10 rounded-lg border-2 border-primary">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg mb-2">
+                Start Free Trial
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Try the platform for free. No payment required to get started.
+              </p>
+            </div>
+            <Button 
+              onClick={handleTrialClick}
+              size="lg"
+              className="ml-4"
+            >
+              Start Trial
+            </Button>
+          </div>
+        </div>
+
         {/* Promo Code Section */}
         <div className="space-y-4 p-6 bg-muted/50 rounded-lg border-2 border-primary/20">
           <div className="flex items-start gap-3">
@@ -150,7 +169,7 @@ const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack }: PaymentSt
           <Button
             onClick={handleContinue}
             className="flex-1"
-            disabled={!hasPromoCode && !paymentMethod}
+            disabled={!isTrial && !hasPromoCode && !paymentMethod}
           >
             Continue
             <ChevronRight className="ml-2 h-4 w-4" />
