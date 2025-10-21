@@ -55,7 +55,7 @@ const MetricsChart = ({ metric, onClose }: MetricsChartProps) => {
   };
 
   return (
-    <Card className="fixed inset-4 z-50 overflow-auto bg-background shadow-lg">
+    <Card className="fixed top-24 left-4 right-4 bottom-4 z-50 overflow-auto bg-background shadow-lg">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

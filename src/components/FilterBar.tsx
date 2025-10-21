@@ -52,10 +52,84 @@ const FilterBar = ({
 
   return (
     <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm border-b border-border py-4 animate-fade-in">
-      <div className="container mx-auto px-4 space-y-3">
-        {/* Active Filters Display - Above filter buttons */}
+      <div className="container mx-auto px-4">
+        {/* Single Row: Back Button, Search, Filters, Edit, View Toggle */}
+        <div className="flex flex-wrap items-center gap-3">
+          {onBack && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="text-foreground hover:text-primary shrink-0"
+              title="Go back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          
+          <Input
+            type="text"
+            placeholder="Search filters... (Press Enter to add)"
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-40 sm:w-48"
+          />
+          
+          {/* Filter Buttons */}
+          {filteredFilters.map((filter) => (
+            <Button
+              key={filter.type}
+              variant={activeFilter === filter.type ? "default" : "outline"}
+              size="sm"
+              onClick={() => onFilterChange(filter.type)}
+              className={cn(
+                "flex items-center gap-1.5 whitespace-nowrap transition-all px-3 py-1.5 text-sm shrink-0",
+                activeFilter === filter.type
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card text-foreground border-border hover:bg-muted"
+              )}
+            >
+              <span className={cn("w-2 h-2 rounded-full", filter.color)} />
+              {filter.label}
+            </Button>
+          ))}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-2"
+            title="Edit filters"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Edit Filters
+          </Button>
+          
+          <div className="ml-auto flex items-center gap-1 shrink-0">
+            <Button
+              variant={viewMode === "gallery" ? "default" : "ghost"}
+              size="icon"
+              onClick={() => onViewModeChange?.("gallery")}
+              className="h-8 w-8"
+              title="Gallery view"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="icon"
+              onClick={() => onViewModeChange?.("list")}
+              className="h-8 w-8"
+              title="List view"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Active Filters Display - Below main row */}
         {(activeFilter !== "all" || customFilters.length > 0) && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap mt-3">
             <span className="text-sm text-muted-foreground shrink-0">Active:</span>
             {activeFilter !== "all" && (
               <Badge 
@@ -92,81 +166,6 @@ const FilterBar = ({
             ))}
           </div>
         )}
-        {/* Top Row: Back Button, Search Input, Edit Filters, View Toggle */}
-        <div className="flex items-center gap-3">
-          {onBack && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="text-foreground hover:text-primary shrink-0"
-              title="Go back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-          
-          <Input
-            type="text"
-            placeholder="Search filters... (Press Enter to add)"
-            value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="max-w-xs"
-          />
-          
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-2"
-            title="Edit filters"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Edit Filters
-          </Button>
-          
-          <div className="ml-auto flex items-center gap-1 shrink-0">
-            <Button
-              variant={viewMode === "gallery" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => onViewModeChange?.("gallery")}
-              className="h-8 w-8"
-              title="Gallery view"
-            >
-              <Grid3x3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => onViewModeChange?.("list")}
-              className="h-8 w-8"
-              title="List view"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Filter Buttons - All in one row */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-          {filteredFilters.map((filter) => (
-            <Button
-              key={filter.type}
-              variant={activeFilter === filter.type ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterChange(filter.type)}
-              className={cn(
-                "flex items-center gap-1.5 whitespace-nowrap transition-all px-3 py-1.5 text-sm shrink-0",
-                activeFilter === filter.type
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-foreground border-border hover:bg-muted"
-              )}
-            >
-              <span className={cn("w-2 h-2 rounded-full", filter.color)} />
-              {filter.label}
-            </Button>
-          ))}
-        </div>
       </div>
     </div>
   );

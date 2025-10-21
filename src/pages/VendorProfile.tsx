@@ -465,16 +465,15 @@ const VendorProfile = () => {
                     onClick={() => navigate(`/vendor/${relatedVendor.id}`)}
                   >
                     <CardContent className="pt-6">
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 relative">
                         <Avatar className="h-12 w-12 shrink-0">
                           <AvatarImage src={relatedVendor.image} alt={relatedVendor.name} />
                           <AvatarFallback>{relatedVendor.name.charAt(0)}</AvatarFallback>
                         </Avatar>
+                        {/* Category dot - absolute positioned in upper-left */}
+                        <div className={cn("absolute top-0 left-0 h-2 w-2 rounded-full ring-1 ring-[#1a1a1a]", categoryColors[relatedVendor.type] || "bg-category-product")} />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className={cn("h-2 w-2 rounded-full ring-1 ring-[#1a1a1a] shrink-0", categoryColors[relatedVendor.type] || "bg-category-product")} />
-                            <h3 className="font-semibold text-sm truncate">{relatedVendor.name}</h3>
-                          </div>
+                          <h3 className="font-semibold text-sm truncate">{relatedVendor.name}</h3>
                           <p className="text-xs text-muted-foreground truncate">{relatedVendor.category}</p>
                         </div>
                       </div>

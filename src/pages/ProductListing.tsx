@@ -305,7 +305,7 @@ const ProductListing = () => {
                     <div className="relative">
                       <img src={item.image} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" loading="lazy" />
                       {item.types && item.types.length > 0 && (
-                        <div className="absolute top-2 right-2 flex gap-1">
+                        <div className="absolute top-2 left-2 flex gap-1">
                           {item.types.map((type: string, idx: number) => (
                             <div
                               key={idx}
@@ -334,7 +334,7 @@ const ProductListing = () => {
                     <div className="relative">
                       <img src={item.image} alt={item.title} className="w-full h-40 object-cover rounded-t-lg" loading="lazy" />
                       {item.types && item.types.length > 0 && (
-                        <div className="absolute top-2 right-2 flex gap-1">
+                        <div className="absolute top-2 left-2 flex gap-1">
                           {item.types.map((type: string, idx: number) => (
                             <div
                               key={idx}
