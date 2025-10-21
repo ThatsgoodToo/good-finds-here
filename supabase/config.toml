@@ -1,1 +1,18 @@
 project_id = "fksjvollrvzokhpptdoi"
+
+[functions.daily-coupon-expiration]
+verify_jwt = false
+
+[functions.manage-coupons]
+
+[functions.renew-recurring-coupons]
+verify_jwt = false
+
+[functions.share-coupon]
+
+[functions.validate-promo]
+
+[functions.check-subscription]
+
+[functions.notify-expiring-subscriptions]
+verify_jwt = false

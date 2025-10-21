@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 type FilterInputStepProps = {
   interests: string[];
@@ -12,14 +12,57 @@ type FilterInputStepProps = {
   onBack: () => void;
 };
 
+// Popular interest suggestions
+const POPULAR_INTERESTS = [
+  "Whole Food",
+  "Healthy Snacks",
+  "Investments",
+  "Community Programs",
+  "Handmade Crafts",
+  "Local Coffee",
+  "Sustainable Goods",
+  "Artisan Products",
+  "Wellness & Self-Care",
+  "Educational Services",
+];
+
+// Smart suggestions based on keywords
+const KEYWORD_SUGGESTIONS: Record<string, string[]> = {
+  food: ["Whole Food", "Healthy Snacks", "Organic Produce", "Local Farms"],
+  health: ["Wellness & Self-Care", "Healthy Snacks", "Fitness", "Natural Products"],
+  art: ["Handmade Crafts", "Artisan Products", "Local Art", "Creative Workshops"],
+  coffee: ["Local Coffee", "Coffee Roasters", "Artisan Tea", "Specialty Drinks"],
+  invest: ["Investments", "Financial Planning", "Real Estate", "Stock Market"],
+  community: ["Community Programs", "Local Events", "Volunteer Opportunities", "Neighborhood Groups"],
+  sustain: ["Sustainable Goods", "Eco-Friendly", "Zero Waste", "Green Living"],
+  craft: ["Handmade Crafts", "DIY Supplies", "Craft Workshops", "Artisan Tools"],
+};
+
 const FilterInputStep = ({ interests, onUpdate, onNext, onBack }: FilterInputStepProps) => {
   const [currentInput, setCurrentInput] = useState("");
 
-  const handleAddInterest = () => {
-    const trimmed = currentInput.trim();
-    if (trimmed && !interests.includes(trimmed)) {
-      onUpdate([...interests, trimmed]);
-      setCurrentInput("");
+  // Get smart suggestions based on current input
+  const smartSuggestions = useMemo(() => {
+    if (!currentInput || currentInput.length < 2) return [];
+    
+    const inputLower = currentInput.toLowerCase();
+    const suggestions: string[] = [];
+    
+    Object.entries(KEYWORD_SUGGESTIONS).forEach(([keyword, values]) => {
+      if (inputLower.includes(keyword)) {
+        suggestions.push(...values);
+      }
+    });
+    
+    // Remove duplicates and already added interests
+    return [...new Set(suggestions)].filter(s => !interests.includes(s)).slice(0, 4);
+  }, [currentInput, interests]);
+
+  const handleAddInterest = (interest?: string) => {
+    const toAdd = interest || currentInput.trim();
+    if (toAdd && !interests.includes(toAdd)) {
+      onUpdate([...interests, toAdd]);
+      if (!interest) setCurrentInput(""); // Only clear input if manually typed
     }
   };
 
@@ -35,57 +78,111 @@ const FilterInputStep = ({ interests, onUpdate, onNext, onBack }: FilterInputSte
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">What are you into?</h2>
-        <p className="text-muted-foreground">Add interests to personalize your experience</p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="interest">Add interests (press Enter or click Add)</Label>
+    <>
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold">What are you into?</CardTitle>
+        <CardDescription>
+          Tell us what you're interested in to help us personalize your experience.
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
           <div className="flex gap-2">
             <Input
-              id="interest"
-              type="text"
-              placeholder="e.g., handmade jewelry, local coffee"
+              placeholder="Type an interest and press Enter"
               value={currentInput}
               onChange={(e) => setCurrentInput(e.target.value)}
               onKeyDown={handleKeyDown}
             />
-            <Button type="button" onClick={handleAddInterest} variant="secondary">
+            <Button onClick={() => handleAddInterest()} disabled={!currentInput.trim()}>
               Add
             </Button>
           </div>
+
+          {/* Smart Suggestions based on input */}
+          {smartSuggestions.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Sparkles className="h-4 w-4" />
+                <span>Related Suggestions:</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {smartSuggestions.map((suggestion) => (
+                  <Badge
+                    key={suggestion}
+                    variant="secondary"
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() => handleAddInterest(suggestion)}
+                  >
+                    {suggestion}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Popular Interests - Always visible when no smart suggestions */}
+          {smartSuggestions.length === 0 && interests.length === 0 && (
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">Popular Interests:</div>
+              <div className="flex flex-wrap gap-2">
+                {POPULAR_INTERESTS.map((interest) => (
+                  <Badge
+                    key={interest}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                    onClick={() => handleAddInterest(interest)}
+                  >
+                    {interest}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Added Interests */}
         {interests.length > 0 && (
           <div className="space-y-2">
-            <Label>Your interests</Label>
+            <div className="text-sm font-medium">Your Interests:</div>
             <div className="flex flex-wrap gap-2">
               {interests.map((interest) => (
-                <Badge key={interest} variant="secondary" className="gap-1">
+                <Badge key={interest} variant="default" className="gap-1 pl-3 pr-1">
                   {interest}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
+                  <button
                     onClick={() => handleRemoveInterest(interest)}
-                  />
+                    className="ml-1 hover:bg-primary-foreground/20 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </Badge>
               ))}
             </div>
           </div>
         )}
-      </div>
 
-      <div className="flex gap-3 justify-between">
-        <Button type="button" variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button onClick={onNext} disabled={interests.length === 0}>
-          Next
-        </Button>
-      </div>
-    </div>
+        {/* Navigation Buttons */}
+        <div className="flex gap-3 pt-4">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="flex-1"
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            onClick={onNext}
+            disabled={interests.length === 0}
+            className="flex-1"
+          >
+            Next
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </>
   );
 };
 

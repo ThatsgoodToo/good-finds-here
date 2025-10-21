@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import PaymentStep from "@/components/signup/PaymentStep";
 
 interface VendorApplication {
   // Page 1
@@ -840,55 +841,16 @@ const VendorSignup = () => {
                 </>
               )}
 
-              {/* Page 6: Subscription */}
+              {/* Page 6: Subscription - Using PaymentStep component */}
               {currentStep === 5 && (
-                <>
-                  <div className="bg-muted p-6 rounded-lg space-y-4">
-                    <h3 className="font-semibold text-lg">Subscription Details</h3>
-                    <div className="space-y-2">
-                      <p className="text-sm">
-                        <strong>Startup Price:</strong> $5/month billed every 6 months
-                      </p>
-                      <p className="text-sm">
-                        After this period, the subscription automatically renews at $7/month
-                      </p>
-                      <Badge variant="secondary" className="mt-2">14-day refund available</Badge>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="promo">Founding Member / Promo Code</Label>
-                    <Input
-                      id="promo"
-                      value={formData.promo_code}
-                      onChange={(e) => updateField('promo_code', e.target.value)}
-                      placeholder="Enter code (if applicable)"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      If you have a promo or founding member code, you can sign up for free
-                    </p>
-                  </div>
-
-                  {!formData.promo_code && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          checked={formData.payment_method_saved}
-                          onCheckedChange={(checked) => updateField('payment_method_saved', checked)}
-                        />
-                        <Label className="font-normal">
-                          I'll enter payment details now (or I can do this after approval)
-                        </Label>
-                      </div>
-                      
-                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                        <p className="text-sm text-amber-800 dark:text-amber-200">
-                          <strong>Note:</strong> Your subscription will only be charged after your application is approved. You can choose to enter payment details now or wait until approval.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </>
+                <div className="-m-6">
+                  <PaymentStep
+                    promoCode={formData.promo_code}
+                    onPromoCodeChange={(code) => updateField('promo_code', code)}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                  />
+                </div>
               )}
 
               {/* Page 7: Confirmation & Agreements */}

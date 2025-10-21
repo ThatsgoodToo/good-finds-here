@@ -297,6 +297,7 @@ export type Database = {
           onboarding_completed: boolean | null
           profile_picture_url: string | null
           role: Database["public"]["Enums"]["app_role"]
+          subscription_status: string | null
           terms_accepted: boolean | null
           updated_at: string
         }
@@ -316,6 +317,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          subscription_status?: string | null
           terms_accepted?: boolean | null
           updated_at?: string
         }
@@ -335,8 +337,80 @@ export type Database = {
           onboarding_completed?: boolean | null
           profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          subscription_status?: string | null
           terms_accepted?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_redemptions: {
+        Row: {
+          id: string
+          promo_code: string
+          redeemed_at: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          promo_code: string
+          redeemed_at?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          promo_code?: string
+          redeemed_at?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_redemptions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          notified_expiring: boolean | null
+          promo_code: string | null
+          start_date: string
+          status: string
+          subscription_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          notified_expiring?: boolean | null
+          promo_code?: string | null
+          start_date?: string
+          status?: string
+          subscription_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          notified_expiring?: boolean | null
+          promo_code?: string | null
+          start_date?: string
+          status?: string
+          subscription_type?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

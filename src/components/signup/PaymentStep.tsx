@@ -1,33 +1,84 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, CreditCard } from "lucide-react";
+import { ChevronLeft, ChevronRight, CreditCard, Sparkles, Timer } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentStepProps {
   promoCode: string;
   onPromoCodeChange: (code: string) => void;
   onNext: () => void;
   onBack: () => void;
+  onTrialSelect?: () => void;
 }
 
-const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack }: PaymentStepProps) => {
+const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack, onTrialSelect }: PaymentStepProps) => {
+  const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState("card");
-  const [hasPromoCode, setHasPromoCode] = useState(false);
   const [isTrial, setIsTrial] = useState(false);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoValid, setPromoValid] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [remainingClaims, setRemainingClaims] = useState<number | null>(null);
+
+  // Validate promo code when it changes
+  useEffect(() => {
+    const validatePromoCode = async () => {
+      if (!promoCode || promoCode.length < 3) {
+        setPromoValid(false);
+        setPromoError("");
+        setRemainingClaims(null);
+        return;
+      }
+
+      setIsValidatingPromo(true);
+      setPromoError("");
+
+      try {
+        const { data, error } = await supabase.functions.invoke('validate-promo', {
+          body: { promoCode, subscriptionType: null }
+        });
+
+        if (error) throw error;
+
+        if (data.valid) {
+          setPromoValid(true);
+          setRemainingClaims(data.remainingClaims);
+          setPromoError("");
+        } else {
+          setPromoValid(false);
+          setPromoError(data.error || "Invalid promo code");
+          setRemainingClaims(null);
+        }
+      } catch (error) {
+        console.error('Promo validation error:', error);
+        setPromoValid(false);
+        setPromoError("Failed to validate promo code");
+        setRemainingClaims(null);
+      } finally {
+        setIsValidatingPromo(false);
+      }
+    };
+
+    const debounce = setTimeout(validatePromoCode, 500);
+    return () => clearTimeout(debounce);
+  }, [promoCode]);
 
   const handleContinue = () => {
-    // If trial, promo code, or payment method selected, allow continue
-    if (isTrial || promoCode || paymentMethod) {
+    if (isTrial || promoValid || paymentMethod) {
       onNext();
     }
   };
 
   const handleTrialClick = () => {
     setIsTrial(true);
+    onPromoCodeChange('__TRIAL__'); // Set special marker for trial
+    if (onTrialSelect) onTrialSelect();
     onNext();
   };
 
@@ -41,66 +92,95 @@ const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack }: PaymentSt
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Trial Button */}
-        <div className="space-y-4 p-6 bg-primary/10 rounded-lg border-2 border-primary">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2">
-                Start Free Trial
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Try the platform for free. No payment required to get started.
-              </p>
+        {/* 15-Day Trial Option - Top Priority */}
+        <div className="space-y-4 p-6 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg border-2 border-primary shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-primary/20 rounded-full">
+              <Timer className="h-6 w-6 text-primary" />
             </div>
-            <Button 
-              onClick={handleTrialClick}
-              size="lg"
-              className="ml-4"
-            >
-              Start Trial
-            </Button>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-bold text-xl">15-Day Free Trial</h3>
+                <Badge variant="secondary" className="text-xs">Most Popular</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                No payment required. Full access to explore the platform. Trial expires in 15 days.
+              </p>
+              <Button 
+                onClick={handleTrialClick}
+                size="lg"
+                className="w-full sm:w-auto"
+              >
+                Start Free Trial
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Promo Code Section */}
-        <div className="space-y-4 p-6 bg-muted/50 rounded-lg border-2 border-primary/20">
-          <div className="flex items-start gap-3">
-            <Badge variant="outline" className="mt-1">
-              Free
-            </Badge>
+        {/* Founding Member Promo Code Section */}
+        <div className="space-y-4 p-6 bg-gradient-to-br from-accent/20 to-accent/10 rounded-lg border-2 border-accent/40">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-accent/20 rounded-full">
+              <Sparkles className="h-6 w-6 text-accent-foreground" />
+            </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2">
-                Founding Member / Promo Code
-              </h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-bold text-xl">Founding Member Code</h3>
+                <Badge variant="outline" className="text-xs bg-accent/20">1 Year Access</Badge>
+              </div>
               <p className="text-sm text-muted-foreground mb-4">
-                If you have a promo or founding member code, enter it to sign up for free. No payment details required.
+                Have a founding member code? Unlock 1 year of full access. No payment required.
               </p>
               
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter promo code"
-                  value={promoCode}
-                  onChange={(e) => {
-                    onPromoCodeChange(e.target.value);
-                    setHasPromoCode(e.target.value.length > 0);
-                  }}
-                  className="max-w-xs"
-                />
-                {promoCode && (
-                  <Badge className="self-center" variant="default">
-                    Applied ✓
-                  </Badge>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter code (e.g., THATSGOODTOO25)"
+                    value={promoCode}
+                    onChange={(e) => {
+                      const upperValue = e.target.value.toUpperCase();
+                      onPromoCodeChange(upperValue);
+                    }}
+                    className="max-w-xs"
+                    disabled={isValidatingPromo}
+                  />
+                  {isValidatingPromo && (
+                    <Badge variant="secondary" className="self-center">
+                      Validating...
+                    </Badge>
+                  )}
+                  {promoValid && (
+                    <Badge className="self-center bg-green-600">
+                      ✓ Valid
+                    </Badge>
+                  )}
+                </div>
+                
+                {promoError && (
+                  <p className="text-sm text-destructive">{promoError}</p>
+                )}
+                
+                {promoValid && remainingClaims !== null && (
+                  <div className="p-3 bg-accent/30 rounded-lg border border-accent/40">
+                    <p className="text-sm font-medium text-accent-foreground">
+                      ✓ 1 Year Access Unlocked!
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {remainingClaims} of 500 codes remaining
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Standard Subscription */}
-        {!hasPromoCode && (
+        {/* Standard Subscription - Only show if no trial/promo selected */}
+        {!isTrial && !promoValid && (
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-6 bg-background rounded-lg border-2">
-              <CreditCard className="h-5 w-5 mt-1 text-primary" />
+            <div className="flex items-start gap-3 p-6 bg-muted/30 rounded-lg border-2 border-border">
+              <CreditCard className="h-5 w-5 mt-1 text-muted-foreground" />
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">
                   Standard Subscription
@@ -169,7 +249,7 @@ const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack }: PaymentSt
           <Button
             onClick={handleContinue}
             className="flex-1"
-            disabled={!isTrial && !hasPromoCode && !paymentMethod}
+            disabled={!isTrial && !promoValid && !paymentMethod}
           >
             Continue
             <ChevronRight className="ml-2 h-4 w-4" />
