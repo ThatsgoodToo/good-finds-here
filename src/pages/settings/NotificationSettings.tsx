@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +18,14 @@ interface NotificationPreferences {
 
 const NotificationSettings = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, activeRole } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleBack = () => {
+    const dashboardPath = activeRole === 'vendor' ? '/vendor/dashboard' : '/dashboard';
+    navigate(dashboardPath);
+  };
 
   const form = useForm<NotificationPreferences>({
     defaultValues: {
@@ -87,6 +94,9 @@ const NotificationSettings = () => {
         <div>
           <h1 className="text-3xl font-bold">Notification Settings</h1>
           <p className="text-muted-foreground">Manage how you receive notifications</p>
+          <Button variant="outline" onClick={handleBack} className="mt-4">
+            Back to Dashboard
+          </Button>
         </div>
 
         <Card>

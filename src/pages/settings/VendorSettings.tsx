@@ -22,6 +22,9 @@ const VendorSettings = () => {
         <div>
           <h1 className="text-3xl font-bold">Vendor Settings</h1>
           <p className="text-muted-foreground">Manage your vendor profile and business settings</p>
+          <Button variant="outline" onClick={() => navigate("/vendor/dashboard")} className="mt-4">
+            Back to Dashboard
+          </Button>
         </div>
 
         <Card>

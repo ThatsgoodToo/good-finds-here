@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useNavigate } from "react-router-dom";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +24,14 @@ const profileSchema = z.object({
 
 const ProfileSettings = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, activeRole } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleBack = () => {
+    const dashboardPath = activeRole === 'vendor' ? '/vendor/dashboard' : '/dashboard';
+    navigate(dashboardPath);
+  };
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -109,6 +116,9 @@ const ProfileSettings = () => {
         <div>
           <h1 className="text-3xl font-bold">Profile Settings</h1>
           <p className="text-muted-foreground">Manage your public profile information</p>
+          <Button variant="outline" onClick={handleBack} className="mt-4">
+            Back to Dashboard
+          </Button>
         </div>
 
         <Card>

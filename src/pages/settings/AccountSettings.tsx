@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useAuth } from "@/contexts/AuthContext";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,13 @@ const passwordSchema = z.object({
 const AccountSettings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { activeRole } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleBack = () => {
+    const dashboardPath = activeRole === 'vendor' ? '/vendor/dashboard' : '/dashboard';
+    navigate(dashboardPath);
+  };
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
@@ -127,8 +134,8 @@ const AccountSettings = () => {
             <h1 className="text-3xl font-bold">Account Settings</h1>
             <p className="text-muted-foreground">Manage your account settings and security</p>
           </div>
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            Back
+          <Button variant="outline" onClick={handleBack}>
+            Back to Dashboard
           </Button>
         </div>
 

@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import Header from "@/components/Header";
 import {
   User,
   Bell,
@@ -96,7 +97,8 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8">
+      <Header />
+      <div className="container mx-auto py-8 pt-24">
         <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
           {/* Sidebar Navigation */}
           <aside className="space-y-2">
