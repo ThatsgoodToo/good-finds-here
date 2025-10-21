@@ -31,7 +31,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
   const [showFollowersList, setShowFollowersList] = useState(false);
   
   const effectiveRole = activeRole ?? userRole;
-  const isOnVendorDashboard = location.pathname.includes('/dashboard/vendor');
+  const isVendorMode = effectiveRole === "vendor";
   
   const handleYourGoodsClick = () => {
     if (!user) {
@@ -82,7 +82,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
           {/* Hi Fives - Hand Icon */}
           <button 
             onClick={() => {
-              if (isOnVendorDashboard) {
+              if (isVendorMode) {
                 setShowFollowersList(true);
               } else {
                 navigate("/high-fives");
