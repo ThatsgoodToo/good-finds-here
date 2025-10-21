@@ -60,7 +60,7 @@ const VendorDashboard = () => {
   // Demo vendor data
   const vendorName = "Clay & Co.";
   const vendorImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200";
-  const location = "Portland, Oregon";
+  const location = "Boise, Idaho";
   const externalUrl = "https://clayandco.example.com";
 
   // Metrics

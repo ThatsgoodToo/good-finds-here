@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings, Upload, ExternalLink, MapPin, Edit2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import ShopperSignupPrompt from "@/components/ShopperSignupPrompt";
 
 interface VendorHeaderProps {
   vendorName: string;
@@ -36,6 +38,7 @@ const VendorHeader = ({
 }: VendorHeaderProps) => {
   const navigate = useNavigate();
   const { roles, activeRole, setActiveRole } = useAuth();
+  const [showShopperSignupPrompt, setShowShopperSignupPrompt] = React.useState(false);
 
   return (
     <div className="border-b border-border bg-card">
@@ -84,32 +87,37 @@ const VendorHeader = ({
           </div>
 
           <div className="flex items-center gap-3">
-            {roles.length > 1 && (
-              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
-                <Button
-                  variant={activeRole === "shopper" ? "default" : "ghost"}
-                  size="sm"
-                  className="px-4"
-                  onClick={() => {
+            {/* Toggle between Vendor and Shopper - Always visible */}
+            <div className="flex items-center gap-2 border rounded-lg p-1">
+              <Button
+                variant={activeRole === "shopper" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  if (roles.includes("shopper")) {
                     setActiveRole("shopper");
                     navigate("/dashboard/shopper");
-                  }}
-                >
-                  Shopper
-                </Button>
-                <Button
-                  variant={activeRole === "vendor" ? "default" : "ghost"}
-                  size="sm"
-                  className="px-4"
-                  onClick={() => {
+                  } else {
+                    setShowShopperSignupPrompt(true);
+                  }
+                }}
+              >
+                Shopper
+              </Button>
+              <Button
+                variant={activeRole === "vendor" || !roles.includes("shopper") ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  if (roles.includes("shopper")) {
                     setActiveRole("vendor");
                     navigate("/dashboard/vendor");
-                  }}
-                >
-                  Vendor
-                </Button>
-              </div>
-            )}
+                  } else {
+                    setShowShopperSignupPrompt(true);
+                  }
+                }}
+              >
+                Vendor
+              </Button>
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -164,6 +172,11 @@ const VendorHeader = ({
           </div>
         )}
       </div>
+
+      <ShopperSignupPrompt 
+        open={showShopperSignupPrompt} 
+        onOpenChange={setShowShopperSignupPrompt}
+      />
     </div>
   );
 };

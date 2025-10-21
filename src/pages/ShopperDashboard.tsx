@@ -59,6 +59,7 @@ import SearchBar from "@/components/SearchBar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import VendorSignupPrompt from "@/components/VendorSignupPrompt";
 
 interface FolderItem {
   id: string;
@@ -79,6 +80,7 @@ interface Folder {
 
 const ShopperDashboard = () => {
   const { user, userRole, roles, activeRole, setActiveRole } = useAuth();
+  const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [activeTab, setActiveTab] = useState("high-fives");
@@ -522,33 +524,39 @@ const ShopperDashboard = () => {
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Toggle between Vendor and Shopper - Show if user has both roles */}
-                {roles.length > 1 && (
-                  <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
-                    <Button
-                      variant={activeRole === "shopper" ? "default" : "ghost"}
-                      size="sm"
-                      className="px-4"
-                      onClick={() => {
+                {/* Toggle between Vendor and Shopper - Always visible */}
+                <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
+                  <Button
+                    variant={activeRole === "shopper" || !roles.includes("vendor") ? "default" : "ghost"}
+                    size="sm"
+                    className="px-4"
+                    onClick={() => {
+                      if (roles.includes("vendor")) {
                         setActiveRole("shopper");
                         navigate("/dashboard/shopper");
-                      }}
-                    >
-                      Shopper
-                    </Button>
-                    <Button
-                      variant={activeRole === "vendor" ? "default" : "ghost"}
-                      size="sm"
-                      className="px-4"
-                      onClick={() => {
+                      } else {
+                        setShowVendorSignupPrompt(true);
+                      }
+                    }}
+                  >
+                    Shopper
+                  </Button>
+                  <Button
+                    variant={activeRole === "vendor" ? "default" : "ghost"}
+                    size="sm"
+                    className="px-4"
+                    onClick={() => {
+                      if (roles.includes("vendor")) {
                         setActiveRole("vendor");
                         navigate("/dashboard/vendor");
-                      }}
-                    >
-                      Vendor
-                    </Button>
-                  </div>
-                )}
+                      } else {
+                        setShowVendorSignupPrompt(true);
+                      }
+                    }}
+                  >
+                    Vendor
+                  </Button>
+                </div>
                 
                 {/* Settings Gear Icon */}
                 <DropdownMenu>
@@ -1337,6 +1345,10 @@ const ShopperDashboard = () => {
       </Dialog>
 
       <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
+      <VendorSignupPrompt 
+        open={showVendorSignupPrompt} 
+        onOpenChange={setShowVendorSignupPrompt}
+      />
     </div>
   );
 };
