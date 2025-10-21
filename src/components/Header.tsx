@@ -1,6 +1,6 @@
 import { Hand, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import VendorFollowersList from "@/components/VendorFollowersList";
@@ -25,11 +25,13 @@ interface HeaderProps {
 
 const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYourGoodsClick }: HeaderProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, userRole, activeRole, signOut } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showFollowersList, setShowFollowersList] = useState(false);
   
   const effectiveRole = activeRole ?? userRole;
+  const isOnVendorDashboard = location.pathname.includes('/dashboard/vendor');
   
   const handleYourGoodsClick = () => {
     if (!user) {
@@ -80,7 +82,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
           {/* Hi Fives - Hand Icon */}
           <button 
             onClick={() => {
-              if (effectiveRole === "vendor") {
+              if (isOnVendorDashboard) {
                 setShowFollowersList(true);
               } else {
                 navigate("/high-fives");
