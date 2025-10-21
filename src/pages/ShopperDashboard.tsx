@@ -1047,17 +1047,19 @@ const ShopperDashboard = () => {
                     <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(item.type))} />
                   </div>
                   <button
-                    className="absolute top-2 right-2 p-2 bg-background/90 rounded-full hover:bg-background transition-colors"
+                    className={cn(
+                      "absolute top-2 right-2 p-2 rounded-full shadow-md transition-all",
+                      item.saved
+                        ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                        : "bg-background/90 hover:bg-background text-foreground"
+                    )}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleToggleSave(selectedFolder.id, item.id);
                     }}
                   >
                     <Hand 
-                      className={cn(
-                        "h-5 w-5 transition-all",
-                        item.saved ? "fill-[hsl(var(--product))] text-[hsl(var(--product))]" : "text-muted-foreground"
-                      )} 
+                      className={cn("h-5 w-5", item.saved && "fill-current")} 
                     />
                   </button>
                 </div>

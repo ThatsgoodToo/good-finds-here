@@ -23,12 +23,15 @@ interface ProductCardProps {
   categories: CategoryType[];
   vendor: string;
   vendorId: string;
+  isSaved?: boolean;
+  onSaveToggle?: () => void;
 }
 
-const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: ProductCardProps) => {
+const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, isSaved = false, onSaveToggle }: ProductCardProps) => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [folders, setFolders] = useState(["Favorites", "Wishlist", "For Later"]);
+  const [saved, setSaved] = useState(isSaved);
 
   // Determine listing path based on categories
   const getListingPath = () => {
@@ -47,10 +50,21 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: 
   };
 
   const handleHighFive = () => {
-    setShowSaveDialog(true);
+    if (saved && onSaveToggle) {
+      // If already saved, toggle it off directly
+      setSaved(false);
+      onSaveToggle();
+    } else {
+      // If not saved, show dialog to choose folder
+      setShowSaveDialog(true);
+    }
   };
 
   const handleSave = (folder: string) => {
+    setSaved(true);
+    if (onSaveToggle) {
+      onSaveToggle();
+    }
     toast.success(`Saved to ${folder}!`, {
       description: `${title} has been added to your collection.`,
     });
@@ -88,9 +102,14 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: 
           variant="ghost"
           size="icon"
           onClick={handleHighFive}
-          className="absolute top-2 right-2 z-10 bg-background/90 hover:bg-background text-foreground shadow-md"
+          className={cn(
+            "absolute top-2 right-2 z-10 shadow-md transition-all",
+            saved
+              ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+              : "bg-background/90 hover:bg-background text-foreground"
+          )}
         >
-          <Hand className="h-5 w-5" />
+          <Hand className={cn("h-5 w-5", saved && "fill-current")} />
         </Button>
 
         {/* Image with max width constraint */}

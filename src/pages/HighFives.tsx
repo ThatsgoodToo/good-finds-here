@@ -237,11 +237,12 @@ const HighFives = () => {
     },
   ];
 
-  const getTypeDotColor = (type: "product" | "service" | "experience") => {
+  const getTypeDotColor = (type: "product" | "service" | "experience" | "sale") => {
     switch (type) {
-      case "product": return "bg-green-500";
-      case "service": return "bg-blue-500";
-      case "experience": return "bg-purple-500";
+      case "product": return "bg-category-product";
+      case "service": return "bg-category-service";
+      case "experience": return "bg-category-experience";
+      case "sale": return "bg-category-sale";
     }
   };
 
