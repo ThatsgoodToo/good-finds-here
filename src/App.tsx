@@ -20,6 +20,17 @@ import VideoListing from "./pages/VideoListing";
 import HighFives from "./pages/HighFives";
 import ShopperProfile from "./pages/ShopperProfile";
 import NotFound from "./pages/NotFound";
+import AccountSettings from "./pages/settings/AccountSettings";
+import ProfileSettings from "./pages/settings/ProfileSettings";
+import NotificationSettings from "./pages/settings/NotificationSettings";
+import Messages from "./pages/settings/Messages";
+import VendorSettings from "./pages/settings/VendorSettings";
+import PrivacySettings from "./pages/settings/PrivacySettings";
+import HelpPage from "./pages/HelpPage";
+import SupportPage from "./pages/SupportPage";
+import AboutPage from "./pages/AboutPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +58,22 @@ const App = () => {
               <Route path="/listing/video/:listingId" element={<VideoListing />} />
               <Route path="/high-fives" element={<HighFives />} />
               <Route path="/shopper/:shopperId" element={<ShopperProfile />} />
+              
+              {/* Settings Routes */}
+              <Route path="/settings/account" element={<AccountSettings />} />
+              <Route path="/settings/profile" element={<ProfileSettings />} />
+              <Route path="/settings/notifications" element={<NotificationSettings />} />
+              <Route path="/settings/messages" element={<Messages />} />
+              <Route path="/settings/vendor" element={<VendorSettings />} />
+              <Route path="/settings/privacy" element={<PrivacySettings />} />
+              
+              {/* Info Pages */}
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
               </Routes>

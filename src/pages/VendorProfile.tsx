@@ -140,12 +140,11 @@ const VendorProfile = () => {
     { id: "3", name: "Favorites" },
   ];
 
-  const getTypeDotColor = (type: "product" | "service" | "experience") => {
-    switch (type) {
-      case "product": return "bg-green-500";
-      case "service": return "bg-blue-500";
-      case "experience": return "bg-purple-500";
-    }
+  const categoryColors: Record<string, string> = {
+    sale: "bg-category-sale",
+    experience: "bg-category-experience",
+    product: "bg-category-product",
+    service: "bg-category-service",
   };
 
   const handleHighFive = () => {
@@ -251,8 +250,8 @@ const VendorProfile = () => {
                         />
                         
                         {/* Top-left type indicator */}
-                        <div className="absolute top-2 left-2">
-                          <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
+                        <div className="absolute top-2 left-2 flex gap-1.5">
+                          <div className={cn("h-3 w-3 rounded-full ring-2 ring-[#1a1a1a]", categoryColors[listing.type] || "bg-category-product")} />
                         </div>
                         
                         {/* High-Five Button */}
@@ -422,7 +421,7 @@ const VendorProfile = () => {
                         {offers.map((offer) => (
                           <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className={cn("h-2 w-2 rounded-full shrink-0", getTypeDotColor(offer.type as any))} />
+                              <div className={cn("h-2 w-2 rounded-full ring-2 ring-[#1a1a1a] shrink-0", categoryColors[offer.type] || "bg-category-product")} />
                               <span className="text-muted-foreground truncate">{offer.title}</span>
                             </div>
                             <Button 
@@ -464,7 +463,7 @@ const VendorProfile = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <div className={cn("h-2 w-2 rounded-full shrink-0", getTypeDotColor(relatedVendor.type))} />
+                            <div className={cn("h-2 w-2 rounded-full ring-2 ring-[#1a1a1a] shrink-0", categoryColors[relatedVendor.type] || "bg-category-product")} />
                             <h3 className="font-semibold text-sm truncate">{relatedVendor.name}</h3>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">{relatedVendor.category}</p>
