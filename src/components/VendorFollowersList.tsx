@@ -100,13 +100,13 @@ const VendorFollowersList = ({ open, onOpenChange }: VendorFollowersListProps) =
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant="outline"
                     onClick={() => {
                       setSelectedFollower({ id: follower.id, name: follower.name });
                       setShareDialogOpen(true);
                     }}
                   >
-                    <Gift className="h-4 w-4" />
+                    <Gift className="h-4 w-4 mr-2" />
+                    Share Coupon
                   </Button>
                   <Button
                     size="sm"
