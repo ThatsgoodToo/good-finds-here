@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,12 +68,16 @@ interface VendorApplication {
 
 const VendorSignup = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const isDualRole = searchParams.get('promo') === 'DUAL_ROLE';
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showTermsDialog, setShowTermsDialog] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
+  const [isExistingUser, setIsExistingUser] = useState(false);
   const [authData, setAuthData] = useState({
     fullName: "",
     email: "",
@@ -105,7 +110,7 @@ const VendorSignup = () => {
     exclusive_offers: "",
     promotion_social_channels: "",
     future_website: "",
-    promo_code: "",
+    promo_code: isDualRole ? "DUAL_ROLE" : "",
     subscription_type: "standard",
     payment_method_saved: false,
     additional_info: "",
@@ -114,6 +119,34 @@ const VendorSignup = () => {
     agrees_to_terms: false,
     receive_updates: false,
   });
+
+  // Check if user is already authenticated and load their data
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user && isDualRole) {
+        setIsExistingUser(true);
+        setShowWelcome(false);
+        setShowAuth(false);
+        
+        // Load existing profile data
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          setAuthData({
+            fullName: profile.full_name || "",
+            email: profile.email || user.email || "",
+            password: "", // Not needed for existing users
+          });
+        }
+      }
+    };
+
+    loadUserData();
+  }, [user, isDualRole]);
 
   const totalSteps = 7;
   const progress = ((currentStep + 1) / totalSteps) * 100;
@@ -232,18 +265,55 @@ const VendorSignup = () => {
     setLoading(true);
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       
-      if (!user) {
+      if (!currentUser) {
         toast.error("Please sign in to submit your application");
         navigate("/auth");
         return;
       }
 
+      // For dual role users, check if they already have a shopper subscription
+      if (isDualRole && isExistingUser) {
+        const { data: existingSub } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .eq('status', 'active')
+          .single();
+
+        // If they have an active subscription, they don't need a new one
+        if (existingSub) {
+          // Just submit the application without creating new subscription
+          const { error } = await supabase
+            .from('vendor_applications')
+            .insert([{
+              user_id: currentUser.id,
+              ...formData,
+              status: 'pending'
+            }]);
+
+          if (error) throw error;
+
+          // Update profile name if changed
+          if (authData.fullName) {
+            await supabase
+              .from('profiles')
+              .update({ full_name: authData.fullName })
+              .eq('id', currentUser.id);
+          }
+
+          toast.success("Application submitted! You can now list products as a vendor.");
+          setCurrentStep(totalSteps); // Show thank you page
+          return;
+        }
+      }
+
+      // Regular submission for new vendors
       const { error } = await supabase
         .from('vendor_applications')
         .insert([{
-          user_id: user.id,
+          user_id: currentUser.id,
           ...formData,
           status: 'pending'
         }]);
@@ -319,7 +389,7 @@ const VendorSignup = () => {
             </Card>
             )}
 
-            {showAuth && (
+            {showAuth && !isExistingUser && (
             <Card className="w-full max-w-md">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold">
@@ -482,6 +552,30 @@ const VendorSignup = () => {
               {/* Page 1: Basic Info */}
               {currentStep === 0 && (
                 <>
+                  {isExistingUser && (
+                    <div className="p-4 bg-primary/10 rounded-lg mb-4">
+                      <h3 className="font-semibold mb-2">Welcome Back!</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        You're already signed in. Optionally update your name below, then continue with your vendor application.
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="updateName">
+                          Full Name (optional - leave as is if you don't want to change)
+                        </Label>
+                        <Input
+                          id="updateName"
+                          type="text"
+                          placeholder={authData.fullName || "Current name"}
+                          value={authData.fullName}
+                          onChange={(e) => setAuthData({ ...authData, fullName: e.target.value })}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Verified email: <strong>{authData.email}</strong>
+                      </p>
+                    </div>
+                  )}
+                  
                   <div>
                     <Label htmlFor="website">Website / Social Media Link *</Label>
                     <Input
@@ -843,14 +937,37 @@ const VendorSignup = () => {
 
               {/* Page 6: Subscription - Using PaymentStep component */}
               {currentStep === 5 && (
-                <div className="-m-6">
-                  <PaymentStep
-                    promoCode={formData.promo_code}
-                    onPromoCodeChange={(code) => updateField('promo_code', code)}
-                    onNext={handleNext}
-                    onBack={handleBack}
-                  />
-                </div>
+                <>
+                  {isExistingUser && isDualRole ? (
+                    <div className="space-y-6">
+                      <div className="p-6 bg-primary/10 rounded-lg text-center">
+                        <h3 className="text-lg font-semibold mb-2">You're All Set!</h3>
+                        <p className="text-muted-foreground">
+                          You already have an active subscription as a shopper. Your vendor application will use the same subscription - no additional payment needed.
+                        </p>
+                      </div>
+                      <div className="flex gap-3 justify-between">
+                        <Button type="button" variant="outline" onClick={handleBack}>
+                          <ChevronLeft className="mr-2 h-4 w-4" />
+                          Back
+                        </Button>
+                        <Button type="button" onClick={handleNext}>
+                          Continue
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="-m-6">
+                      <PaymentStep
+                        promoCode={formData.promo_code}
+                        onPromoCodeChange={(code) => updateField('promo_code', code)}
+                        onNext={handleNext}
+                        onBack={handleBack}
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Page 7: Confirmation & Agreements */}
