@@ -50,10 +50,13 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
   };
 
   const handleHighFive = () => {
-    if (saved && onSaveToggle) {
+    if (saved) {
       // If already saved, toggle it off directly
       setSaved(false);
-      onSaveToggle();
+      if (onSaveToggle) {
+        onSaveToggle();
+      }
+      toast.success("Removed from collection");
     } else {
       // If not saved, show dialog to choose folder
       setShowSaveDialog(true);

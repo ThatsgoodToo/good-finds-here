@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
@@ -16,6 +17,7 @@ type FilterType = "all" | CategoryType;
 
 const Index = () => {
   const { user, userRole } = useAuth();
+  const navigate = useNavigate();
   const [isMapView, setIsMapView] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [hasSearched, setHasSearched] = useState(false);
@@ -70,9 +72,9 @@ const Index = () => {
 
   const handleYourGoodsClick = () => {
     if (userRole === "shopper") {
-      window.location.href = "/dashboard/shopper";
+      navigate("/dashboard/shopper");
     } else if (userRole === "vendor") {
-      window.location.href = "/dashboard/vendor";
+      navigate("/dashboard/vendor");
     }
   };
 

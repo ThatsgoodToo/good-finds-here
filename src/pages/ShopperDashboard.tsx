@@ -315,11 +315,13 @@ const ShopperDashboard = () => {
     },
   ];
 
-  const getTypeDotColor = (type: "product" | "service" | "experience") => {
+  const getTypeDotColor = (type: "product" | "service" | "experience" | "sale") => {
     switch (type) {
       case "product": return "bg-[hsl(var(--product))]";
       case "service": return "bg-[hsl(var(--service))]";
       case "experience": return "bg-[hsl(var(--experience))]";
+      case "sale": return "bg-[hsl(var(--sale))]";
+      default: return "bg-foreground";
     }
   };
 

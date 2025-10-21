@@ -95,26 +95,28 @@ const FilterBar = ({
             </Button>
           ))}
           
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant={viewMode === "gallery" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => onViewModeChange?.("gallery")}
-              className="h-8 w-8"
-              title="Gallery view"
-            >
-              <Grid3x3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => onViewModeChange?.("list")}
-              className="h-8 w-8"
-              title="List view"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+          {onViewModeChange && (
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant={viewMode === "gallery" ? "default" : "ghost"}
+                size="icon"
+                onClick={() => onViewModeChange("gallery")}
+                className="h-8 w-8"
+                title="Gallery view"
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="icon"
+                onClick={() => onViewModeChange("list")}
+                className="h-8 w-8"
+                title="List view"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
         
         {/* Active Filters Display - Below main row */}

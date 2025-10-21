@@ -77,11 +77,13 @@ const VendorNewListing = () => {
         if (data) {
           setListingType(data.listing_type as ListingType);
           setTitle(data.title);
-          setDescription(data.description);
+          setDescription(data.description || "");
           setPrice(data.price?.toString() || "");
           setIsFree(!data.price || data.price === 0);
           setCategory(data.category || "");
           setSubcategories(data.categories || []);
+          
+          // Load media
           if (data.image_url) {
             setImages([data.image_url]);
           }
