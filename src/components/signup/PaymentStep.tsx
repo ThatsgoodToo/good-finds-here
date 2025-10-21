@@ -136,7 +136,7 @@ const PaymentStep = ({ promoCode, onPromoCodeChange, onNext, onBack, onTrialSele
               <div className="space-y-3">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter code (e.g., THATSGOODTOO25)"
+                    placeholder="Enter code"
                     value={promoCode}
                     onChange={(e) => {
                       const upperValue = e.target.value.toUpperCase();

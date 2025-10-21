@@ -5,7 +5,7 @@ interface Product {
   title: string;
   price: string;
   image: string;
-  category: CategoryType;
+  categories: CategoryType[];
   vendor: string;
   vendorId: string;
 }

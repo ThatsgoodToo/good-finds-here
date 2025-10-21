@@ -220,9 +220,12 @@ export type Database = {
       }
       listings: {
         Row: {
+          categories: string[] | null
           category: string
           created_at: string
           description: string
+          generic_category: string | null
+          generic_subcategory: string | null
           id: string
           image_url: string | null
           is_featured: boolean | null
@@ -237,9 +240,12 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          categories?: string[] | null
           category: string
           created_at?: string
           description: string
+          generic_category?: string | null
+          generic_subcategory?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
@@ -254,9 +260,12 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          categories?: string[] | null
           category?: string
           created_at?: string
           description?: string
+          generic_category?: string | null
+          generic_subcategory?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean | null

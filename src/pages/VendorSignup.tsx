@@ -807,7 +807,7 @@ const VendorSignup = () => {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Required for products/services; optional for content
+                      Products/services must always have one active exclusive offer; free content does not require one. This ensures paid listings are always attractive and actionable for shoppers.
                     </p>
                   </div>
 

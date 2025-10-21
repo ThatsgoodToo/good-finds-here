@@ -19,18 +19,18 @@ interface ProductCardProps {
   title: string;
   price: string;
   image: string;
-  category: CategoryType;
+  categories: CategoryType[];
   vendor: string;
   vendorId: string;
 }
 
-const ProductCard = ({ id, title, price, image, category, vendor, vendorId }: ProductCardProps) => {
+const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: ProductCardProps) => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
-  // Determine listing path based on category
+  // Determine listing path based on categories
   const getListingPath = () => {
     // For demo purposes, map categories to listing types
-    if (category === "service" || category === "experience") {
+    if (categories.includes("service") || categories.includes("experience")) {
       return `/listing/video/${id}`;
     }
     return `/listing/product/${id}`;
@@ -57,9 +57,14 @@ const ProductCard = ({ id, title, price, image, category, vendor, vendorId }: Pr
   return (
     <>
       <div className="group relative overflow-hidden rounded-lg bg-transparent border-none transition-all hover:shadow-lg animate-scale-in">
-        {/* Category Dot */}
-        <div className="absolute top-3 left-3 z-10">
-          <div className={cn("w-3 h-3 rounded-full", categoryColors[category])} />
+        {/* Category Dots - Multiple if applicable */}
+        <div className="absolute top-3 left-3 z-10 flex gap-1.5">
+          {categories.map((cat, index) => (
+            <div 
+              key={`${cat}-${index}`}
+              className={cn("w-3 h-3 rounded-full", categoryColors[cat])} 
+            />
+          ))}
         </div>
 
         {/* High-Five Button */}

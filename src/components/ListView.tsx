@@ -6,7 +6,7 @@ interface Product {
   title: string;
   price: string;
   image: string;
-  category: CategoryType;
+  categories: CategoryType[];
   vendor: string;
   vendorId: string;
 }
@@ -16,8 +16,8 @@ interface ListViewProps {
 }
 
 const ListView = ({ products }: ListViewProps) => {
-  const getListingPath = (category: CategoryType, id: string) => {
-    if (category === "service" || category === "experience") {
+  const getListingPath = (categories: CategoryType[], id: string) => {
+    if (categories.includes("service") || categories.includes("experience")) {
       return `/listing/video/${id}`;
     }
     return `/listing/product/${id}`;
@@ -29,7 +29,7 @@ const ListView = ({ products }: ListViewProps) => {
         {products.map((product) => (
           <Link 
             key={product.id} 
-            to={getListingPath(product.category, product.id)}
+            to={getListingPath(product.categories, product.id)}
             className="flex gap-4 bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-shadow"
           >
             <div className="w-32 h-32 shrink-0">
