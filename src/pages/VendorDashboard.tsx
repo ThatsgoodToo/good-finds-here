@@ -14,6 +14,8 @@ import VendorFilters from "@/components/dashboard/vendor/VendorFilters";
 import ManageListings from "@/components/dashboard/vendor/ManageListings";
 import CouponForm from "@/components/dashboard/vendor/CouponForm";
 import CouponList from "@/components/dashboard/vendor/CouponList";
+import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
+import { useVendorShareLimits } from "@/hooks/useVendorShareLimits";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,6 +45,10 @@ const VendorDashboard = () => {
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [refreshCoupons, setRefreshCoupons] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedShopper, setSelectedShopper] = useState<{ id: string; name: string } | null>(null);
+  
+  const { sharesRemaining, maxShares } = useVendorShareLimits();
   const [vendorDescription, setVendorDescription] = useState(
     "Handcrafted ceramics and pottery made with sustainable practices. Family-owned business since 2015."
   );
@@ -152,7 +158,10 @@ const VendorDashboard = () => {
 
   const handleSendOffer = (visitorId: string) => {
     const visitor = recentVisitors.find((v) => v.id === visitorId);
-    toast.success(`Offer sent to ${visitor?.name}!`);
+    if (visitor) {
+      setSelectedShopper({ id: visitorId, name: visitor.name });
+      setShareDialogOpen(true);
+    }
   };
 
   const handleUploadImage = () => {
@@ -283,7 +292,7 @@ const VendorDashboard = () => {
                       <CardTitle>Your Hi Fives</CardTitle>
                       <CardDescription>Shoppers who saved you to their favorites</CardDescription>
                     </div>
-                    <Badge variant="secondary">20 offers remaining this month</Badge>
+                    <Badge variant="secondary">{sharesRemaining}/{maxShares} offers remaining this month</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -341,6 +350,16 @@ const VendorDashboard = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Share Coupon Dialog */}
+      {selectedShopper && (
+        <ShareCouponDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          shopperId={selectedShopper.id}
+          shopperName={selectedShopper.name}
+        />
+      )}
 
       <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
