@@ -70,15 +70,25 @@ const ProductListing = () => {
   };
 
   const moreFromVendor = [
-    { id: "1", title: "Denim Jacket", image: product.images[0] },
-    { id: "2", title: "Leather Belt", image: product.images[0] },
-    { id: "3", title: "Canvas Bag", image: product.images[0] },
+    { id: "1", title: "Denim Jacket", image: product.images[0], types: ["product"] },
+    { id: "2", title: "Leather Belt", image: product.images[0], types: ["product"] },
+    { id: "3", title: "Canvas Bag", image: product.images[0], types: ["product"] },
   ];
 
   const relatedListings = [
-    { id: "1", title: "Similar Shirt", vendor: "Another Brand", image: product.images[0] },
-    { id: "2", title: "Handwoven Top", vendor: "Artisan Co", image: product.images[0] },
+    { id: "1", title: "Similar Shirt", vendor: "Another Brand", image: product.images[0], types: ["product"] },
+    { id: "2", title: "Handwoven Top", vendor: "Artisan Co", image: product.images[0], types: ["product"] },
   ];
+
+  const categoryColors: Record<string, string> = {
+    product: "bg-category-product",
+    service: "bg-category-service",
+    material: "bg-category-material",
+    music: "bg-category-music",
+    video: "bg-category-video",
+    food: "bg-category-food",
+    wellness: "bg-category-wellness",
+  };
 
   const folders = [
     { id: "1", name: "Travel" },
@@ -292,7 +302,19 @@ const ProductListing = () => {
               {moreFromVendor.map((item) => (
                 <Card key={item.id} className="shrink-0 w-48 cursor-pointer hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
-                    <img src={item.image} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" loading="lazy" />
+                    <div className="relative">
+                      <img src={item.image} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" loading="lazy" />
+                      {item.types && item.types.length > 0 && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          {item.types.map((type: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="p-3">
                       <p className="text-sm font-medium">{item.title}</p>
                     </div>
@@ -309,7 +331,19 @@ const ProductListing = () => {
               {relatedListings.map((item) => (
                 <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
-                    <img src={item.image} alt={item.title} className="w-full h-40 object-cover rounded-t-lg" loading="lazy" />
+                    <div className="relative">
+                      <img src={item.image} alt={item.title} className="w-full h-40 object-cover rounded-t-lg" loading="lazy" />
+                      {item.types && item.types.length > 0 && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          {item.types.map((type: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="p-3">
                       <p className="text-sm font-medium">{item.title}</p>
                       <p className="text-xs text-muted-foreground">{item.vendor}</p>

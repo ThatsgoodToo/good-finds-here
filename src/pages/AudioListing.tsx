@@ -66,15 +66,25 @@ const AudioListing = () => {
   };
 
   const moreFromVendor = [
-    { id: "1", title: "Echoes", image: audio.coverArt },
-    { id: "2", title: "Resonance", image: audio.coverArt },
-    { id: "3", title: "Drift", image: audio.coverArt },
+    { id: "1", title: "Echoes", image: audio.coverArt, types: ["music"] },
+    { id: "2", title: "Resonance", image: audio.coverArt, types: ["music"] },
+    { id: "3", title: "Drift", image: audio.coverArt, types: ["music"] },
   ];
 
   const relatedListings = [
-    { id: "1", title: "Deep Focus", vendor: "Sound Artist", image: audio.coverArt },
-    { id: "2", title: "Night Waves", vendor: "Ambient Collective", image: audio.coverArt },
+    { id: "1", title: "Deep Focus", vendor: "Sound Artist", image: audio.coverArt, types: ["music"] },
+    { id: "2", title: "Night Waves", vendor: "Ambient Collective", image: audio.coverArt, types: ["music"] },
   ];
+
+  const categoryColors: Record<string, string> = {
+    product: "bg-category-product",
+    service: "bg-category-service",
+    material: "bg-category-material",
+    music: "bg-category-music",
+    video: "bg-category-video",
+    food: "bg-category-food",
+    wellness: "bg-category-wellness",
+  };
 
   const folders = [
     { id: "1", name: "Music" },
@@ -270,7 +280,19 @@ const AudioListing = () => {
               {moreFromVendor.map((item) => (
                 <Card key={item.id} className="shrink-0 w-48 cursor-pointer hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
-                    <img src={item.image} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" loading="lazy" />
+                    <div className="relative">
+                      <img src={item.image} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" loading="lazy" />
+                      {item.types && item.types.length > 0 && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          {item.types.map((type: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="p-3">
                       <p className="text-sm font-medium">{item.title}</p>
                     </div>
@@ -287,7 +309,19 @@ const AudioListing = () => {
               {relatedListings.map((item) => (
                 <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
-                    <img src={item.image} alt={item.title} className="w-full h-40 object-cover rounded-t-lg" loading="lazy" />
+                    <div className="relative">
+                      <img src={item.image} alt={item.title} className="w-full h-40 object-cover rounded-t-lg" loading="lazy" />
+                      {item.types && item.types.length > 0 && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          {item.types.map((type: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="p-3">
                       <p className="text-sm font-medium">{item.title}</p>
                       <p className="text-xs text-muted-foreground">{item.vendor}</p>

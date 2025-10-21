@@ -68,15 +68,25 @@ const VideoListing = () => {
   };
 
   const moreFromVendor = [
-    { id: "1", title: "City Lights", image: video.thumbnails[0] },
-    { id: "2", title: "Street Stories", image: video.thumbnails[0] },
-    { id: "3", title: "Urban Poetry", image: video.thumbnails[0] },
+    { id: "1", title: "City Lights", image: video.thumbnails[0], types: ["video"] },
+    { id: "2", title: "Street Stories", image: video.thumbnails[0], types: ["video"] },
+    { id: "3", title: "Urban Poetry", image: video.thumbnails[0], types: ["video"] },
   ];
 
   const relatedListings = [
-    { id: "1", title: "Documentary Series", vendor: "Film Collective", image: video.thumbnails[0] },
-    { id: "2", title: "Visual Essay", vendor: "Media Lab", image: video.thumbnails[0] },
+    { id: "1", title: "Documentary Series", vendor: "Film Collective", image: video.thumbnails[0], types: ["video"] },
+    { id: "2", title: "Visual Essay", vendor: "Media Lab", image: video.thumbnails[0], types: ["video"] },
   ];
+
+  const categoryColors: Record<string, string> = {
+    product: "bg-category-product",
+    service: "bg-category-service",
+    material: "bg-category-material",
+    music: "bg-category-music",
+    video: "bg-category-video",
+    food: "bg-category-food",
+    wellness: "bg-category-wellness",
+  };
 
   const folders = [
     { id: "1", name: "Videos" },
@@ -246,6 +256,16 @@ const VideoListing = () => {
                   <CardContent className="p-0">
                     <div className="relative aspect-video">
                       <img src={item.image} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
+                      {item.types && item.types.length > 0 && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          {item.types.map((type: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="p-3">
                       <p className="text-sm font-medium">{item.title}</p>
@@ -265,6 +285,16 @@ const VideoListing = () => {
                   <CardContent className="p-0">
                     <div className="relative aspect-video">
                       <img src={item.image} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
+                      {item.types && item.types.length > 0 && (
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          {item.types.map((type: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="p-3">
                       <p className="text-sm font-medium">{item.title}</p>
