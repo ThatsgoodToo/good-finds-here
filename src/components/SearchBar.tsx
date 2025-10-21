@@ -60,7 +60,7 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               placeholder="WHAT ARE YOU LOOKING FOR?"
-              className="pl-12 pr-24 h-14 bg-card text-foreground placeholder:text-muted-foreground/60 border-none rounded-full text-sm uppercase tracking-wide w-full"
+              className="pl-12 pr-24 h-14 bg-stone-50 dark:bg-card text-foreground placeholder:text-muted-foreground/60 border-none rounded-full text-sm uppercase tracking-wide w-full"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <Button
@@ -127,7 +127,7 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Search..."
-              className="pl-9 pr-20 h-11 bg-input border-border text-foreground placeholder:text-muted-foreground text-sm rounded-full"
+              className="pl-9 pr-20 h-11 bg-stone-50 dark:bg-input border-border text-foreground placeholder:text-muted-foreground text-sm rounded-full"
             />
             <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
               <Button
