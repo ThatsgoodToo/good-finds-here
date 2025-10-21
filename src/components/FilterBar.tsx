@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Grid3x3, List, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeft, Grid3x3, List, X } from "lucide-react";
 
 type FilterType = "all" | "product" | "service" | "experience" | "sale";
 
@@ -53,8 +53,8 @@ const FilterBar = ({
   return (
     <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm border-b border-border py-4 animate-fade-in">
       <div className="container mx-auto px-4">
-        {/* Single Row: Back Button, Search, Filters, Edit, View Toggle */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Single Row: Back Button, Search, Filters, View Toggle - Horizontal Scroll */}
+        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
           {onBack && (
             <Button
               variant="ghost"
@@ -73,7 +73,7 @@ const FilterBar = ({
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-40 sm:w-48"
+            className="w-40 sm:w-48 shrink-0"
           />
           
           {/* Filter Buttons */}
@@ -95,17 +95,7 @@ const FilterBar = ({
             </Button>
           ))}
           
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-2"
-            title="Edit filters"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Edit Filters
-          </Button>
-          
-          <div className="ml-auto flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <Button
               variant={viewMode === "gallery" ? "default" : "ghost"}
               size="icon"
