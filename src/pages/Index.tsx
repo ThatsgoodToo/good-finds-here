@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
+import OnboardingTutorial from "@/components/OnboardingTutorial";
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import MasonryGallery from "@/components/MasonryGallery";
@@ -177,6 +178,8 @@ const Index = () => {
         onHighFiveClick={handleHighFiveClick}
         onYourGoodsClick={handleYourGoodsClick}
       />
+      
+      <OnboardingTutorial />
       
       <main className="pt-16 sm:pt-20">
         {/* Hero search (centered) or bottom search bar */}

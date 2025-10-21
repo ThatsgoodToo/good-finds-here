@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import SignupModal from "@/components/SignupModal";
+import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Users, BarChart3, Tag, Hand } from "lucide-react";
 import Header from "@/components/Header";
@@ -196,6 +197,8 @@ const VendorDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+
+      <OnboardingTutorial />
 
       <main className="pt-16 sm:pt-20 pb-12">
         <VendorHeader

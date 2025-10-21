@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import SignupModal from "@/components/SignupModal";
+import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -431,6 +432,8 @@ const ShopperDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      <OnboardingTutorial />
       
       <main className="pt-16 sm:pt-20 pb-24">
         {/* Dashboard Header */}
