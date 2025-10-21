@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import SignupModal from "@/components/SignupModal";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,10 @@ type ListingType = "product" | "service" | "viewerbase";
 
 const VendorNewListing = () => {
   const navigate = useNavigate();
+  const { listingId } = useParams();
   const { user } = useAuth();
+  const isEditMode = !!listingId;
+  const [loading, setLoading] = useState(false);
   const [listingType, setListingType] = useState<ListingType | "">("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -54,6 +58,45 @@ const VendorNewListing = () => {
       setShowSignupModal(true);
     }
   }, [user]);
+  
+  // Load existing listing data if in edit mode
+  useEffect(() => {
+    const loadListing = async () => {
+      if (!isEditMode || !listingId) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("listings")
+          .select("*")
+          .eq("id", listingId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setListingType(data.listing_type as ListingType);
+          setTitle(data.title);
+          setDescription(data.description);
+          setPrice(data.price?.toString() || "");
+          setIsFree(!data.price || data.price === 0);
+          setCategory(data.category || "");
+          setSubcategories(data.categories || []);
+          if (data.image_url) {
+            setImages([data.image_url]);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading listing:", error);
+        toast.error("Failed to load listing");
+        navigate("/dashboard/vendor");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadListing();
+  }, [isEditMode, listingId, navigate]);
   
   // Mock vendor data
   const vendor = {
@@ -175,7 +218,7 @@ const VendorNewListing = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validation
     if (!listingType) {
       toast.error("Please select a listing type");
@@ -202,9 +245,51 @@ const VendorNewListing = () => {
       return;
     }
 
-    // Submit listing
-    toast.success("Listing created successfully! Awaiting TGT approval.");
-    navigate("/dashboard/vendor");
+    if (!user) {
+      toast.error("You must be logged in to save a listing");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const listingData = {
+        vendor_id: user.id,
+        title: title.trim(),
+        description: description.trim(),
+        listing_type: listingType,
+        price: isFree ? 0 : parseFloat(price) || null,
+        category: category || null,
+        categories: subcategories,
+        image_url: images[0] || null,
+        status: "active"
+      };
+
+      if (isEditMode && listingId) {
+        // Update existing listing
+        const { error } = await supabase
+          .from("listings")
+          .update(listingData)
+          .eq("id", listingId);
+
+        if (error) throw error;
+        toast.success("Listing updated successfully!");
+      } else {
+        // Create new listing
+        const { error } = await supabase
+          .from("listings")
+          .insert([listingData]);
+
+        if (error) throw error;
+        toast.success("Listing created successfully!");
+      }
+      
+      navigate("/dashboard/vendor");
+    } catch (error) {
+      console.error("Error saving listing:", error);
+      toast.error(`Failed to ${isEditMode ? 'update' : 'create'} listing`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -222,7 +307,9 @@ const VendorNewListing = () => {
             <span>Back to Dashboard</span>
           </button>
 
-          <h1 className="text-2xl sm:text-3xl font-bold mb-6">Create New Listing</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-6">
+            {isEditMode ? "Edit Listing" : "Create New Listing"}
+          </h1>
 
           {/* Split Layout - Form & Preview */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -606,11 +693,11 @@ const VendorNewListing = () => {
 
               {/* Submit Buttons */}
               <div className="flex gap-4 sticky bottom-4 bg-background p-4 rounded-lg border shadow-lg">
-                <Button variant="outline" onClick={() => navigate("/dashboard/vendor")} className="flex-1">
+                <Button variant="outline" onClick={() => navigate("/dashboard/vendor")} className="flex-1" disabled={loading}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmit} className="flex-1">
-                  Submit for Approval
+                <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
+                  {loading ? "Saving..." : isEditMode ? "Update Listing" : "Create Listing"}
                 </Button>
               </div>
             </div>

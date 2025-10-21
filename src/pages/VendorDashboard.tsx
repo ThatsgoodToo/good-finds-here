@@ -191,7 +191,7 @@ const VendorDashboard = () => {
   };
 
   const handleEditListing = (id: string) => {
-    toast.info(`Edit listing ${id}`);
+    navigate(`/vendor/listing/edit/${id}`);
   };
 
   return (
