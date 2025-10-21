@@ -10,6 +10,7 @@ import ListView from "@/components/ListView";
 import MapView from "@/components/MapView";
 import { CategoryType } from "@/components/ProductCard";
 import { toast } from "sonner";
+import { mapCategoriesToTypes } from "@/lib/categoryMapping";
 
 type FilterType = "all" | CategoryType;
 
@@ -157,7 +158,7 @@ const Index = () => {
     title: listing.title,
     price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
     image: listing.image_url || "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=500",
-    categories: listing.categories || [listing.listing_type as CategoryType],
+    categories: mapCategoriesToTypes(listing.categories as string[]),
     vendor: "Local Vendor",
     vendorId: listing.vendor_id,
   }));
