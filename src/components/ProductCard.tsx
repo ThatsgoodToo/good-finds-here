@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Hand } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import {
@@ -26,6 +27,8 @@ interface ProductCardProps {
 
 const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: ProductCardProps) => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [folders, setFolders] = useState(["Favorites", "Wishlist", "For Later"]);
 
   // Determine listing path based on categories
   const getListingPath = () => {
@@ -52,6 +55,19 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: 
       description: `${title} has been added to your collection.`,
     });
     setShowSaveDialog(false);
+    setNewFolderName("");
+  };
+
+  const handleCreateFolder = () => {
+    if (newFolderName.trim() && !folders.includes(newFolderName.trim())) {
+      const folderName = newFolderName.trim();
+      setFolders([...folders, folderName]);
+      handleSave(folderName);
+    } else if (folders.includes(newFolderName.trim())) {
+      toast.error("Folder already exists");
+    } else {
+      toast.error("Please enter a folder name");
+    }
   };
 
   return (
@@ -106,31 +122,42 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: 
           <DialogHeader>
             <DialogTitle className="text-foreground">Save to My Shop</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Choose a folder to save this item
+              Choose a folder to save this item or create a new one
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Button
-              onClick={() => handleSave("Favorites")}
-              variant="outline"
-              className="w-full justify-start bg-background hover:bg-muted text-foreground"
-            >
-              Favorites
-            </Button>
-            <Button
-              onClick={() => handleSave("Wishlist")}
-              variant="outline"
-              className="w-full justify-start bg-background hover:bg-muted text-foreground"
-            >
-              Wishlist
-            </Button>
-            <Button
-              onClick={() => handleSave("For Later")}
-              variant="outline"
-              className="w-full justify-start bg-background hover:bg-muted text-foreground"
-            >
-              For Later
-            </Button>
+            {folders.map((folder) => (
+              <Button
+                key={folder}
+                onClick={() => handleSave(folder)}
+                variant="outline"
+                className="w-full justify-start bg-background hover:bg-muted text-foreground"
+              >
+                {folder}
+              </Button>
+            ))}
+            
+            {/* Create New Folder Section */}
+            <div className="pt-4 border-t border-border space-y-2">
+              <p className="text-sm font-medium text-foreground">Create New Folder</p>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Folder name"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleCreateFolder();
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button onClick={handleCreateFolder} className="shrink-0">
+                  Create
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
