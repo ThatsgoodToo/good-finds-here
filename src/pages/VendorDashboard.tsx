@@ -150,7 +150,7 @@ const VendorDashboard = () => {
   ];
 
   const mainCategories = ["Handcrafted", "Home Goods", "Art"];
-  const subcategories = ["Ceramics", "Pottery", "Sustainable", "Local", "Eco-friendly"];
+  const [subcategories, setSubcategories] = useState(["Ceramics", "Pottery", "Sustainable", "Local", "Eco-friendly"]);
 
   const handleMetricClick = (metric: string) => {
     setSelectedMetric(metric);
@@ -181,8 +181,8 @@ const VendorDashboard = () => {
     toast.success("Description updated!");
   };
 
-  const handleEditSubcategories = () => {
-    toast.info("Edit subcategories dialog");
+  const handleEditSubcategories = (newSubcategories: string[]) => {
+    setSubcategories(newSubcategories);
   };
 
   const handleAddListing = () => {
