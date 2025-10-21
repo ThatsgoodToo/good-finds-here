@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface VendorFiltersProps {
   mainCategories: string[];
@@ -26,7 +26,6 @@ const VendorFilters = ({ mainCategories, subcategories, onEditSubcategories }: V
   const [editedSubcategories, setEditedSubcategories] = useState<string[]>(subcategories);
   const [newSubcategory, setNewSubcategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
 
   const handleOpenEdit = () => {
     setEditedSubcategories(subcategories);
@@ -60,26 +59,15 @@ const VendorFilters = ({ mainCategories, subcategories, onEditSubcategories }: V
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Search and Filter Tabs on Same Line */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <div className="relative flex-1 w-full sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search filters..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-full sm:w-auto">
-              <TabsList className="grid grid-cols-5 w-full sm:w-auto">
-                <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-                <TabsTrigger value="products" className="text-xs sm:text-sm">Products</TabsTrigger>
-                <TabsTrigger value="services" className="text-xs sm:text-sm">Services</TabsTrigger>
-                <TabsTrigger value="experiences" className="text-xs sm:text-sm">Experiences</TabsTrigger>
-                <TabsTrigger value="sales" className="text-xs sm:text-sm">Sales</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          {/* Search Filters */}
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search filters..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
 
           {/* Main Categories - Locked */}
