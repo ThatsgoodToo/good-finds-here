@@ -71,6 +71,9 @@ serve(async (req) => {
       case 'create': {
         if (!coupon) throw new Error('Coupon data required');
 
+        // Normalize code to uppercase
+        coupon.code = coupon.code?.toUpperCase();
+
         // Validate coupon data
         if (!coupon.code || coupon.code.length < 3 || coupon.code.length > 20) {
           throw new Error('Code must be 3-20 characters');

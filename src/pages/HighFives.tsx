@@ -10,11 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Hand, Star, TrendingUp, Award, Sparkles, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
 
 const HighFives = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedFollower, setSelectedFollower] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -631,6 +634,14 @@ const HighFives = () => {
       </main>
 
       <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
+      {selectedFollower && (
+        <ShareCouponDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          shopperId={selectedFollower.id}
+          shopperName={selectedFollower.name}
+        />
+      )}
     </div>
   );
 };

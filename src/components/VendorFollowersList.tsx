@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { List, Map as MapIcon } from "lucide-react";
+import { List, Map as MapIcon, Gift } from "lucide-react";
+import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
 
 interface Follower {
   id: string;
@@ -26,6 +27,8 @@ interface VendorFollowersListProps {
 const VendorFollowersList = ({ open, onOpenChange }: VendorFollowersListProps) => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedFollower, setSelectedFollower] = useState<{ id: string; name: string } | null>(null);
 
   // Demo data
   const followers: Follower[] = [
@@ -94,13 +97,25 @@ const VendorFollowersList = ({ open, onOpenChange }: VendorFollowersListProps) =
                     <p className="text-xs text-muted-foreground">Followed {follower.savedDate}</p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleViewProfile(follower.id)}
-                >
-                  View Profile
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedFollower({ id: follower.id, name: follower.name });
+                      setShareDialogOpen(true);
+                    }}
+                  >
+                    <Gift className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleViewProfile(follower.id)}
+                  >
+                    View Profile
+                  </Button>
+                </div>
               </div>
             ))}
           </TabsContent>
@@ -112,6 +127,14 @@ const VendorFollowersList = ({ open, onOpenChange }: VendorFollowersListProps) =
           </TabsContent>
         </Tabs>
       </DialogContent>
+      {selectedFollower && (
+        <ShareCouponDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          shopperId={selectedFollower.id}
+          shopperName={selectedFollower.name}
+        />
+      )}
     </Dialog>
   );
 };

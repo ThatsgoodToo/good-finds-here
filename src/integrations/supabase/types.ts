@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupon_shares: {
+        Row: {
+          coupon_id: string
+          id: string
+          shared_at: string
+          shopper_id: string
+          vendor_id: string
+          viewed: boolean | null
+          viewed_at: string | null
+        }
+        Insert: {
+          coupon_id: string
+          id?: string
+          shared_at?: string
+          shopper_id: string
+          vendor_id: string
+          viewed?: boolean | null
+          viewed_at?: string | null
+        }
+        Update: {
+          coupon_id?: string
+          id?: string
+          shared_at?: string
+          shopper_id?: string
+          vendor_id?: string
+          viewed?: boolean | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_shares_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_shares_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_coupon_analytics"
+            referencedColumns: ["coupon_id"]
+          },
+        ]
+      }
       coupon_usage: {
         Row: {
           coupon_id: string

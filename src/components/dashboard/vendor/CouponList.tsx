@@ -3,10 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Copy } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Trash2, Copy, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import CouponEditForm from "./CouponEditForm";
 
 interface Coupon {
   id: string;
@@ -30,6 +32,7 @@ interface CouponListProps {
 export default function CouponList({ refresh, onRefreshComplete }: CouponListProps) {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
 
   const loadCoupons = async () => {
     try {
@@ -143,13 +146,22 @@ export default function CouponList({ refresh, onRefreshComplete }: CouponListPro
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => deleteCoupon(coupon.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditingCoupon(coupon)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => deleteCoupon(coupon.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -160,36 +172,56 @@ export default function CouponList({ refresh, onRefreshComplete }: CouponListPro
   }
 
   return (
-    <Tabs defaultValue="active" className="w-full">
-      <TabsList>
-        <TabsTrigger value="active">Active ({activeCoupons.length})</TabsTrigger>
-        <TabsTrigger value="expired">Expired ({expiredCoupons.length})</TabsTrigger>
-        <TabsTrigger value="recurring">Recurring ({recurringCoupons.length})</TabsTrigger>
-      </TabsList>
+    <>
+      <Tabs defaultValue="active" className="w-full">
+        <TabsList>
+          <TabsTrigger value="active">Active ({activeCoupons.length})</TabsTrigger>
+          <TabsTrigger value="expired">Expired ({expiredCoupons.length})</TabsTrigger>
+          <TabsTrigger value="recurring">Recurring ({recurringCoupons.length})</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="active" className="mt-4">
-        {activeCoupons.length === 0 ? (
-          <p className="text-center py-8 text-muted-foreground">No active coupons</p>
-        ) : (
-          activeCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)
-        )}
-      </TabsContent>
+        <TabsContent value="active" className="mt-4">
+          {activeCoupons.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground">No active coupons</p>
+          ) : (
+            activeCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)
+          )}
+        </TabsContent>
 
-      <TabsContent value="expired" className="mt-4">
-        {expiredCoupons.length === 0 ? (
-          <p className="text-center py-8 text-muted-foreground">No expired coupons</p>
-        ) : (
-          expiredCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)
-        )}
-      </TabsContent>
+        <TabsContent value="expired" className="mt-4">
+          {expiredCoupons.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground">No expired coupons</p>
+          ) : (
+            expiredCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)
+          )}
+        </TabsContent>
 
-      <TabsContent value="recurring" className="mt-4">
-        {recurringCoupons.length === 0 ? (
-          <p className="text-center py-8 text-muted-foreground">No recurring coupons</p>
-        ) : (
-          recurringCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)
-        )}
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="recurring" className="mt-4">
+          {recurringCoupons.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground">No recurring coupons</p>
+          ) : (
+            recurringCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)
+          )}
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={!!editingCoupon} onOpenChange={(open) => !open && setEditingCoupon(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Coupon</DialogTitle>
+          </DialogHeader>
+          {editingCoupon && (
+            <CouponEditForm
+              coupon={editingCoupon}
+              onSuccess={() => {
+                setEditingCoupon(null);
+                loadCoupons();
+              }}
+              onCancel={() => setEditingCoupon(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

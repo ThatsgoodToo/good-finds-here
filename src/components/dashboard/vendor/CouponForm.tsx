@@ -24,11 +24,11 @@ const couponSchema = z.object({
   code: z.string()
     .min(3, "Code must be at least 3 characters")
     .max(20, "Code must be at most 20 characters")
-    .regex(/^[A-Z0-9-]+$/, "Only uppercase letters, numbers, and hyphens allowed")
-    .transform(val => val.toUpperCase()),
+    .transform(val => val.toUpperCase())
+    .pipe(z.string().regex(/^[A-Z0-9-]+$/, "Only uppercase letters, numbers, and hyphens allowed")),
   discount_type: z.enum(['percentage', 'fixed_amount', 'free_shipping']),
-  discount_value: z.number().positive("Discount must be positive"),
-  max_uses: z.number().positive().int().optional().nullable(),
+  discount_value: z.coerce.number().positive("Discount must be positive"),
+  max_uses: z.coerce.number().positive().int().optional().nullable(),
   start_date: z.date(),
   end_date: z.date(),
   is_recurring: z.boolean().default(false),
@@ -137,6 +137,11 @@ export default function CouponForm({ onSuccess, onCancel }: CouponFormProps) {
             {...register("code")}
             placeholder="SAVE20"
             className="uppercase"
+            onChange={(e) => {
+              const uppercased = e.target.value.toUpperCase();
+              e.target.value = uppercased;
+              setValue("code", uppercased);
+            }}
           />
           <Button type="button" variant="outline" onClick={generateCode}>
             Generate

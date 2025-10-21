@@ -18,10 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ExternalLink, MapPin, Hand, ChevronLeft, Gift, Eye, EyeOff } from "lucide-react";
+import { ExternalLink, MapPin, Hand, ChevronLeft, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
 
 const ShopperProfile = () => {
   const navigate = useNavigate();
@@ -30,8 +30,6 @@ const ShopperProfile = () => {
   const [showActivityDialog, setShowActivityDialog] = useState(false);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponDescription, setCouponDescription] = useState("");
   const [privacySettings, setPrivacySettings] = useState({
     highFivesPublic: true,
     locationPublic: true,
@@ -139,23 +137,6 @@ const ShopperProfile = () => {
     return type === "vendor" ? "bg-green-500" : "bg-blue-500";
   };
 
-  const handleOfferCoupon = () => {
-    if (!couponCode.trim() || !couponDescription.trim()) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    // Track coupon offer
-    console.log("Coupon offered:", { couponCode, couponDescription, shopperId });
-    
-    toast.success("Exclusive coupon sent!", {
-      description: `${shopper.name} will see your offer in their dashboard.`,
-    });
-    
-    setShowCouponDialog(false);
-    setCouponCode("");
-    setCouponDescription("");
-  };
 
   const handleItemClick = (item: typeof savedItems[0]) => {
     if (item.type === "vendor") {
@@ -341,53 +322,12 @@ const ShopperProfile = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Offer Coupon Dialog */}
-      <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Offer Exclusive Coupon</DialogTitle>
-            <DialogDescription>
-              Create a special offer for {shopper.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="couponCode">Coupon Code</Label>
-              <Input
-                id="couponCode"
-                placeholder="e.g., SPECIAL15"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="couponDescription">Description</Label>
-              <Textarea
-                id="couponDescription"
-                placeholder="e.g., 15% off your next purchase"
-                value={couponDescription}
-                onChange={(e) => setCouponDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowCouponDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={handleOfferCoupon}
-              >
-                Send Offer
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ShareCouponDialog
+        open={showCouponDialog}
+        onOpenChange={setShowCouponDialog}
+        shopperId={shopper.id}
+        shopperName={shopper.name}
+      />
 
       <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>
