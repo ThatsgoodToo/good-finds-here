@@ -12,6 +12,8 @@ import MetricsChart from "@/components/dashboard/vendor/MetricsChart";
 import RecentVisitors from "@/components/dashboard/vendor/RecentVisitors";
 import VendorFilters from "@/components/dashboard/vendor/VendorFilters";
 import ManageListings from "@/components/dashboard/vendor/ManageListings";
+import CouponForm from "@/components/dashboard/vendor/CouponForm";
+import CouponList from "@/components/dashboard/vendor/CouponList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +42,7 @@ const VendorDashboard = () => {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [refreshCoupons, setRefreshCoupons] = useState(false);
   const [vendorDescription, setVendorDescription] = useState(
     "Handcrafted ceramics and pottery made with sustainable practices. Family-owned business since 2015."
   );
@@ -253,68 +256,20 @@ const VendorDashboard = () => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Active Offers</CardTitle>
-                      <CardDescription>Manage your active coupon offers across all listings</CardDescription>
+                      <CardTitle>Active Coupons</CardTitle>
+                      <CardDescription>Manage your coupon codes and promotional offers</CardDescription>
                     </div>
                     <Button onClick={() => setShowCouponDialog(true)} className="gap-2">
                       <Tag className="h-4 w-4" />
-                      New Offer
+                      New Coupon
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {listings.filter(l => l.activeOffer).length === 0 ? (
-                    <div className="text-center py-12">
-                      <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                      <h3 className="text-lg font-semibold mb-2">No Active Offers</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Create your first offer to attract more customers
-                      </p>
-                      <Button onClick={() => setShowCouponDialog(true)}>Create Offer</Button>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      {listings.filter(l => l.activeOffer).map((listing) => (
-                        <div key={listing.id} className="flex gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                          <div className="w-20 h-20 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
-                            <img 
-                              src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200" 
-                              alt={listing.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold truncate">{listing.title}</h4>
-                                <p className="text-sm text-muted-foreground">{listing.offerDetails}</p>
-                              </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <Badge variant="secondary">{listing.couponClaims} claims</Badge>
-                                <Badge 
-                                  variant="outline" 
-                                  className={
-                                    listing.type === "product" 
-                                      ? "border-category-product text-category-product" 
-                                      : "border-category-service text-category-service"
-                                  }
-                                >
-                                  {listing.type}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm text-muted-foreground">{listing.price}</p>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm">Edit</Button>
-                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">Deactivate</Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <CouponList 
+                    refresh={refreshCoupons}
+                    onRefreshComplete={() => setRefreshCoupons(false)}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -370,55 +325,20 @@ const VendorDashboard = () => {
 
       {/* Create Coupon Dialog */}
       <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Coupon</DialogTitle>
-            <DialogDescription>Set up a new coupon code for your listings</DialogDescription>
+            <DialogTitle>Create Coupon Code</DialogTitle>
+            <DialogDescription>
+              Create a new coupon code for your customers
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="coupon-code">Coupon Code</Label>
-              <Input id="coupon-code" placeholder="e.g., SAVE20" />
-            </div>
-            <div>
-              <Label htmlFor="discount">Discount</Label>
-              <Select>
-                <SelectTrigger id="discount">
-                  <SelectValue placeholder="Select discount type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="percentage">Percentage Off</SelectItem>
-                  <SelectItem value="fixed">Fixed Amount</SelectItem>
-                  <SelectItem value="shipping">Free Shipping</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="value">Value</Label>
-              <Input id="value" placeholder="e.g., 15" type="number" />
-            </div>
-            <div>
-              <Label htmlFor="claim-limit">Claim Limit (Optional)</Label>
-              <Input id="claim-limit" placeholder="Max number of claims" type="number" />
-            </div>
-            <div>
-              <Label htmlFor="expiration">Expiration Date</Label>
-              <Input id="expiration" type="date" />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowCouponDialog(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  toast.success("Coupon created!");
-                  setShowCouponDialog(false);
-                }}
-              >
-                Create Coupon
-              </Button>
-            </div>
-          </div>
+          <CouponForm 
+            onSuccess={() => {
+              setShowCouponDialog(false);
+              setRefreshCoupons(true);
+            }}
+            onCancel={() => setShowCouponDialog(false)}
+          />
         </DialogContent>
       </Dialog>
 
