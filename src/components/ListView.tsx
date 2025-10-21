@@ -32,7 +32,21 @@ const ListView = ({ products }: ListViewProps) => {
             to={getListingPath(product.categories, product.id)}
             className="flex gap-4 bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-shadow"
           >
-            <div className="w-32 h-32 shrink-0">
+            <div className="w-32 h-32 shrink-0 relative">
+              {/* Category Dots */}
+              <div className="absolute top-2 left-2 z-10 flex gap-1.5">
+                {product.categories.map((cat, index) => (
+                  <div 
+                    key={`${cat}-${index}`}
+                    className={`w-3 h-3 rounded-full ${
+                      cat === 'product' ? 'bg-category-product' :
+                      cat === 'service' ? 'bg-category-service' :
+                      cat === 'experience' ? 'bg-category-experience' :
+                      'bg-category-sale'
+                    }`}
+                  />
+                ))}
+              </div>
               <img
                 src={product.image}
                 alt={product.title}

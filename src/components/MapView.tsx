@@ -3,9 +3,9 @@ import { MapPin } from "lucide-react";
 const MapView = () => {
   // Mock vendor locations
   const vendors = [
-    { id: 1, name: "Artisan Pottery", lat: 40, lng: -100, image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200" },
-    { id: 2, name: "Local Honey", lat: 35, lng: -95, image: "https://images.unsplash.com/photo-1587049352846-4a222e784eaf?w=200" },
-    { id: 3, name: "Handmade Jewelry", lat: 42, lng: -110, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200" },
+    { id: 1, name: "Artisan Pottery", lat: 40, lng: -100, image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200", categories: ["product"] as const },
+    { id: 2, name: "Local Honey", lat: 35, lng: -95, image: "https://images.unsplash.com/photo-1587049352846-4a222e784eaf?w=200", categories: ["product", "sale"] as const },
+    { id: 3, name: "Handmade Jewelry", lat: 42, lng: -110, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200", categories: ["product", "experience"] as const },
   ];
 
   return (
@@ -31,11 +31,27 @@ const MapView = () => {
             {/* Vendor preview card */}
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               <div className="bg-card border border-border rounded-lg shadow-xl p-3 w-48">
-                <img
-                  src={vendor.image}
-                  alt={vendor.name}
-                  className="w-full h-24 object-cover rounded mb-2"
-                />
+                <div className="relative">
+                  {/* Category Dots */}
+                  <div className="absolute top-2 left-2 z-10 flex gap-1.5">
+                    {vendor.categories.map((cat, index) => (
+                      <div 
+                        key={`${cat}-${index}`}
+                        className={`w-3 h-3 rounded-full ${
+                          cat === 'product' ? 'bg-category-product' :
+                          cat === 'service' ? 'bg-category-service' :
+                          cat === 'experience' ? 'bg-category-experience' :
+                          'bg-category-sale'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <img
+                    src={vendor.image}
+                    alt={vendor.name}
+                    className="w-full h-24 object-cover rounded mb-2"
+                  />
+                </div>
                 <h3 className="text-foreground font-semibold text-sm">{vendor.name}</h3>
                 <p className="text-muted-foreground text-xs mt-1">View Listing</p>
               </div>
