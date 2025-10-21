@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupon_usage: {
+        Row: {
+          coupon_id: string
+          device_fingerprint: string | null
+          id: string
+          ip_address: string | null
+          listing_id: string | null
+          used_at: string
+          user_id: string | null
+        }
+        Insert: {
+          coupon_id: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          listing_id?: string | null
+          used_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          coupon_id?: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          listing_id?: string | null
+          used_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_coupon_analytics"
+            referencedColumns: ["coupon_id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          active_status: boolean
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id: string
+          is_recurring: boolean | null
+          listing_id: string | null
+          max_uses: number | null
+          recurrence_pattern: string | null
+          start_date: string
+          updated_at: string
+          used_count: number
+          vendor_id: string
+        }
+        Insert: {
+          active_status?: boolean
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id?: string
+          is_recurring?: boolean | null
+          listing_id?: string | null
+          max_uses?: number | null
+          recurrence_pattern?: string | null
+          start_date: string
+          updated_at?: string
+          used_count?: number
+          vendor_id: string
+        }
+        Update: {
+          active_status?: boolean
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          end_date?: string
+          id?: string
+          is_recurring?: boolean | null
+          listing_id?: string | null
+          max_uses?: number | null
+          recurrence_pattern?: string | null
+          start_date?: string
+          updated_at?: string
+          used_count?: number
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           created_at: string
@@ -517,9 +631,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vendor_coupon_analytics: {
+        Row: {
+          active_status: boolean | null
+          code: string | null
+          coupon_id: string | null
+          created_at: string | null
+          discount_type: string | null
+          discount_value: number | null
+          end_date: string | null
+          max_uses: number | null
+          start_date: string | null
+          total_claims: number | null
+          unique_users: number | null
+          usage_percentage: number | null
+          used_count: number | null
+          vendor_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      claim_coupon: {
+        Args: {
+          _coupon_code: string
+          _device_fingerprint?: string
+          _ip_address?: string
+          _listing_id?: string
+          _user_id?: string
+          _vendor_id: string
+        }
+        Returns: Json
+      }
+      expire_coupons: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -530,6 +677,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      renew_recurring_coupons: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
     }
     Enums: {
