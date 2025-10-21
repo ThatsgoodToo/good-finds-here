@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Upload, ExternalLink, MapPin, Edit2 } from "lucide-react";
+import { Settings, Upload, ExternalLink, MapPin, Edit2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface VendorHeaderProps {
@@ -118,6 +118,18 @@ const VendorHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                {roles.includes("shopper") && (
+                  <>
+                    <DropdownMenuItem onClick={() => {
+                      setActiveRole("shopper");
+                      navigate("/dashboard/shopper");
+                    }}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Switch to Shopper Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => navigate(`/vendor/${vendorName.toLowerCase().replace(/\s/g, '-')}`)}>
                   View Public Profile
                 </DropdownMenuItem>

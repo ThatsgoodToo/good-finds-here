@@ -558,6 +558,18 @@ const ShopperDashboard = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
+                    {roles.includes("vendor") && (
+                      <>
+                        <DropdownMenuItem onClick={() => {
+                          setActiveRole("vendor");
+                          navigate("/dashboard/vendor");
+                        }}>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Switch to Vendor Dashboard
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem onClick={() => navigate(`/shopper/${shopperName.toLowerCase().replace(/\s/g, '-')}`)}>
                       View Public Profile
                     </DropdownMenuItem>
