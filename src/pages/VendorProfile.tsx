@@ -3,7 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
+import FilterBar from "@/components/FilterBar";
 import SignupModal from "@/components/SignupModal";
+import { CategoryType } from "@/components/ProductCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +46,8 @@ const VendorProfile = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"all" | CategoryType>("all");
+  const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
 
   useEffect(() => {
     if (!user) {
@@ -75,32 +79,32 @@ const VendorProfile = () => {
         id: "1",
         url: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=500",
         title: "Handcrafted Bowl Set",
-        type: "product" as const,
-        types: ["product"] as const,
+        type: "product" as CategoryType,
+        types: ["product"] as CategoryType[],
         hasOffer: true,
       },
       {
         id: "2",
         url: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=500",
         title: "Ceramic Vase",
-        type: "product" as const,
-        types: ["product"] as const,
+        type: "product" as CategoryType,
+        types: ["product"] as CategoryType[],
         hasOffer: false,
       },
       {
         id: "3",
         url: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=500",
         title: "Pottery Workshop",
-        type: "experience" as const,
-        types: ["experience"] as const,
+        type: "experience" as CategoryType,
+        types: ["experience"] as CategoryType[],
         hasOffer: true,
       },
       {
         id: "4",
         url: "https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?w=500",
         title: "Custom Orders",
-        type: "service" as const,
-        types: ["service"] as const,
+        type: "service" as CategoryType,
+        types: ["service"] as CategoryType[],
         hasOffer: false,
       },
     ],
@@ -119,21 +123,21 @@ const VendorProfile = () => {
       id: "1",
       name: "Studio Ceramics",
       category: "Pottery & Art",
-      type: "experience" as const,
+      type: "experience" as CategoryType,
       image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=200",
     },
     {
       id: "2",
       name: "Metalworks",
       category: "Handcrafted Jewelry",
-      type: "product" as const,
+      type: "product" as CategoryType,
       image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200",
     },
     {
       id: "3",
       name: "Pure Essence",
       category: "Organic Goods",
-      type: "product" as const,
+      type: "product" as CategoryType,
       image: "https://images.unsplash.com/photo-1600428449936-7d99b66d3e7c?w=200",
     },
   ];
@@ -144,12 +148,26 @@ const VendorProfile = () => {
     { id: "3", name: "Favorites" },
   ];
 
-  const categoryColors: Record<string, string> = {
-    sale: "bg-category-sale",
-    experience: "bg-category-experience",
-    product: "bg-category-product",
-    service: "bg-category-service",
+  const getCategoryColor = (type: string): string => {
+    const colors: Record<string, string> = {
+      sale: "bg-category-sale",
+      experience: "bg-category-experience",
+      product: "bg-category-product",
+      service: "bg-category-service",
+    };
+    return colors[type.toLowerCase()] || "bg-category-product";
   };
+
+  // Filter listings based on active filter
+  const filteredListings = activeFilter === "all" 
+    ? listings.images 
+    : listings.images.filter(listing => 
+        listing.types.includes(activeFilter)
+      );
+
+  const filteredOffers = activeFilter === "all"
+    ? offers
+    : offers.filter(offer => offer.type === activeFilter);
 
   const handleHighFive = () => {
     setShowFolderDialog(true);
@@ -210,16 +228,14 @@ const VendorProfile = () => {
           </div>
         </div>
 
-        {/* Back Button */}
-        <div className="container mx-auto px-4 sm:px-6 py-4">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
-          >
-            <ChevronLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Back</span>
-          </button>
-        </div>
+        {/* Filter Bar */}
+        <FilterBar
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          onBack={() => navigate(-1)}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
 
         {/* Main Content Area */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
@@ -241,7 +257,7 @@ const VendorProfile = () => {
 
                 <TabsContent value="images" className="mt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {listings.images.map((listing) => (
+                    {filteredListings.map((listing) => (
                       <div
                         key={listing.id}
                         className="relative group cursor-pointer rounded-lg overflow-hidden aspect-square"
@@ -258,7 +274,7 @@ const VendorProfile = () => {
                           {listing.types?.map((type: string) => (
                             <div
                               key={type}
-                              className={cn("w-3 h-3 rounded-full ring-1 ring-border", categoryColors[type.toLowerCase()] || "bg-category-product")}
+                              className={cn("w-3 h-3 rounded-full ring-1 ring-border", getCategoryColor(type))}
                             />
                           ))}
                         </div>
@@ -427,10 +443,10 @@ const VendorProfile = () => {
                     <div className="flex-1">
                       <h3 className="font-semibold mb-2">Active Offers ({vendor.activeOffers})</h3>
                       <div className="space-y-2">
-                        {offers.map((offer) => (
+                        {filteredOffers.map((offer) => (
                           <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className={cn("h-2 w-2 rounded-full ring-1 ring-border shrink-0", categoryColors[offer.type] || "bg-category-product")} />
+                              <div className={cn("h-2 w-2 rounded-full ring-1 ring-border shrink-0", getCategoryColor(offer.type))} />
                               <span className="text-muted-foreground truncate">{offer.title}</span>
                             </div>
                             <Button 
@@ -471,7 +487,7 @@ const VendorProfile = () => {
                           <AvatarFallback>{relatedVendor.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         {/* Category dot - absolute positioned in upper-left */}
-                        <div className={cn("absolute top-2 left-2 h-2 w-2 rounded-full ring-1 ring-border", categoryColors[relatedVendor.type] || "bg-category-product")} />
+                        <div className={cn("absolute top-2 left-2 h-2 w-2 rounded-full ring-1 ring-border", getCategoryColor(relatedVendor.type))} />
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm truncate">{relatedVendor.name}</h3>
                           <p className="text-xs text-muted-foreground truncate">{relatedVendor.category}</p>
