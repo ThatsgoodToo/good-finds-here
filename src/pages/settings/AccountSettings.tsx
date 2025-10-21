@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,6 +28,7 @@ const passwordSchema = z.object({
 
 const AccountSettings = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
@@ -120,9 +122,14 @@ const AccountSettings = () => {
   return (
     <SettingsLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Account Settings</h1>
-          <p className="text-muted-foreground">Manage your account settings and security</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Account Settings</h1>
+            <p className="text-muted-foreground">Manage your account settings and security</p>
+          </div>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Back
+          </Button>
         </div>
 
         <Card>

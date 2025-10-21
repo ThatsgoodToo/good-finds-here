@@ -76,6 +76,7 @@ const VendorProfile = () => {
         url: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=500",
         title: "Handcrafted Bowl Set",
         type: "product" as const,
+        types: ["product"] as const,
         hasOffer: true,
       },
       {
@@ -83,6 +84,7 @@ const VendorProfile = () => {
         url: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=500",
         title: "Ceramic Vase",
         type: "product" as const,
+        types: ["product"] as const,
         hasOffer: false,
       },
       {
@@ -90,6 +92,7 @@ const VendorProfile = () => {
         url: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=500",
         title: "Pottery Workshop",
         type: "experience" as const,
+        types: ["experience"] as const,
         hasOffer: true,
       },
       {
@@ -97,6 +100,7 @@ const VendorProfile = () => {
         url: "https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?w=500",
         title: "Custom Orders",
         type: "service" as const,
+        types: ["service"] as const,
         hasOffer: false,
       },
     ],
@@ -250,8 +254,13 @@ const VendorProfile = () => {
                         />
                         
                         {/* Top-left type indicator */}
-                        <div className="absolute top-2 left-2 flex gap-1.5">
-                          <div className={cn("h-3 w-3 rounded-full ring-2 ring-[#1a1a1a]", categoryColors[listing.type] || "bg-category-product")} />
+                        <div className="absolute top-2 left-2 flex gap-1.5 z-10">
+                          {listing.types?.map((type: string) => (
+                            <div
+                              key={type}
+                              className={cn("w-3 h-3 rounded-full ring-1 ring-[#1a1a1a]", categoryColors[type.toLowerCase()] || "bg-category-product")}
+                            />
+                          ))}
                         </div>
                         
                         {/* High-Five Button */}
@@ -421,7 +430,7 @@ const VendorProfile = () => {
                         {offers.map((offer) => (
                           <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className={cn("h-2 w-2 rounded-full ring-2 ring-[#1a1a1a] shrink-0", categoryColors[offer.type] || "bg-category-product")} />
+                              <div className={cn("h-2 w-2 rounded-full ring-1 ring-[#1a1a1a] shrink-0", categoryColors[offer.type] || "bg-category-product")} />
                               <span className="text-muted-foreground truncate">{offer.title}</span>
                             </div>
                             <Button 
@@ -463,7 +472,7 @@ const VendorProfile = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <div className={cn("h-2 w-2 rounded-full ring-2 ring-[#1a1a1a] shrink-0", categoryColors[relatedVendor.type] || "bg-category-product")} />
+                            <div className={cn("h-2 w-2 rounded-full ring-1 ring-[#1a1a1a] shrink-0", categoryColors[relatedVendor.type] || "bg-category-product")} />
                             <h3 className="font-semibold text-sm truncate">{relatedVendor.name}</h3>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">{relatedVendor.category}</p>

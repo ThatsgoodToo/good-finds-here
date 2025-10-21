@@ -37,7 +37,7 @@ const MapView = () => {
                     {vendor.categories.map((cat, index) => (
                       <div 
                         key={`${cat}-${index}`}
-                        className={`w-3 h-3 rounded-full ring-2 ring-[#1a1a1a] ${
+                        className={`w-3 h-3 rounded-full ring-1 ring-[#1a1a1a] ${
                           cat === 'product' ? 'bg-category-product' :
                           cat === 'service' ? 'bg-category-service' :
                           cat === 'experience' ? 'bg-category-experience' :
