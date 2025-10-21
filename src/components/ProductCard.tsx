@@ -62,7 +62,7 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId }: 
           {categories.map((cat, index) => (
             <div 
               key={`${cat}-${index}`}
-              className={cn("w-3 h-3 rounded-full ring-1 ring-[#1a1a1a]", categoryColors[cat])} 
+              className={cn("w-3 h-3 rounded-full ring-1 ring-border", categoryColors[cat])} 
             />
           ))}
         </div>

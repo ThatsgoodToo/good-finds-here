@@ -309,7 +309,7 @@ const ProductListing = () => {
                           {item.types.map((type: string, idx: number) => (
                             <div
                               key={idx}
-                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                              className={`h-3 w-3 rounded-full ring-1 ring-border ${categoryColors[type] || "bg-category-product"}`}
                             />
                           ))}
                         </div>
@@ -338,7 +338,7 @@ const ProductListing = () => {
                           {item.types.map((type: string, idx: number) => (
                             <div
                               key={idx}
-                              className={`h-3 w-3 rounded-full ring-1 ring-[#1a1a1a] ${categoryColors[type] || "bg-category-product"}`}
+                              className={`h-3 w-3 rounded-full ring-1 ring-border ${categoryColors[type] || "bg-category-product"}`}
                             />
                           ))}
                         </div>

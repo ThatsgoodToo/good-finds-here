@@ -258,7 +258,7 @@ const VendorProfile = () => {
                           {listing.types?.map((type: string) => (
                             <div
                               key={type}
-                              className={cn("w-3 h-3 rounded-full ring-1 ring-[#1a1a1a]", categoryColors[type.toLowerCase()] || "bg-category-product")}
+                              className={cn("w-3 h-3 rounded-full ring-1 ring-border", categoryColors[type.toLowerCase()] || "bg-category-product")}
                             />
                           ))}
                         </div>
@@ -430,7 +430,7 @@ const VendorProfile = () => {
                         {offers.map((offer) => (
                           <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className={cn("h-2 w-2 rounded-full ring-1 ring-[#1a1a1a] shrink-0", categoryColors[offer.type] || "bg-category-product")} />
+                              <div className={cn("h-2 w-2 rounded-full ring-1 ring-border shrink-0", categoryColors[offer.type] || "bg-category-product")} />
                               <span className="text-muted-foreground truncate">{offer.title}</span>
                             </div>
                             <Button 
@@ -471,7 +471,7 @@ const VendorProfile = () => {
                           <AvatarFallback>{relatedVendor.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         {/* Category dot - absolute positioned in upper-left */}
-                        <div className={cn("absolute top-0 left-0 h-2 w-2 rounded-full ring-1 ring-[#1a1a1a]", categoryColors[relatedVendor.type] || "bg-category-product")} />
+                        <div className={cn("absolute top-2 left-2 h-2 w-2 rounded-full ring-1 ring-border", categoryColors[relatedVendor.type] || "bg-category-product")} />
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm truncate">{relatedVendor.name}</h3>
                           <p className="text-xs text-muted-foreground truncate">{relatedVendor.category}</p>
