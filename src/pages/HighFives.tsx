@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
+import FilterBar from "@/components/FilterBar";
 import SignupModal from "@/components/SignupModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { CategoryType } from "@/components/ProductCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +20,7 @@ const HighFives = () => {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedFollower, setSelectedFollower] = useState<{ id: string; name: string } | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"all" | CategoryType>("all");
 
   useEffect(() => {
     if (!user) {
@@ -246,6 +249,12 @@ const HighFives = () => {
     }
   };
 
+  // Filter listings based on active filter
+  const filterByType = <T extends { type: "product" | "service" | "experience" | "sale" }>(items: T[]): T[] => {
+    if (activeFilter === "all") return items;
+    return items.filter(item => item.type === activeFilter);
+  };
+
   const renderGuestView = () => (
     <div className="space-y-12">
       {/* Top Rated Vendors */}
@@ -255,7 +264,7 @@ const HighFives = () => {
           <h2 className="text-2xl font-bold">Top Rated Vendors</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topVendors.map((vendor) => (
+          {filterByType(topVendors).map((vendor) => (
             <Card
               key={vendor.id}
               className="cursor-pointer hover:shadow-lg transition-shadow"
@@ -292,7 +301,7 @@ const HighFives = () => {
           <h2 className="text-2xl font-bold">Featured Listings</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topListings.map((listing) => (
+          {filterByType(topListings).map((listing) => (
             <Card
               key={listing.id}
               className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
@@ -332,7 +341,7 @@ const HighFives = () => {
           <Badge variant="secondary">Give them some love!</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {overlookedItems.map((listing) => (
+          {filterByType(overlookedItems).map((listing) => (
             <Card
               key={listing.id}
               className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
@@ -389,7 +398,7 @@ const HighFives = () => {
           <h2 className="text-2xl font-bold">My Favorite Vendors</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {shopperFavorites.vendors.map((vendor) => (
+          {filterByType(shopperFavorites.vendors).map((vendor) => (
             <Card
               key={vendor.id}
               className="cursor-pointer hover:shadow-lg transition-shadow"
@@ -426,7 +435,7 @@ const HighFives = () => {
           <h2 className="text-2xl font-bold">My Saved Listings</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {shopperFavorites.listings.map((listing) => (
+          {filterByType(shopperFavorites.listings).map((listing) => (
             <Card
               key={listing.id}
               className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
@@ -469,7 +478,7 @@ const HighFives = () => {
           <Badge variant="secondary">Based on your preferences</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {relatableListings.map((listing) => (
+          {filterByType(relatableListings).map((listing) => (
             <Card
               key={listing.id}
               className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
@@ -618,6 +627,15 @@ const HighFives = () => {
               {user && userRole === "vendor" && "Shoppers who are following your profile"}
             </p>
           </div>
+
+          {/* Filter Bar */}
+          <FilterBar
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            onBack={() => navigate("/")}
+            viewMode="gallery"
+            onViewModeChange={() => {}}
+          />
 
           {/* Content based on user state */}
           {!user && renderGuestView()}

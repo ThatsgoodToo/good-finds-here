@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
-import FilterBar from "@/components/FilterBar";
 import SignupModal from "@/components/SignupModal";
 import { CategoryType } from "@/components/ProductCard";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,8 +45,6 @@ const VendorProfile = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<"all" | CategoryType>("all");
-  const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
 
   useEffect(() => {
     if (!user) {
@@ -158,17 +155,6 @@ const VendorProfile = () => {
     return colors[type.toLowerCase()] || "bg-category-product";
   };
 
-  // Filter listings based on active filter
-  const filteredListings = activeFilter === "all" 
-    ? listings.images 
-    : listings.images.filter(listing => 
-        listing.types.includes(activeFilter)
-      );
-
-  const filteredOffers = activeFilter === "all"
-    ? offers
-    : offers.filter(offer => offer.type === activeFilter);
-
   const handleHighFive = () => {
     setShowFolderDialog(true);
   };
@@ -228,15 +214,6 @@ const VendorProfile = () => {
           </div>
         </div>
 
-        {/* Filter Bar */}
-        <FilterBar
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          onBack={() => navigate(-1)}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
-
         {/* Main Content Area */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -257,7 +234,7 @@ const VendorProfile = () => {
 
                 <TabsContent value="images" className="mt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredListings.map((listing) => (
+                    {listings.images.map((listing) => (
                       <div
                         key={listing.id}
                         className="relative group cursor-pointer rounded-lg overflow-hidden aspect-square"
@@ -443,7 +420,7 @@ const VendorProfile = () => {
                     <div className="flex-1">
                       <h3 className="font-semibold mb-2">Active Offers ({vendor.activeOffers})</h3>
                       <div className="space-y-2">
-                        {filteredOffers.map((offer) => (
+                        {offers.map((offer) => (
                           <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <div className={cn("h-2 w-2 rounded-full ring-1 ring-border shrink-0", getCategoryColor(offer.type))} />
