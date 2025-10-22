@@ -30,9 +30,12 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
           <Button
             onClick={onWhatsgoodClick}
             variant="outline"
-            className="text-foreground hover:text-primary border-border/50 rounded-full px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base bg-transparent hover:bg-muted/50"
+            className="text-foreground hover:text-primary border-border/50 rounded-full px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base bg-transparent hover:bg-muted/50 relative overflow-hidden group"
           >
-            WHAT'S GOOD TODAY
+            <span className="relative z-10 inline-block animate-[pulse_2s_ease-in-out_infinite]">
+              WHAT'S GOOD TODAY
+            </span>
+            <span className="absolute inset-0 bg-primary/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
           </Button>
           
           <Button

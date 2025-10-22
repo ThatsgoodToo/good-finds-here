@@ -213,6 +213,16 @@ const Index = () => {
         )}
 
         {hasSearched && isMapView && <MapView />}
+
+        {/* What's Good Today Section - Shows on scroll when not searched */}
+        {!hasSearched && (
+          <div className="container mx-auto px-4 py-16 mt-[40vh]">
+            <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in">
+              What's Good Today
+            </h2>
+            <MasonryGallery products={filteredProducts} />
+          </div>
+        )}
       </main>
     </div>
   );
