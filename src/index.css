@@ -138,3 +138,55 @@ All colors MUST be HSL.
     animation: slide-in-bottom 0.3s ease-out;
   }
 }
+
+/* Driver.js Custom Styling */
+.driver-popover.driverjs-theme {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 10px 40px -15px hsl(var(--foreground) / 0.2);
+}
+
+.driver-popover.driverjs-theme .driver-popover-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.driver-popover.driverjs-theme .driver-popover-description {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.95rem;
+}
+
+.driver-popover.driverjs-theme .driver-popover-progress-text {
+  color: hsl(var(--muted-foreground));
+}
+
+.driver-popover.driverjs-theme button {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: calc(var(--radius) - 2px);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.driver-popover.driverjs-theme button:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+
+.driver-popover.driverjs-theme .driver-popover-navigation-btns button:last-child {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+.driver-popover.driverjs-theme .driver-popover-close-btn {
+  background-color: transparent;
+  color: hsl(var(--muted-foreground));
+}
+
+.driver-popover.driverjs-theme .driver-popover-close-btn:hover {
+  background-color: hsl(var(--muted));
+}

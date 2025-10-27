@@ -31,6 +31,7 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
             onClick={onWhatsgoodClick}
             variant="outline"
             className="text-foreground hover:text-primary border-border/50 rounded-full px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base bg-transparent hover:bg-muted/50 relative overflow-hidden group"
+            data-tour="whatsgood-button"
           >
             <span className="relative z-10 inline-block animate-[pulse_2s_ease-in-out_infinite]">
               WHAT'S GOOD TODAY
@@ -49,13 +50,14 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
                 : "border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             title="Toggle map view"
+            data-tour="view-toggle"
           >
             <Globe className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </div>
         
         {/* Search bar - Full width on mobile */}
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-4xl" data-tour="search-bar">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
             <Input

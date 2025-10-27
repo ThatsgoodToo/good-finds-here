@@ -36,6 +36,7 @@ const VendorSignupPrompt = ({ open, onOpenChange }: VendorSignupPromptProps) => 
               onOpenChange(false);
               navigate("/signup/vendor");
             }}
+            data-tour="vendor-signup"
           >
             Sign Up as Vendor
           </Button>

@@ -216,19 +216,19 @@ const VendorDashboard = () => {
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-8">
-              <TabsTrigger value="overview" className="gap-2">
+              <TabsTrigger value="overview" className="gap-2" data-tour="vendor-dashboard">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="listings" className="gap-2">
+              <TabsTrigger value="listings" className="gap-2" data-tour="vendor-listings">
                 <Package className="h-4 w-4" />
                 <span className="hidden sm:inline">Listings</span>
               </TabsTrigger>
-              <TabsTrigger value="coupons" className="gap-2">
+              <TabsTrigger value="coupons" className="gap-2" data-tour="vendor-offers">
                 <Tag className="h-4 w-4" />
                 <span className="hidden sm:inline">Active Offers</span>
               </TabsTrigger>
-              <TabsTrigger value="hifives" className="gap-2">
+              <TabsTrigger value="hifives" className="gap-2" data-tour="vendor-hi-fives">
                 <Hand className="h-4 w-4" />
                 <span className="hidden sm:inline">Your Hi Fives</span>
               </TabsTrigger>
@@ -243,6 +243,7 @@ const VendorDashboard = () => {
                 activeOffers={metrics.activeOffers}
                 followers={metrics.followers}
                 onMetricClick={handleMetricClick}
+                data-tour="vendor-metrics"
               />
 
               {/* Filters */}

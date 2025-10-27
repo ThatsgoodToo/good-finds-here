@@ -111,6 +111,7 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
               ? "bg-primary hover:bg-primary/90 text-primary-foreground"
               : "bg-background/90 hover:bg-background text-foreground"
           )}
+          data-tour="hi-five-icon"
         >
           <Hand className={cn("h-5 w-5", saved && "fill-current")} />
         </Button>
