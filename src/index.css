@@ -137,6 +137,24 @@ All colors MUST be HSL.
   .animate-slide-in-bottom {
     animation: slide-in-bottom 0.3s ease-out;
   }
+
+  @keyframes bounce-arrow {
+    0%, 100% { 
+      transform: translate(-50%, 0); 
+    }
+    50% { 
+      transform: translate(-50%, -8px); 
+    }
+  }
+
+  @keyframes bounce-arrow-horizontal {
+    0%, 100% { 
+      transform: translate(0, -50%); 
+    }
+    50% { 
+      transform: translate(-8px, -50%); 
+    }
+  }
 }
 
 /* Driver.js Custom Styling */
@@ -189,4 +207,99 @@ All colors MUST be HSL.
 
 .driver-popover.driverjs-theme .driver-popover-close-btn:hover {
   background-color: hsl(var(--muted));
+}
+
+/* Arrow pointing down (popover is above element) */
+.driver-popover.driverjs-theme[data-side="top"]::after {
+  content: "";
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 24px solid hsl(var(--card));
+  filter: drop-shadow(0 4px 6px hsl(var(--foreground) / 0.1));
+  animation: bounce-arrow 2s ease-in-out infinite;
+  z-index: 10000;
+}
+
+/* Arrow pointing up (popover is below element) */
+.driver-popover.driverjs-theme[data-side="bottom"]::after {
+  content: "";
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 24px solid hsl(var(--card));
+  filter: drop-shadow(0 -4px 6px hsl(var(--foreground) / 0.1));
+  animation: bounce-arrow 2s ease-in-out infinite;
+  z-index: 10000;
+}
+
+/* Arrow pointing right (popover is on left side) */
+.driver-popover.driverjs-theme[data-side="left"]::after {
+  content: "";
+  position: absolute;
+  right: -24px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 24px solid hsl(var(--card));
+  filter: drop-shadow(4px 0 6px hsl(var(--foreground) / 0.1));
+  animation: bounce-arrow-horizontal 2s ease-in-out infinite;
+  z-index: 10000;
+}
+
+/* Arrow pointing left (popover is on right side) */
+.driver-popover.driverjs-theme[data-side="right"]::after {
+  content: "";
+  position: absolute;
+  left: -24px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 24px solid hsl(var(--card));
+  filter: drop-shadow(-4px 0 6px hsl(var(--foreground) / 0.1));
+  animation: bounce-arrow-horizontal 2s ease-in-out infinite;
+  z-index: 10000;
+}
+
+/* Enhance highlighted element visibility */
+.driver-active-element {
+  position: relative;
+  z-index: 9999 !important;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 640px) {
+  .driver-popover.driverjs-theme {
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .driver-popover.driverjs-theme[data-side="top"]::after,
+  .driver-popover.driverjs-theme[data-side="bottom"]::after {
+    border-left-width: 10px;
+    border-right-width: 10px;
+    border-top-width: 18px;
+  }
+  
+  .driver-popover.driverjs-theme[data-side="left"]::after,
+  .driver-popover.driverjs-theme[data-side="right"]::after {
+    border-left-width: 10px;
+    border-right-width: 10px;
+    border-top-width: 18px;
+  }
 }

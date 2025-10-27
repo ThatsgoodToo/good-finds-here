@@ -12,12 +12,16 @@ const OnboardingTutorial = () => {
   useEffect(() => {
     // Check if user has completed the tour
     const tourCompleted = localStorage.getItem("tgt_tour_completed");
+    const firstSigninComplete = localStorage.getItem("tgt_first_signin_complete");
     
-    if (user && !tourCompleted) {
-      // Show tour after a brief delay for better UX
+    if (user && !tourCompleted && !firstSigninComplete) {
+      // Mark that first sign-in has occurred
+      localStorage.setItem("tgt_first_signin_complete", "true");
+      
+      // Show tour after a brief delay to ensure all elements are loaded
       setTimeout(() => {
         startTour();
-      }, 1000);
+      }, 1500);
     } else if (user) {
       setShowHelpButton(true);
     }
@@ -76,14 +80,8 @@ const OnboardingTutorial = () => {
       ];
     }
 
-    // Shopper steps
+    // Shopper steps - start directly with first interactive element
     return [
-      {
-        popover: {
-          title: "Welcome to TGT!",
-          description: "Discover local artisans, unique products, and authentic experiences. Let's get you started with a quick tour.",
-        },
-      },
       {
         element: '[data-tour="search-bar"]',
         popover: {
@@ -138,6 +136,9 @@ const OnboardingTutorial = () => {
       showButtons: ["next", "previous", "close"],
       steps: getSteps(),
       popoverClass: "driverjs-theme",
+      animate: true,
+      overlayOpacity: 0.75,
+      popoverOffset: 20,
       onDestroyStarted: () => {
         // Mark tour as completed when user closes it
         localStorage.setItem("tgt_tour_completed", "true");
