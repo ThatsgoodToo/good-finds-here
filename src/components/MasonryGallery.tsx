@@ -17,9 +17,9 @@ interface MasonryGalleryProps {
 const MasonryGallery = ({ products }: MasonryGalleryProps) => {
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="columns-2 lg:columns-3 xl:columns-4 gap-32 space-y-32">
+      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-16 space-y-16">
         {products.map((product) => (
-          <div key={product.id} className="break-inside-avoid mb-32">
+          <div key={product.id} className="break-inside-avoid mb-16">
             <ProductCard {...product} />
           </div>
         ))}
