@@ -112,7 +112,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-sm border-border w-56 z-[100] shadow-lg">
+            <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-sm border-border w-56 z-[10001] shadow-lg">
               {user && (
                 <>
                   <DropdownMenuItem className="text-xs font-medium pointer-events-none">

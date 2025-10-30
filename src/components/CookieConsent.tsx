@@ -22,7 +22,7 @@ const CookieConsent = () => {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-6 sm:pb-4 bg-card border-t border-border shadow-lg animate-slide-in-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-[10000] p-4 pb-6 sm:pb-4 bg-background border-t border-border shadow-lg animate-slide-in-bottom">
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
           <div className="flex items-start gap-3 flex-1">
