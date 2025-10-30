@@ -71,6 +71,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
             onClick={handleYourGoodsClick}
             className="group focus:outline-none"
             type="button"
+            data-tour="your-goods-icon"
           >
             <img 
               src={squirrelIcon} 
@@ -90,6 +91,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
             }}
             className="group focus:outline-none"
             type="button"
+            data-tour="hi-fives-icon"
           >
             <Hand className="h-5 w-5 sm:h-6 sm:w-6 text-foreground opacity-70 group-hover:opacity-100 group-hover:text-primary transition-all" strokeWidth={1.5} />
           </button>
@@ -105,6 +107,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                 size="icon"
                 className="text-foreground hover:text-primary h-8 w-8 sm:h-10 sm:w-10"
                 title="Settings"
+                data-tour="settings-menu"
               >
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>

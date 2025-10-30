@@ -57,6 +57,7 @@ const VendorHeader = ({
                 variant="secondary"
                 className="absolute bottom-0 right-0 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={onUploadImage}
+                data-tour="vendor-image-upload"
               >
                 <Upload className="h-3 w-3" />
               </Button>

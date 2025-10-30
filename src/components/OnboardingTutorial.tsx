@@ -33,10 +33,46 @@ const OnboardingTutorial = () => {
     if (isVendor) {
       return [
         {
+          element: '[data-tour="your-goods-icon"]',
+          popover: {
+            title: "Vendor Dashboard",
+            description: "Your home base for managing your business. View metrics, create listings, and engage with shoppers.",
+            side: "bottom" as const,
+            align: "start" as const,
+          },
+        },
+        {
+          element: '[data-tour="hi-fives-icon"]',
+          popover: {
+            title: "Your Followers",
+            description: "See shoppers who have Hi-Fived your listings. Send them personalized coupon codes to drive sales.",
+            side: "bottom" as const,
+            align: "center" as const,
+          },
+        },
+        {
+          element: '[data-tour="theme-toggle"]',
+          popover: {
+            title: "Customize Your View",
+            description: "Switch between light and dark modes to match your preference or device settings.",
+            side: "bottom" as const,
+            align: "center" as const,
+          },
+        },
+        {
+          element: '[data-tour="settings-menu"]',
+          popover: {
+            title: "Settings & More",
+            description: "Access your account settings, vendor settings, notifications, messages, help center, and more.",
+            side: "bottom" as const,
+            align: "end" as const,
+          },
+        },
+        {
           element: '[data-tour="vendor-dashboard"]',
           popover: {
-            title: "Welcome to TGT Vendors!",
-            description: "You're all set to showcase your business. Let's walk through the key features to get you started.",
+            title: "Dashboard Tabs",
+            description: "Navigate between Overview (metrics), Listings (your products), Active Offers (coupons), and Hi-Fives (engaged shoppers).",
             side: "bottom" as const,
             align: "start" as const,
           },
@@ -77,11 +113,56 @@ const OnboardingTutorial = () => {
             align: "start" as const,
           },
         },
+        {
+          element: '[data-tour="vendor-image-upload"]',
+          popover: {
+            title: "Update Your Brand Image",
+            description: "Upload a profile image that represents your brand. This appears on your vendor page and listings.",
+            side: "bottom" as const,
+            align: "start" as const,
+          },
+        },
       ];
     }
 
-    // Shopper steps - start directly with first interactive element
+    // Shopper steps
     return [
+      {
+        element: '[data-tour="your-goods-icon"]',
+        popover: {
+          title: "Your Personal Dashboard",
+          description: "Click the squirrel to access your dashboard where you can organize saved items into folders and manage your preferences.",
+          side: "bottom" as const,
+          align: "start" as const,
+        },
+      },
+      {
+        element: '[data-tour="hi-fives-icon"]',
+        popover: {
+          title: "Save Your Favorites",
+          description: "Click the hand icon to see all items and vendors you've Hi-Fived. Vendors are notified and may send you exclusive offers!",
+          side: "bottom" as const,
+          align: "center" as const,
+        },
+      },
+      {
+        element: '[data-tour="theme-toggle"]',
+        popover: {
+          title: "Customize Your View",
+          description: "Switch between light and dark modes to match your preference or device settings.",
+          side: "bottom" as const,
+          align: "center" as const,
+        },
+      },
+      {
+        element: '[data-tour="settings-menu"]',
+        popover: {
+          title: "Settings & More",
+          description: "Access your account settings, notifications, messages, help center, and more.",
+          side: "bottom" as const,
+          align: "end" as const,
+        },
+      },
       {
         element: '[data-tour="search-bar"]',
         popover: {
@@ -110,10 +191,19 @@ const OnboardingTutorial = () => {
         },
       },
       {
+        element: '[data-tour="filter-bar"]',
+        popover: {
+          title: "Filter Results",
+          description: "Narrow down results by category (Products, Services, Experiences, Sales). Toggle between grid and list views.",
+          side: "bottom" as const,
+          align: "start" as const,
+        },
+      },
+      {
         element: '[data-tour="hi-five-icon"]',
         popover: {
-          title: "Save Your Favorites",
-          description: "Click the hand icon to 'Hi-Five' items you love. This saves them to your collection and notifies vendors.",
+          title: "Hi-Five Items",
+          description: "Click the hand icon on any item to save it to your dashboard. Vendors get notified and may send you exclusive deals!",
           side: "top" as const,
           align: "center" as const,
         },

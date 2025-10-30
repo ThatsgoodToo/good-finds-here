@@ -51,7 +51,7 @@ const FilterBar = ({
   };
 
   return (
-    <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm border-b border-border py-4 animate-fade-in">
+    <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm border-b border-border py-4 animate-fade-in" data-tour="filter-bar">
       <div className="container mx-auto px-4">
         {/* Single Row: Back Button, Search, Filters, View Toggle - Horizontal Scroll */}
         <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
