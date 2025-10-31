@@ -5,12 +5,40 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Mail, Phone } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+
+const contactSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters"),
+  email: z.string()
+    .trim()
+    .email("Please enter a valid email address")
+    .max(255, "Email must be less than 255 characters"),
+  subject: z.string()
+    .trim()
+    .min(5, "Subject must be at least 5 characters")
+    .max(200, "Subject must be less than 200 characters"),
+  message: z.string()
+    .trim()
+    .min(10, "Message must be at least 10 characters")
+    .max(2000, "Message must be less than 2000 characters")
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
 
 const SupportPage = () => {
   const { toast } = useToast();
-  const form = useForm({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -19,12 +47,43 @@ const SupportPage = () => {
     },
   });
 
-  const onSubmit = (values: any) => {
-    toast({
-      title: "Message sent",
-      description: "We'll get back to you as soon as possible.",
-    });
-    form.reset();
+  const onSubmit = async (values: ContactFormData) => {
+    try {
+      setIsSubmitting(true);
+      
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: values
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you as soon as possible.",
+      });
+      
+      form.reset();
+    } catch (error: any) {
+      console.error("Error sending contact form:", error);
+      
+      let errorMessage = "Please try again later or email us directly at connect@thatsgoodtoo.shop";
+      
+      if (error?.message?.includes("Too many requests")) {
+        errorMessage = "You've sent too many messages. Please wait before trying again.";
+      } else if (error?.message?.includes("network") || error?.message?.includes("fetch")) {
+        errorMessage = "Connection problem. Please check your internet and try again.";
+      }
+      
+      toast({
+        title: "Failed to send message",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,10 +110,16 @@ const SupportPage = () => {
             <CardHeader>
               <Mail className="h-8 w-8 mb-2" />
               <CardTitle>Email</CardTitle>
-              <CardDescription>support@example.com</CardDescription>
+              <CardDescription>connect@thatsgoodtoo.shop</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full">Send Email</Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => window.location.href = 'mailto:connect@thatsgoodtoo.shop'}
+              >
+                Send Email
+              </Button>
             </CardContent>
           </Card>
 
@@ -134,7 +199,9 @@ const SupportPage = () => {
                     </FormItem>
                   )}
                 />
-                <Button type="submit">Send Message</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending..." : "Send Message"}
+                </Button>
               </form>
             </Form>
           </CardContent>
