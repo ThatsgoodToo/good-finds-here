@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Users, BarChart3, Tag, Hand } from "lucide-react";
 import Header from "@/components/Header";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import VendorHeader from "@/components/dashboard/vendor/VendorHeader";
 import MetricsRow from "@/components/dashboard/vendor/MetricsRow";
 import MetricsChart from "@/components/dashboard/vendor/MetricsChart";
