@@ -12,6 +12,7 @@ import ShopperSignup from "./pages/ShopperSignup";
 import VendorSignup from "./pages/VendorSignup";
 import ShopperDashboard from "./pages/ShopperDashboard";
 import VendorDashboard from "./pages/VendorDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import VendorProfile from "./pages/VendorProfile";
 import VendorNewListing from "./pages/VendorNewListing";
 import ProductListing from "./pages/ProductListing";
@@ -51,6 +52,7 @@ const App = () => {
               <Route path="/signup/vendor" element={<VendorSignup />} />
               <Route path="/dashboard/shopper" element={<ShopperDashboard />} />
               <Route path="/dashboard/vendor" element={<VendorDashboard />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/vendor/:vendorId" element={<VendorProfile />} />
               <Route path="/vendor/listing/new" element={<VendorNewListing />} />
               <Route path="/vendor/listing/edit/:listingId" element={<VendorNewListing />} />

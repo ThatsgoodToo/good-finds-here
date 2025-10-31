@@ -4,6 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import SignupModal from "@/components/SignupModal";
 import Header from "@/components/Header";
+import VendorPendingApproval from "@/components/VendorPendingApproval";
+import VendorApplicationRejected from "@/components/VendorApplicationRejected";
+import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +31,7 @@ const VendorNewListing = () => {
   const navigate = useNavigate();
   const { listingId } = useParams();
   const { user } = useAuth();
+  const { status: vendorStatus, isLoading: checkingStatus } = useVendorAccess();
   const isEditMode = !!listingId;
   const [loading, setLoading] = useState(false);
   const [listingType, setListingType] = useState<ListingType | "">("");
@@ -248,6 +252,41 @@ const VendorNewListing = () => {
       setShippingOptions([...shippingOptions, option]);
     }
   };
+
+  // Check vendor access status
+  if (checkingStatus) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-20 container mx-auto px-4 py-12 text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (vendorStatus === "pending") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <VendorPendingApproval />
+      </div>
+    );
+  }
+
+  if (vendorStatus === "rejected") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <VendorApplicationRejected />
+      </div>
+    );
+  }
+
+  if (vendorStatus === "no-application") {
+    navigate("/signup/vendor");
+    return null;
+  }
 
   const handleSubmit = async () => {
     // Validation

@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import SignupModal from "@/components/SignupModal";
+import VendorPendingApproval from "@/components/VendorPendingApproval";
+import VendorApplicationRejected from "@/components/VendorApplicationRejected";
+import { useVendorAccess } from "@/hooks/useVendorAccess";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Users, BarChart3, Tag, Hand } from "lucide-react";
@@ -42,6 +45,7 @@ import {
 const VendorDashboard = () => {
   const { user, roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
+  const { status: vendorStatus, isLoading: checkingStatus } = useVendorAccess();
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
@@ -67,6 +71,41 @@ const VendorDashboard = () => {
       setActiveRole("vendor");
     }
   }, [roles, activeRole, setActiveRole]);
+
+  // Check vendor access status
+  if (checkingStatus) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-20 container mx-auto px-4 py-12 text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (vendorStatus === "pending") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <VendorPendingApproval />
+      </div>
+    );
+  }
+
+  if (vendorStatus === "rejected") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <VendorApplicationRejected />
+      </div>
+    );
+  }
+
+  if (vendorStatus === "no-application") {
+    navigate("/signup/vendor");
+    return null;
+  }
 
   // Demo vendor data
   const vendorName = "Clay & Co.";

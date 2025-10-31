@@ -1,8 +1,8 @@
-import { Hand, Settings } from "lucide-react";
+import { Hand, Settings, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import VendorFollowersList from "@/components/VendorFollowersList";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -26,13 +26,28 @@ interface HeaderProps {
 const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYourGoodsClick }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, userRole, activeRole, signOut } = useAuth();
+  const { user, userRole, activeRole, roles, signOut } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showFollowersList, setShowFollowersList] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const effectiveRole = activeRole ?? userRole;
   const isVendorMode = effectiveRole === "vendor";
   
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data } = await supabase.rpc("is_admin", { _user_id: user.id });
+        setIsAdmin(!!data);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
+
   const handleYourGoodsClick = () => {
     if (!user) {
       setShowSignupModal(true);
@@ -121,6 +136,15 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate("/admin/dashboard")} className="cursor-pointer text-primary font-medium">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Admin Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem onClick={() => navigate("/settings/account")} className="cursor-pointer">
                     Account Settings
                   </DropdownMenuItem>
