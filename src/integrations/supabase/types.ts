@@ -816,6 +816,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_view_profile_email: {
+        Args: { _profile_id: string }
+        Returns: boolean
+      }
       claim_coupon: {
         Args: {
           _coupon_code: string
@@ -828,6 +832,17 @@ export type Database = {
         Returns: Json
       }
       expire_coupons: { Args: never; Returns: Json }
+      get_public_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          profile_picture_url: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
