@@ -61,22 +61,41 @@ const handler = async (req: Request): Promise<Response> => {
       vendorApplication = vendorApp;
     }
 
-    // Format email content
-    const emailHtml = generateEmailHtml(profile, subscription, vendorApplication);
-    const subject = `New ${role === "vendor" ? "Vendor" : "Shopper"} Signup: ${profile.full_name || profile.display_name || "Unknown"}`;
+    // Send admin notification email
+    const adminEmailHtml = generateEmailHtml(profile, subscription, vendorApplication);
+    const adminSubject = `New ${role === "vendor" ? "Vendor" : "Shopper"} Signup: ${profile.full_name || profile.display_name || "Unknown"}`;
 
-    // Send email via Resend
-    const emailResponse = await resend.emails.send({
+    const adminEmailResponse = await resend.emails.send({
       from: "That's Good Too <onboarding@resend.dev>",
       to: ["connect@thatsgoodtoo.shop"],
-      subject: subject,
-      html: emailHtml,
+      subject: adminSubject,
+      html: adminEmailHtml,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Admin notification sent successfully:", adminEmailResponse);
+
+    // Send user confirmation email
+    const isVendor = role === "vendor" || profile.role === "vendor";
+    const userEmailHtml = generateUserConfirmationHtml(profile, subscription, vendorApplication, isVendor);
+    const userSubject = isVendor 
+      ? "Your Vendor Application Has Been Received 🏪"
+      : "Welcome to That's Good Too! 🎉";
+
+    try {
+      const userEmailResponse = await resend.emails.send({
+        from: "That's Good Too <welcome@resend.dev>",
+        to: [profile.email],
+        subject: userSubject,
+        html: userEmailHtml,
+      });
+      console.log("User confirmation sent successfully:", userEmailResponse);
+    } catch (userEmailError) {
+      // Log but don't fail - user account is still created
+      console.error("User confirmation failed (non-critical):", userEmailError);
+    }
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailResponse.data?.id }),
+      JSON.stringify({ success: true, emailId: adminEmailResponse.data?.id }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -333,6 +352,240 @@ function generateEmailHtml(profile: any, subscription: any, vendorApplication: a
   `;
 
   return html;
+}
+
+function generateUserConfirmationHtml(
+  profile: any,
+  subscription: any,
+  vendorApplication: any,
+  isVendor: boolean
+): string {
+  if (isVendor) {
+    return generateVendorConfirmationHtml(profile, vendorApplication);
+  } else {
+    return generateShopperWelcomeHtml(profile, subscription);
+  }
+}
+
+function generateShopperWelcomeHtml(profile: any, subscription: any): string {
+  const userName = profile.full_name || profile.display_name || "there";
+  const trialEndDate = subscription?.end_date 
+    ? new Date(subscription.end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : "";
+  const hasPromo = subscription?.promo_code && subscription.promo_code !== "DUAL_ROLE";
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9fafb;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #2563eb;
+      font-size: 28px;
+      margin: 0;
+    }
+    .content p {
+      margin: 15px 0;
+    }
+    .highlight {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #2563eb;
+      margin: 20px 0;
+    }
+    .button {
+      display: inline-block;
+      background: #2563eb;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 Welcome to That's Good Too!</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hi ${userName},</p>
+      
+      <p>Your account has been successfully created! We're excited to have you join our community of local goods enthusiasts.</p>
+      
+      ${subscription?.subscription_type === "trial" ? `
+      <div class="highlight">
+        <strong>🎁 Your 15-Day Free Trial</strong><br>
+        Your trial starts now and ends on <strong>${trialEndDate}</strong>. Enjoy full access to discover amazing local vendors, products, and experiences!
+      </div>
+      ` : ""}
+      
+      ${hasPromo ? `
+      <div class="highlight">
+        <strong>✨ Promo Code Applied</strong><br>
+        Your promo code <strong>${subscription.promo_code}</strong> has been activated! You now have founding member access.
+      </div>
+      ` : ""}
+      
+      <p><strong>What you can do now:</strong></p>
+      <ul>
+        <li>Browse local vendors and their unique offerings</li>
+        <li>Discover products, services, and experiences</li>
+        <li>Follow your favorite vendors</li>
+        <li>Save items to your favorites</li>
+        <li>Get exclusive coupons and deals</li>
+      </ul>
+      
+      <p>If you have any questions, feel free to reach out to us at <a href="mailto:connect@thatsgoodtoo.shop">connect@thatsgoodtoo.shop</a>.</p>
+      
+      <p>Happy discovering!</p>
+      <p><strong>The That's Good Too Team</strong></p>
+    </div>
+    
+    <div class="footer">
+      <p>That's Good Too - Supporting Local Goods & Independent Artists</p>
+      <p>You received this email because you created an account on That's Good Too.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+function generateVendorConfirmationHtml(profile: any, vendorApplication: any): string {
+  const userName = profile.full_name || profile.display_name || "there";
+  const businessType = vendorApplication?.business_type || "Not specified";
+  const location = vendorApplication?.city 
+    ? `${vendorApplication.city}, ${vendorApplication.state_region}`
+    : "Not specified";
+  const submittedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9fafb;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #2563eb;
+      font-size: 28px;
+      margin: 0;
+    }
+    .content p {
+      margin: 15px 0;
+    }
+    .highlight {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #2563eb;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏪 Application Received!</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hi ${userName},</p>
+      
+      <p>Thank you for applying to become a vendor on That's Good Too! We've successfully received your application.</p>
+      
+      <div class="highlight">
+        <strong>📋 What Happens Next</strong><br>
+        Your application will be personally reviewed by our team within <strong>5 business days</strong>. We take the time to review each application individually to ensure we maintain the quality and authenticity of our platform.
+      </div>
+      
+      <p><strong>Review Process:</strong></p>
+      <ul>
+        <li>A real person will review your application (no automated decisions)</li>
+        <li>We'll assess your business fit with our community</li>
+        <li>You'll receive an email with our decision</li>
+        <li>If approved, you'll get instructions to set up your vendor profile</li>
+      </ul>
+      
+      <p><strong>Application Details:</strong></p>
+      <ul>
+        <li><strong>Business Type:</strong> ${businessType}</li>
+        <li><strong>Location:</strong> ${location}</li>
+        <li><strong>Submitted:</strong> ${submittedDate}</li>
+      </ul>
+      
+      <p>While you wait, feel free to explore the platform and see what other vendors are doing!</p>
+      
+      <p>If you have any questions about your application or the vendor program, please contact us at <a href="mailto:connect@thatsgoodtoo.shop">connect@thatsgoodtoo.shop</a>.</p>
+      
+      <p>We appreciate your interest in That's Good Too!</p>
+      <p><strong>The That's Good Too Team</strong></p>
+    </div>
+    
+    <div class="footer">
+      <p>That's Good Too - Supporting Local Goods & Independent Artists</p>
+      <p>You received this email because you submitted a vendor application.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
 }
 
 serve(handler);
