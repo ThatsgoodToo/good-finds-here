@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SignupData } from "@/pages/ShopperSignup";
+import { toast } from "sonner";
 
 type AccountCreationStepProps = {
   data: SignupData;
@@ -13,6 +15,8 @@ type AccountCreationStepProps = {
 };
 
 const AccountCreationStep = ({ data, onUpdate, onNext, onBack, isExistingUser = false }: AccountCreationStepProps) => {
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -24,8 +28,16 @@ const AccountCreationStep = ({ data, onUpdate, onNext, onBack, isExistingUser = 
     
     // For new users, require all fields
     if (!data.fullName || !data.email || !data.password || !data.ageVerified) {
+      toast.error("Please fill in all required fields");
       return;
     }
+    
+    // Validate passwords match
+    if (data.password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    
     onNext();
   };
 
@@ -79,6 +91,19 @@ const AccountCreationStep = ({ data, onUpdate, onNext, onBack, isExistingUser = 
                 placeholder="••••••••"
                 value={data.password}
                 onChange={(e) => onUpdate({ password: e.target.value })}
+                required
+                minLength={6}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
               />

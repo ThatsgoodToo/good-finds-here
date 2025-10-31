@@ -15,7 +15,13 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import PaymentStep from "@/components/signup/PaymentStep";
+
+interface VendorAuthData {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
 interface VendorApplication {
   // Page 1
@@ -78,10 +84,11 @@ const VendorSignup = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
   const [isExistingUser, setIsExistingUser] = useState(false);
-  const [authData, setAuthData] = useState({
+  const [authData, setAuthData] = useState<VendorAuthData>({
     fullName: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
   
   const [formData, setFormData] = useState<VendorApplication>({
@@ -140,6 +147,7 @@ const VendorSignup = () => {
             fullName: profile.full_name || "",
             email: profile.email || user.email || "",
             password: "", // Not needed for existing users
+            confirmPassword: "", // Not needed for existing users
           });
         }
       }
@@ -148,7 +156,7 @@ const VendorSignup = () => {
     loadUserData();
   }, [user, isDualRole]);
 
-  const totalSteps = 7;
+  const totalSteps = 5;
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
   const updateField = (field: keyof VendorApplication, value: any) => {
@@ -173,24 +181,20 @@ const VendorSignup = () => {
         }
         break;
       case 1: // About Your Business
-        if (!formData.business_description || formData.products_services.length === 0 || formData.inventory_type.length === 0) {
+        if (!formData.business_description || formData.products_services.length === 0 || formData.inventory_type.length === 0 || formData.area_of_expertise.length === 0) {
           toast.error("Please fill in all required fields");
           return false;
         }
         break;
       case 2: // Expertise
-        if (formData.area_of_expertise.length === 0 || !formData.business_duration || !formData.craft_development) {
+        if (!formData.business_duration || !formData.craft_development) {
           toast.error("Please fill in all required fields");
           return false;
         }
         break;
-      case 5: // Subscription
-        // Validate payment if no promo code
-        if (!formData.promo_code && !formData.payment_method_saved) {
-          // Allow continuing without payment, but inform user
-        }
+      case 3: // Practices & Creativity - no required fields
         break;
-      case 6: // Agreements
+      case 4: // Agreements
         if (!formData.info_accurate || !formData.understands_review || !formData.agrees_to_terms) {
           toast.error("Please agree to all required terms");
           return false;
@@ -228,8 +232,14 @@ const VendorSignup = () => {
         setShowAuth(false);
       } else {
         // Handle signup
-        if (!authData.fullName || !authData.email || !authData.password) {
+        if (!authData.fullName || !authData.email || !authData.password || !authData.confirmPassword) {
           toast.error("Please fill in all fields");
+          return;
+        }
+
+        // Validate passwords match
+        if (authData.password !== authData.confirmPassword) {
+          toast.error("Passwords do not match");
           return;
         }
 
@@ -350,6 +360,10 @@ const VendorSignup = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <p className="text-sm text-primary font-medium mb-4">
+                  Welcome to our Premiere Release — our community and database will grow as we bring more creators on board!
+                </p>
+                
                 <div className="prose prose-sm sm:prose-base text-muted-foreground space-y-4">
                   <p>
                     We promote local goods, independent artists, and small-scale producers by giving you five spaces to showcase your products, services, or experiences, directing customers straight to your existing site.
@@ -365,8 +379,8 @@ const VendorSignup = () => {
                     <div className="text-sm text-muted-foreground">Showcase Spaces</div>
                   </div>
                   <div className="text-center p-4 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold text-primary mb-1">$5/mo</div>
-                    <div className="text-sm text-muted-foreground">Startup Price</div>
+                    <div className="text-2xl font-bold text-primary mb-1">Free</div>
+                    <div className="text-sm text-muted-foreground">Founding Member Access</div>
                   </div>
                   <div className="text-center p-4 bg-muted rounded-lg">
                     <div className="text-2xl font-bold text-primary mb-1">0%</div>
@@ -436,6 +450,19 @@ const VendorSignup = () => {
                     placeholder="••••••••"
                     value={authData.password}
                     onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={authData.confirmPassword}
+                    onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
                     required
                     minLength={6}
                   />
@@ -534,18 +561,14 @@ const VendorSignup = () => {
                 {currentStep === 1 && "About Your Business"}
                 {currentStep === 2 && "Expertise"}
                 {currentStep === 3 && "Practices & Creativity"}
-                {currentStep === 4 && "Pricing & Accessibility"}
-                {currentStep === 5 && "Subscription"}
-                {currentStep === 6 && "Confirmation & Agreements"}
+                {currentStep === 4 && "Confirmation & Agreements"}
               </CardTitle>
               <CardDescription>
                 {currentStep === 0 && "Where can we find you?"}
                 {currentStep === 1 && "Tell us about what you offer"}
                 {currentStep === 2 && "Share your experience and expertise"}
                 {currentStep === 3 && "What makes your work unique?"}
-                {currentStep === 4 && "Help us understand your pricing and offerings"}
-                {currentStep === 5 && "Choose your subscription plan"}
-                {currentStep === 6 && "Review and confirm your application"}
+                {currentStep === 4 && "Review and confirm your application"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -629,7 +652,7 @@ const VendorSignup = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="businessType">Business Type *</Label>
+                    <Label htmlFor="businessType">Ownership *</Label>
                     <Select value={formData.business_type} onValueChange={(val) => updateField('business_type', val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
@@ -703,39 +726,42 @@ const VendorSignup = () => {
                   </div>
 
                   <div>
-                    <Label>Shipping Options</Label>
-                    <div className="space-y-2 mt-2">
-                      {["Shipping", "Pick Up", "In Person", "Virtual", "Other"].map(item => (
-                        <div key={item} className="flex items-center gap-2">
-                          <Checkbox
-                            checked={formData.shipping_options.includes(item)}
-                            onCheckedChange={() => toggleArrayItem('shipping_options', item)}
-                          />
-                          <Label className="font-normal">{item}</Label>
-                        </div>
-                      ))}
-                    </div>
+                    <Label htmlFor="ownership">Ownership *</Label>
+                    <Select value={formData.business_type} onValueChange={(val) => updateField('business_type', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="independent">Independent artist / maker</SelectItem>
+                        <SelectItem value="nonprofit">Nonprofit / mission-driven</SelectItem>
+                        <SelectItem value="family">Family Owned</SelectItem>
+                        <SelectItem value="collaborative">Collaborative</SelectItem>
+                        <SelectItem value="diverse">Diverse-owned</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  {formData.shipping_options.includes("Pick Up") && (
-                    <div>
-                      <Label htmlFor="pickupAddress">Pickup Address</Label>
-                      <Input
-                        id="pickupAddress"
-                        value={formData.pickup_address}
-                        onChange={(e) => updateField('pickup_address', e.target.value)}
-                        placeholder="Street address for pickup"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Page 3: Expertise */}
-              {currentStep === 2 && (
-                <>
                   <div>
-                    <Label>Area of Expertise *</Label>
+                    <Label htmlFor="pricing">Pricing Style</Label>
+                    <Select value={formData.pricing_style} onValueChange={(val) => updateField('pricing_style', val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select pricing style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="budget">Budget-friendly</SelectItem>
+                        <SelectItem value="accessible">Accessible</SelectItem>
+                        <SelectItem value="cost-effective">Cost-effective</SelectItem>
+                        <SelectItem value="high-end">High-end/Designer</SelectItem>
+                        <SelectItem value="no-budget">No set budget</SelectItem>
+                        <SelectItem value="viewership">Viewership-based</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Area of Expertise / Business Type *</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                       {["Art & Design", "Fashion & Accessories", "Food & Beverage", "Home & Lifestyle", "Wellness & Body Care", "Tech & Innovation", "Education & Experiences", "Other"].map(item => (
                         <div key={item} className="flex items-center gap-2">
@@ -748,7 +774,12 @@ const VendorSignup = () => {
                       ))}
                     </div>
                   </div>
+                </>
+              )}
 
+              {/* Page 3: Expertise */}
+              {currentStep === 2 && (
+                <>
                   <div>
                     <Label htmlFor="duration">Business Duration *</Label>
                     <Select value={formData.business_duration} onValueChange={(val) => updateField('business_duration', val)}>
@@ -816,28 +847,6 @@ const VendorSignup = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="inspiration">Inspiration (Optional)</Label>
-                    <Textarea
-                      id="inspiration"
-                      value={formData.inspiration}
-                      onChange={(e) => updateField('inspiration', e.target.value)}
-                      placeholder="What inspires your work?"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="uniqueness">Brand Uniqueness (Optional)</Label>
-                    <Textarea
-                      id="uniqueness"
-                      value={formData.brand_uniqueness}
-                      onChange={(e) => updateField('brand_uniqueness', e.target.value)}
-                      placeholder="What makes your brand unique?"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
                     <Label>Sustainable / Local / Small-Scale Methods</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                       {[
@@ -867,111 +876,8 @@ const VendorSignup = () => {
                 </>
               )}
 
-              {/* Page 5: Pricing & Accessibility */}
+              {/* Page 5: Confirmation & Agreements */}
               {currentStep === 4 && (
-                <>
-                  <div>
-                    <Label htmlFor="pricing">Pricing Style</Label>
-                    <Select value={formData.pricing_style} onValueChange={(val) => updateField('pricing_style', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select pricing style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="budget">Budget-friendly</SelectItem>
-                        <SelectItem value="accessible">Accessible</SelectItem>
-                        <SelectItem value="cost-effective">Cost-effective</SelectItem>
-                        <SelectItem value="high-end">High-end/Designer</SelectItem>
-                        <SelectItem value="no-budget">No set budget</SelectItem>
-                        <SelectItem value="viewership">Viewership-based</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="offers">Exclusive Offers {formData.products_services.includes("Designed, made, grown, or collected") || formData.products_services.includes("Services offered") ? "*" : "(Optional)"}</Label>
-                    <Select value={formData.exclusive_offers} onValueChange={(val) => updateField('exclusive_offers', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="yes">Absolutely (e.g., free shipping, 15%+ discount, BOGO)</SelectItem>
-                        <SelectItem value="maybe">Maybe</SelectItem>
-                        <SelectItem value="no">Nope</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Products/services must always have one active exclusive offer; free content does not require one. This ensures paid listings are always attractive and actionable for shoppers.
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="promotion">Promotion on TGT Social Channels</Label>
-                    <Select value={formData.promotion_social_channels} onValueChange={(val) => updateField('promotion_social_channels', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="yes">Yes</SelectItem>
-                        <SelectItem value="maybe">Maybe</SelectItem>
-                        <SelectItem value="no">No thanks</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="futureWebsite">Future Website</Label>
-                    <Select value={formData.future_website} onValueChange={(val) => updateField('future_website', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="have">Already have one</SelectItem>
-                        <SelectItem value="maybe">Maybe</SelectItem>
-                        <SelectItem value="no">No</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-
-              {/* Page 6: Subscription - Using PaymentStep component */}
-              {currentStep === 5 && (
-                <>
-                  {isExistingUser && isDualRole ? (
-                    <div className="space-y-6">
-                      <div className="p-6 bg-primary/10 rounded-lg text-center">
-                        <h3 className="text-lg font-semibold mb-2">You're All Set!</h3>
-                        <p className="text-muted-foreground">
-                          You already have an active subscription as a shopper. Your vendor application will use the same subscription - no additional payment needed.
-                        </p>
-                      </div>
-                      <div className="flex gap-3 justify-between">
-                        <Button type="button" variant="outline" onClick={handleBack}>
-                          <ChevronLeft className="mr-2 h-4 w-4" />
-                          Back
-                        </Button>
-                        <Button type="button" onClick={handleNext}>
-                          Continue
-                          <ChevronRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="-m-6">
-                      <PaymentStep
-                        promoCode={formData.promo_code}
-                        onPromoCodeChange={(code) => updateField('promo_code', code)}
-                        onNext={handleNext}
-                        onBack={handleBack}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Page 7: Confirmation & Agreements */}
-              {currentStep === 6 && (
                 <>
                   <div>
                     <Label htmlFor="additional">Anything else you'd like to add? (Optional)</Label>
