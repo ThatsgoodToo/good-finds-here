@@ -140,9 +140,15 @@ const { data: canView } = await supabase.rpc('can_view_profile_email', {
 
 ## RLS Policies in Effect
 
-1. **"Users can view own complete profile"** - Users can see all their own data
-2. **"Public can view safe profile info"** - Allows SELECT but relies on app code filtering
-3. **"Users can update own profile"** - Users can only update their own profile
+### On `profiles` Table:
+1. **"Users can view own complete profile"** - Authenticated users can SELECT all their own data (auth.uid() = id)
+2. **"Users can update own profile"** - Authenticated users can UPDATE only their own data (auth.uid() = id)
+
+### Key Security Features:
+- ❌ **No public SELECT policy** - Anonymous users cannot query profiles table at all
+- ❌ **No cross-user access** - Users cannot view other users' profiles from this table
+- ✅ **Owner-only access** - Users can only access their own complete profile data
+- ✅ **Public view available** - Use `public_profiles` view for safe public profile data
 
 ## Security Testing
 
