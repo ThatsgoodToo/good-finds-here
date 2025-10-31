@@ -46,6 +46,8 @@ const VendorDashboard = () => {
   const { user, roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
   const { status: vendorStatus, isLoading: checkingStatus } = useVendorAccess();
+  
+  // All state hooks MUST be declared before any conditional returns
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
@@ -53,11 +55,12 @@ const VendorDashboard = () => {
   const [refreshCoupons, setRefreshCoupons] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedShopper, setSelectedShopper] = useState<{ id: string; name: string } | null>(null);
-  
-  const { sharesRemaining, maxShares } = useVendorShareLimits();
+  const [subcategories, setSubcategories] = useState(["Ceramics", "Pottery", "Sustainable", "Local", "Eco-friendly"]);
   const [vendorDescription, setVendorDescription] = useState(
     "Handcrafted ceramics and pottery made with sustainable practices. Family-owned business since 2015."
   );
+  
+  const { sharesRemaining, maxShares } = useVendorShareLimits();
 
   useEffect(() => {
     if (!user) {
@@ -191,7 +194,6 @@ const VendorDashboard = () => {
   ];
 
   const mainCategories = ["Handcrafted", "Home Goods", "Art"];
-  const [subcategories, setSubcategories] = useState(["Ceramics", "Pottery", "Sustainable", "Local", "Eco-friendly"]);
 
   const handleMetricClick = (metric: string) => {
     setSelectedMetric(metric);
