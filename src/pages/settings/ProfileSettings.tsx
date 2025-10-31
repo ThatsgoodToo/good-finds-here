@@ -169,11 +169,54 @@ const ProfileSettings = () => {
                   name="avatarUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Avatar URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/avatar.jpg" {...field} />
-                      </FormControl>
-                      <FormDescription>Link to your profile picture</FormDescription>
+                      <FormLabel>Profile Picture</FormLabel>
+                      <div className="space-y-2">
+                        <FormControl>
+                          <Input placeholder="https://example.com/avatar.jpg" {...field} />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={async () => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/*';
+                            
+                            input.onchange = async (e) => {
+                              const file = (e.target as HTMLInputElement).files?.[0];
+                              if (!file || !user) return;
+
+                              try {
+                                const { uploadFile, getUserPath } = await import("@/lib/storage");
+                                const path = getUserPath(user.id, file.name);
+                                const { url } = await uploadFile({
+                                  bucket: "profile-pictures",
+                                  file,
+                                  path,
+                                });
+                                
+                                field.onChange(url);
+                                toast({
+                                  title: "Success",
+                                  description: "Image uploaded!",
+                                });
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Upload failed",
+                                  variant: "destructive",
+                                });
+                              }
+                            };
+                            
+                            input.click();
+                          }}
+                        >
+                          Upload Image
+                        </Button>
+                      </div>
+                      <FormDescription>Provide a URL or upload an image</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

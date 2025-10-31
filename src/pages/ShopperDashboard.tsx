@@ -454,7 +454,40 @@ const ShopperDashboard = () => {
                     size="icon"
                     variant="secondary"
                     className="absolute bottom-0 right-0 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => toast.info("Image upload feature coming soon")}
+                    onClick={async () => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (!file || !user) return;
+
+                        try {
+                          const { uploadFile, getUserPath } = await import("@/lib/storage");
+                          const path = getUserPath(user.id, file.name);
+                          const { url } = await uploadFile({
+                            bucket: "profile-pictures",
+                            file,
+                            path,
+                          });
+
+                          const { error } = await supabase
+                            .from("profiles")
+                            .update({ avatar_url: url })
+                            .eq("id", user.id);
+
+                          if (error) throw error;
+
+                          toast.success("Profile picture updated!");
+                        } catch (error) {
+                          console.error("Upload failed:", error);
+                          toast.error("Failed to upload profile picture");
+                        }
+                      };
+
+                      input.click();
+                    }}
                   >
                     <Upload className="h-3 w-3" />
                   </Button>

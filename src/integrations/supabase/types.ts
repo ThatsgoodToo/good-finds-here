@@ -824,10 +824,7 @@ export type Database = {
         }
         Returns: Json
       }
-      expire_coupons: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      expire_coupons: { Args: never; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -839,10 +836,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      renew_recurring_coupons: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      renew_recurring_coupons: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "vendor" | "shopper" | "admin" | "moderator"

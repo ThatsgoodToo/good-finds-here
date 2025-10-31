@@ -167,20 +167,49 @@ const VendorNewListing = () => {
     }
   };
 
-  const handleImageUpload = () => {
+  const handleImageUpload = async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file && images.length < 5) {
-        const url = URL.createObjectURL(file);
-        setImages([...images, url]);
-        toast.success("Image added");
-      } else if (images.length >= 5) {
+    input.multiple = true;
+    
+    input.onchange = async (e) => {
+      const files = Array.from((e.target as HTMLInputElement).files || []);
+      
+      if (files.length + images.length > 5) {
         toast.error("Maximum 5 images allowed");
+        return;
+      }
+
+      if (!user) {
+        toast.error("You must be logged in to upload images");
+        return;
+      }
+
+      const uploadPromises = files.map(async (file) => {
+        try {
+          const { uploadFile, getUserPath } = await import("@/lib/storage");
+          const path = getUserPath(user.id, file.name);
+          const { url } = await uploadFile({
+            bucket: "product-images",
+            file,
+            path,
+          });
+          return url;
+        } catch (error) {
+          console.error("Upload failed:", error);
+          toast.error(`Failed to upload ${file.name}`);
+          return null;
+        }
+      });
+
+      const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
+      if (uploadedUrls.length > 0) {
+        setImages(prev => [...prev, ...uploadedUrls]);
+        toast.success(`Uploaded ${uploadedUrls.length} image(s)`);
       }
     };
+
     input.click();
   };
 

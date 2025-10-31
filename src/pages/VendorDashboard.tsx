@@ -165,8 +165,39 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleUploadImage = () => {
-    toast.info("Image upload feature coming soon");
+  const handleUploadImage = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file || !user) return;
+
+      try {
+        const { uploadFile, getUserPath } = await import("@/lib/storage");
+        const path = getUserPath(user.id, file.name);
+        const { url } = await uploadFile({
+          bucket: "profile-pictures",
+          file,
+          path,
+        });
+
+        const { error } = await supabase
+          .from("profiles")
+          .update({ avatar_url: url })
+          .eq("id", user.id);
+
+        if (error) throw error;
+
+        toast.success("Vendor image updated!");
+      } catch (error) {
+        console.error("Upload failed:", error);
+        toast.error("Failed to upload vendor image");
+      }
+    };
+
+    input.click();
   };
 
   const handleUpdateLocation = (newLocation: string) => {
