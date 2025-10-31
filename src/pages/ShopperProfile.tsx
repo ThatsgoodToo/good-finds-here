@@ -49,6 +49,7 @@ const ShopperProfile = () => {
         return;
       }
       try {
+        // ✅ SAFE: Only selecting non-sensitive fields for profile check
         const { data } = await supabase
           .from('profiles')
           .select('display_name, high_fives_public, location_public')
