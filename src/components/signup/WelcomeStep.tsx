@@ -9,14 +9,18 @@ type WelcomeStepProps = {
 const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
   return (
     <div className="text-center space-y-6">
+      <h1 className="text-3xl font-bold">Welcome to That's Good Too!</h1>
+      
       <p className="text-sm text-primary font-medium">
         Welcome to our Premiere Release — our community and database will grow as we bring more creators on board!
       </p>
       
-      <h1 className="text-3xl font-bold">Welcome to That's Good Too!</h1>
-      
       <p className="text-lg text-muted-foreground">
         Your one-stop destination to discover local goods, support small-scale makers, and access exclusive offers.
+      </p>
+      
+      <p className="text-muted-foreground">
+        Our affordable, subscription-based platform is designed to save you time while providing a clean, distraction-free shopping experience.
       </p>
       
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-6">
@@ -24,7 +28,6 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
           <CardContent className="pt-6 text-center space-y-2">
             <Store className="h-8 w-8 mx-auto text-primary" />
             <h3 className="font-semibold">Your Own Shop</h3>
-            <p className="text-sm text-muted-foreground">Save and organize your favorite vendors in one place</p>
           </CardContent>
         </Card>
         
@@ -32,7 +35,6 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
           <CardContent className="pt-6 text-center space-y-2">
             <Sparkles className="h-8 w-8 mx-auto text-primary" />
             <h3 className="font-semibold">Founding Member Free Access</h3>
-            <p className="text-sm text-muted-foreground">Join now and enjoy free early adopter benefits</p>
           </CardContent>
         </Card>
         
@@ -40,14 +42,9 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
           <CardContent className="pt-6 text-center space-y-2">
             <Gift className="h-8 w-8 mx-auto text-primary" />
             <h3 className="font-semibold">Exclusive Offers</h3>
-            <p className="text-sm text-muted-foreground">Access special deals and promotions from local vendors</p>
           </CardContent>
         </Card>
       </div>
-      
-      <p className="text-muted-foreground">
-        Our affordable, subscription-based platform is designed to save you time while providing a clean, distraction-free shopping experience.
-      </p>
       
       <Button size="lg" onClick={onNext} className="w-full sm:w-auto">
         Get Started

@@ -724,24 +724,6 @@ const VendorSignup = () => {
                       />
                     </div>
                   )}
-
-                  <div>
-                    <Label htmlFor="pricing">Pricing Style</Label>
-                    <Select value={formData.pricing_style} onValueChange={(val) => updateField('pricing_style', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select pricing style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="budget">Budget-friendly</SelectItem>
-                        <SelectItem value="accessible">Accessible</SelectItem>
-                        <SelectItem value="cost-effective">Cost-effective</SelectItem>
-                        <SelectItem value="high-end">High-end/Designer</SelectItem>
-                        <SelectItem value="no-budget">No set budget</SelectItem>
-                        <SelectItem value="viewership">Viewership-based</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </>
               )}
 
