@@ -22,7 +22,6 @@ import VendorLocationMap from "@/components/VendorLocationMap";
 import { 
   ExternalLink, 
   CheckCircle, 
-  MapPin, 
   DollarSign, 
   Package, 
   Truck, 
@@ -331,7 +330,6 @@ const VendorProfile = () => {
                       onClick={() => setShowLocationMap(true)}
                       className="flex items-start gap-3 w-full text-left group cursor-pointer"
                     >
-                      <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                       <div>
                         <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">Location</h3>
                         <p className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">

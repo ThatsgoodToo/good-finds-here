@@ -39,7 +39,6 @@ import {
   FolderHeart, 
   Grid3x3, 
   List, 
-  MapPin, 
   Settings, 
   RefreshCw, 
   Tag, 
@@ -504,7 +503,6 @@ const ShopperDashboard = () => {
                   {/* Location */}
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
                       <span>{profileSettings.location}</span>
                     </div>
                     <Button
@@ -740,7 +738,7 @@ const ShopperDashboard = () => {
                     size="icon"
                     onClick={() => setViewMode("map")}
                   >
-                    <MapPin className="h-4 w-4" />
+                    Map
                   </Button>
                 </div>
               </div>
@@ -845,7 +843,6 @@ const ShopperDashboard = () => {
                   <CardContent className="pt-6">
                     <div className="h-96 flex items-center justify-center bg-muted rounded-lg">
                       <div className="text-center">
-                        <MapPin className="h-12 w-12 text-primary mx-auto mb-2" />
                         <p className="text-muted-foreground">Map view coming soon</p>
                         <p className="text-sm text-muted-foreground">View your saved vendors by location</p>
                       </div>
@@ -1153,7 +1150,6 @@ const ShopperDashboard = () => {
                 placeholder="City, State"
               />
               <p className="text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 inline mr-1" />
                 This will be shown on your profile based on your privacy settings below.
               </p>
             </div>

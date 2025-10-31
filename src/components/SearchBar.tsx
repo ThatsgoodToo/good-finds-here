@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Mic, MapPin, Globe } from "lucide-react";
+import { Search, Mic, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -71,14 +71,6 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 text-foreground/60 hover:text-foreground hover:bg-transparent"
-                title="Location"
-              >
-                <MapPin className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
                 onClick={handleSearch}
                 className="h-10 w-10 text-foreground/60 hover:text-foreground hover:bg-transparent"
                 title="Voice search"
@@ -135,13 +127,6 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
               className="pl-9 pr-20 h-11 bg-stone-50 dark:bg-input border-border text-foreground placeholder:text-muted-foreground text-sm rounded-full"
             />
             <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-muted-foreground hover:text-foreground"
-              >
-                <MapPin className="h-4 w-4" />
-              </Button>
               <Button
                 variant="ghost"
                 size="icon"

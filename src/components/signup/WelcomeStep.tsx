@@ -15,7 +15,7 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
         </div>
         <CardTitle className="text-3xl sm:text-4xl">Welcome to That's Good Too!</CardTitle>
         <CardDescription className="text-sm text-primary font-medium">
-          Welcome to our Premiere Release — our community and database will grow as we bring more creators on board!
+          Welcome to our Premiere Release. Our community and database will grow as we bring more creators on board!
         </CardDescription>
       </CardHeader>
       

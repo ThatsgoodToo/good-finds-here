@@ -361,7 +361,7 @@ const VendorSignup = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <p className="text-sm text-primary font-medium mb-4">
-                  Welcome to our Premiere Release — our community and database will grow as we bring more creators on board!
+                  Welcome to our Premiere Release. Our community and database will grow as we bring more creators on board!
                 </p>
                 
                 <div className="prose prose-sm sm:prose-base text-muted-foreground space-y-4">

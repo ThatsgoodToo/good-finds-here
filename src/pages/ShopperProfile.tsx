@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ExternalLink, MapPin, Hand, ChevronLeft, Gift } from "lucide-react";
+import { ExternalLink, Hand, ChevronLeft, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
@@ -177,7 +177,6 @@ const ShopperProfile = () => {
                 
                 {shopper.location && privacySettings.locationPublic && (
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
                     <span>{shopper.location}</span>
                   </div>
                 )}

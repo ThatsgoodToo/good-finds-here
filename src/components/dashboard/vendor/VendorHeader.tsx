@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Upload, ExternalLink, MapPin, Edit2, RefreshCw } from "lucide-react";
+import { Settings, Upload, ExternalLink, Edit2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ShopperSignupPrompt from "@/components/ShopperSignupPrompt";
 
@@ -70,7 +70,6 @@ const VendorHeader = ({
                 {vendorName} Goods
               </h1>
               <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                <MapPin className="h-3 w-3" />
                 <span>{location}</span>
               </div>
               {externalUrl && (
