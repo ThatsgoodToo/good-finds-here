@@ -287,6 +287,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "listings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -795,6 +802,39 @@ export type Database = {
       }
     }
     Views: {
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          high_fives_public: boolean | null
+          id: string | null
+          location_public: boolean | null
+          profile_picture_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          high_fives_public?: boolean | null
+          id?: string | null
+          location_public?: boolean | null
+          profile_picture_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          high_fives_public?: boolean | null
+          id?: string | null
+          location_public?: boolean | null
+          profile_picture_url?: string | null
+        }
+        Relationships: []
+      }
       vendor_coupon_analytics: {
         Row: {
           active_status: boolean | null

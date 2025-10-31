@@ -31,9 +31,20 @@ These fields MUST NEVER be included in public queries:
 
 ## Query Examples
 
-### ✅ CORRECT: Public Profile View
+### ✅ RECOMMENDED: Use Public Profiles View
 ```typescript
 // Viewing another user's profile (public data only)
+// Using the dedicated public_profiles view that excludes all sensitive data
+const { data } = await supabase
+  .from('public_profiles')
+  .select('*')  // Safe - view only contains non-sensitive columns
+  .eq('id', userId)
+  .single();
+```
+
+### ✅ CORRECT: Public Profile View (Direct Query)
+```typescript
+// Alternative: Direct query with explicit safe columns
 const { data } = await supabase
   .from('profiles')
   .select('id, display_name, avatar_url, profile_picture_url, bio, created_at')
@@ -84,6 +95,27 @@ Before merging any code that queries `profiles`:
 - [ ] If public query, confirm only safe fields are selected
 - [ ] Use explicit column list instead of `SELECT *`
 - [ ] Consider using `get_public_profile()` helper function
+
+## Database Views
+
+### `public_profiles` View
+A dedicated view that exposes only safe profile fields. **Recommended for all public profile queries.**
+
+**Included Fields:**
+- `id`, `display_name`, `avatar_url`, `profile_picture_url`, `bio`, `created_at`
+- `high_fives_public`, `location_public` (privacy settings)
+
+**Excluded Fields:**
+- `email` ⚠️, `full_name`, `subscription_status`, internal flags
+
+```typescript
+// Best practice: Use the view for public profiles
+const { data } = await supabase
+  .from('public_profiles')
+  .select('*')
+  .eq('id', userId)
+  .single();
+```
 
 ## Helper Functions
 
