@@ -175,13 +175,13 @@ const VendorSignup = () => {
   const validateStep = () => {
     switch (currentStep) {
       case 0: // Basic Info
-        if (!formData.website || !formData.city || !formData.state_region || !formData.country || !formData.business_type) {
+        if (!formData.website || !formData.city || !formData.state_region || !formData.country) {
           toast.error("Please fill in all required fields");
           return false;
         }
         break;
       case 1: // About Your Business
-        if (!formData.business_description || formData.products_services.length === 0 || formData.inventory_type.length === 0 || formData.area_of_expertise.length === 0) {
+        if (!formData.business_description || formData.products_services.length === 0 || formData.business_type.length === 0 || formData.area_of_expertise.length === 0) {
           toast.error("Please fill in all required fields");
           return false;
         }
@@ -650,34 +650,6 @@ const VendorSignup = () => {
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
-
-                  <div>
-                    <Label htmlFor="businessType">Ownership *</Label>
-                    <Select value={formData.business_type} onValueChange={(val) => updateField('business_type', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="independent">Independent artist / maker</SelectItem>
-                        <SelectItem value="nonprofit">Nonprofit / mission-driven</SelectItem>
-                        <SelectItem value="family">Family Owned</SelectItem>
-                        <SelectItem value="collaborative">Collaborative</SelectItem>
-                        <SelectItem value="diverse">Diverse-owned</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {(formData.business_type === "diverse" || formData.business_type === "other") && (
-                    <div>
-                      <Label htmlFor="businessTypeOther">Please Specify</Label>
-                      <Input
-                        id="businessTypeOther"
-                        value={formData.business_type_other}
-                        onChange={(e) => updateField('business_type_other', e.target.value)}
-                      />
-                    </div>
-                  )}
                 </>
               )}
 
@@ -711,15 +683,15 @@ const VendorSignup = () => {
                   </div>
 
                   <div>
-                    <Label>Inventory Type *</Label>
-                    <div className="space-y-2 mt-2">
-                      {["Regular", "Overstocked", "Odd Balls / One-Offs / Misfits", "Viewer-based", "Other"].map(item => (
+                    <Label>Business Type *</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      {["Art & Design", "Fashion & Accessories", "Food & Beverage", "Home & Lifestyle", "Wellness & Body Care", "Tech & Innovation", "Education & Experiences", "Other"].map(item => (
                         <div key={item} className="flex items-center gap-2">
                           <Checkbox
-                            checked={formData.inventory_type.includes(item)}
-                            onCheckedChange={() => toggleArrayItem('inventory_type', item)}
+                            checked={formData.area_of_expertise.includes(item)}
+                            onCheckedChange={() => toggleArrayItem('area_of_expertise', item)}
                           />
-                          <Label className="font-normal">{item}</Label>
+                          <Label className="font-normal text-sm">{item}</Label>
                         </div>
                       ))}
                     </div>
@@ -742,6 +714,17 @@ const VendorSignup = () => {
                     </Select>
                   </div>
 
+                  {(formData.business_type === "diverse" || formData.business_type === "other") && (
+                    <div>
+                      <Label htmlFor="businessTypeOther">Please Specify</Label>
+                      <Input
+                        id="businessTypeOther"
+                        value={formData.business_type_other}
+                        onChange={(e) => updateField('business_type_other', e.target.value)}
+                      />
+                    </div>
+                  )}
+
                   <div>
                     <Label htmlFor="pricing">Pricing Style</Label>
                     <Select value={formData.pricing_style} onValueChange={(val) => updateField('pricing_style', val)}>
@@ -758,21 +741,6 @@ const VendorSignup = () => {
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-
-                  <div>
-                    <Label>Area of Expertise / Business Type *</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                      {["Art & Design", "Fashion & Accessories", "Food & Beverage", "Home & Lifestyle", "Wellness & Body Care", "Tech & Innovation", "Education & Experiences", "Other"].map(item => (
-                        <div key={item} className="flex items-center gap-2">
-                          <Checkbox
-                            checked={formData.area_of_expertise.includes(item)}
-                            onCheckedChange={() => toggleArrayItem('area_of_expertise', item)}
-                          />
-                          <Label className="font-normal text-sm">{item}</Label>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </>
               )}
