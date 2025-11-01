@@ -424,10 +424,23 @@ const VendorSignup = () => {
                 })} required minLength={6} />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  
-                </div>
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="••••••••"
+                      value={authData.confirmPassword}
+                      onChange={(e) => setAuthData({
+                        ...authData,
+                        confirmPassword: e.target.value
+                      })}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                )}
 
                 <Button onClick={handleAuthSubmit} className="w-full">
                   {isLogin ? "Sign In & Continue" : "Create Account & Continue"}
