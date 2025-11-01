@@ -511,7 +511,7 @@ const VendorSignup = () => {
                 {currentStep === 0 && "Where can we find you?"}
                 {currentStep === 1 && "Tell us about what you offer"}
                 {currentStep === 2 && "Your expertise helps us match you with projects and people who'll appreciate what you do best."}
-                {currentStep === 3 && "What makes your work unique?"}
+                {currentStep === 3 && "How you create tells your story, these questions help us reflect that in how you're showcased."}
                 {currentStep === 4 && "Review and confirm your application"}
               </CardDescription>
             </CardHeader>
@@ -734,6 +734,23 @@ const VendorSignup = () => {
                           <Checkbox checked={formData.sustainable_methods.includes(item)} onCheckedChange={(checked) => toggleArrayItem('sustainable_methods', item, checked as boolean)} />
                           <Label className="font-normal text-sm">{item}</Label>
                         </div>)}
+                    </div>
+                    <div className="mt-4">
+                      <Label htmlFor="other-method">Other (please specify)</Label>
+                      <Input 
+                        id="other-method"
+                        className="mt-2"
+                        placeholder="Describe your custom sustainable method..."
+                        value={formData.sustainable_methods.find(m => m.startsWith('Other: '))?.replace('Other: ', '') || ''}
+                        onChange={(e) => {
+                          const newMethods = formData.sustainable_methods.filter(m => !m.startsWith('Other: '));
+                          if (e.target.value.trim()) {
+                            updateField('sustainable_methods', [...newMethods, `Other: ${e.target.value}`]);
+                          } else {
+                            updateField('sustainable_methods', newMethods);
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </>}
