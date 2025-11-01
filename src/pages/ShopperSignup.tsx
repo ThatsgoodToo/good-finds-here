@@ -107,8 +107,18 @@ const ShopperSignup = () => {
           },
         });
 
-        if (signUpError) throw signUpError;
-        if (!authData.user) throw new Error("No user returned from signup");
+        if (signUpError) {
+          console.error("Signup error:", signUpError);
+          throw new Error(`Signup failed: ${signUpError.message}`);
+        }
+        
+        if (!authData.user) {
+          throw new Error("Account created but no user data returned. Please try signing in.");
+        }
+        
+        if (!authData.session) {
+          console.warn("No session created immediately after signup");
+        }
         
         userId = authData.user.id;
       }
@@ -132,7 +142,10 @@ const ShopperSignup = () => {
         .update(profileUpdate)
         .eq("id", userId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw new Error(`Failed to update profile: ${updateError.message}`);
+      }
 
       // Show success message
       if (isExistingUser && isDualRole) {
@@ -143,7 +156,8 @@ const ShopperSignup = () => {
       
       navigate("/dashboard/shopper");
     } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
+      console.error("Signup error:", error);
+      toast.error(error.message || "Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }

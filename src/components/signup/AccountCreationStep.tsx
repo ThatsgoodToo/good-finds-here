@@ -84,7 +84,7 @@ const AccountCreationStep = ({ data, onUpdate, onNext, onBack, isExistingUser = 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password (minimum 6 characters)</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -94,6 +94,9 @@ const AccountCreationStep = ({ data, onUpdate, onNext, onBack, isExistingUser = 
                 required
                 minLength={6}
               />
+              <p className="text-xs text-muted-foreground">
+                Must be at least 6 characters long
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -107,6 +110,11 @@ const AccountCreationStep = ({ data, onUpdate, onNext, onBack, isExistingUser = 
                 required
                 minLength={6}
               />
+              {confirmPassword && data.password !== confirmPassword && (
+                <p className="text-xs text-destructive">
+                  Passwords do not match
+                </p>
+              )}
             </div>
 
             <div className="flex items-center space-x-2">

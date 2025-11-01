@@ -164,25 +164,28 @@ const Auth = () => {
             <TabsContent value="signup">
               <div className="space-y-4">
                 <div className="text-center space-y-3">
-                  <p className="text-muted-foreground">Choose your account type</p>
+                  <p className="text-muted-foreground">Choose your account type to get started</p>
                   <div className="space-y-2">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="default"
                       className="w-full"
                       onClick={() => navigate("/signup/shopper")}
                     >
-                      Shop for goods (Shopper)
+                      Sign Up as Shopper
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       className="w-full"
                       onClick={() => navigate("/signup/vendor")}
                     >
-                      Sell my goods (Vendor)
+                      Sign Up as Vendor
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground pt-2">
+                    New users must complete the full signup process for their chosen role
+                  </p>
                 </div>
               </div>
             </TabsContent>

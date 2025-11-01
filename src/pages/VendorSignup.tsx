@@ -273,8 +273,17 @@ const VendorSignup = () => {
       const {
         data: {
           user: currentUser
-        }
+        },
+        error: userError
       } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error("Auth error:", userError);
+        toast.error("Authentication error. Please try signing in again.");
+        navigate("/auth");
+        return;
+      }
+      
       if (!currentUser) {
         toast.error("Please sign in to submit your application");
         navigate("/auth");
@@ -297,7 +306,11 @@ const VendorSignup = () => {
             ...formData,
             status: 'pending'
           }]);
-          if (error) throw error;
+          
+          if (error) {
+            console.error("Insert error:", error);
+            throw new Error(`Failed to submit application: ${error.message}`);
+          }
 
           // Update profile name if changed
           if (authData.fullName) {
@@ -313,13 +326,18 @@ const VendorSignup = () => {
 
       // Regular submission for new vendors
       const {
-        error
+        error: insertError
       } = await supabase.from('vendor_applications').insert([{
         user_id: currentUser.id,
         ...formData,
         status: 'pending'
       }]);
-      if (error) throw error;
+      
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw new Error(`Failed to submit application: ${insertError.message}`);
+      }
+      
       toast.success("Application submitted successfully!");
       setCurrentStep(totalSteps); // Show thank you page
       
@@ -328,7 +346,8 @@ const VendorSignup = () => {
         navigate("/vendor/pending-approval");
       }, 2000);
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit application");
+      console.error("Submission error:", error);
+      toast.error(error.message || "Failed to submit application. Please try again.");
     } finally {
       setLoading(false);
     }
