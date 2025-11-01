@@ -10,9 +10,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Hand, Star, TrendingUp, Award, Sparkles, Heart } from "lucide-react";
+import { Hand, Award, Sparkles, Heart, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const HighFives = () => {
   const navigate = useNavigate();
@@ -21,6 +23,15 @@ const HighFives = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedFollower, setSelectedFollower] = useState<{ id: string; name: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<"all" | CategoryType>("all");
+  
+  // State for fetched data
+  const [loading, setLoading] = useState(true);
+  const [topVendors, setTopVendors] = useState<any[]>([]);
+  const [topListings, setTopListings] = useState<any[]>([]);
+  const [overlookedItems, setOverlookedItems] = useState<any[]>([]);
+  const [shopperFavorites, setShopperFavorites] = useState<{ vendors: any[]; listings: any[] }>({ vendors: [], listings: [] });
+  const [relatableListings, setRelatableListings] = useState<any[]>([]);
+  const [vendorFollowers, setVendorFollowers] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -28,217 +39,339 @@ const HighFives = () => {
     }
   }, [user]);
 
-  // Mock data for highly rated vendors (shown to signed-out users)
-  const topVendors = [
-    {
-      id: "1",
-      name: "Clay & Co.",
-      image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200",
-      rating: 4.9,
-      highFives: 1247,
-      category: "Handcrafted Ceramics",
-      type: "product" as const,
-    },
-    {
-      id: "2",
-      name: "GINEW",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200",
-      rating: 4.8,
-      highFives: 1114,
-      category: "Heritage Clothing",
-      type: "product" as const,
-    },
-    {
-      id: "3",
-      name: "Studio Ceramics",
-      image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=200",
-      rating: 4.9,
-      highFives: 892,
-      category: "Pottery Workshops",
-      type: "experience" as const,
-    },
-  ];
+  // Fetch data based on user role
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (!user) {
+          await fetchGuestData();
+        } else if (userRole === "shopper") {
+          await fetchShopperData();
+        } else if (userRole === "vendor") {
+          await fetchVendorData();
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Mock data for top listings (shown to signed-out users)
-  const topListings = [
-    {
-      id: "1",
-      title: "Handcrafted Bowl Set",
-      vendor: "Clay & Co.",
-      vendorId: "1",
-      image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300",
-      highFives: 547,
-      price: "$95",
-      type: "product" as const,
-    },
-    {
-      id: "2",
-      title: "Heritage Striped Shirt",
-      vendor: "GINEW",
-      vendorId: "2",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300",
-      highFives: 432,
-      price: "$120",
-      type: "product" as const,
-    },
-    {
-      id: "3",
-      title: "Pottery Workshop",
-      vendor: "Studio Ceramics",
-      vendorId: "3",
-      image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300",
-      highFives: 389,
-      price: "$75",
-      type: "experience" as const,
-    },
-  ];
+    fetchData();
+  }, [user, userRole]);
 
-  // Mock data for shopper favorites (shown to signed-in shoppers)
-  const shopperFavorites = {
-    vendors: [
-      {
-        id: "1",
-        name: "Clay & Co.",
-        image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200",
-        highFives: 1247,
-        category: "Handcrafted Ceramics",
-        type: "product" as const,
-        savedDate: "2025-10-15",
-      },
-      {
-        id: "2",
-        name: "GINEW",
-        image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200",
-        highFives: 1114,
-        category: "Heritage Clothing",
-        type: "product" as const,
-        savedDate: "2025-10-12",
-      },
-    ],
-    listings: [
-      {
-        id: "1",
-        title: "Handcrafted Bowl Set",
-        vendor: "Clay & Co.",
-        vendorId: "1",
-        image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300",
-        highFives: 547,
-        price: "$95",
-        type: "product" as const,
-        folder: "Favorites",
-      },
-      {
-        id: "2",
-        title: "Heritage Striped Shirt",
-        vendor: "GINEW",
-        vendorId: "2",
-        image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300",
-        highFives: 432,
-        price: "$120",
-        type: "product" as const,
-        folder: "Gift Ideas",
-      },
-    ],
+  const fetchGuestData = async () => {
+    // Fetch top vendors with follower counts
+    const { data: vendors, error: vendorsError } = await supabase
+      .from("vendor_profiles")
+      .select(`
+        id,
+        user_id,
+        business_description,
+        business_type,
+        city,
+        state_region
+      `)
+      .eq("status", "active")
+      .limit(6);
+
+    if (!vendorsError && vendors) {
+      const vendorsWithCounts = await Promise.all(
+        vendors.map(async (vendor) => {
+          // Get profile data
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name, profile_picture_url")
+            .eq("id", vendor.user_id)
+            .single();
+
+          // Get follower count
+          const { count } = await supabase
+            .from("followers")
+            .select("*", { count: "exact", head: true })
+            .eq("vendor_id", vendor.user_id);
+
+          return {
+            id: vendor.user_id,
+            name: profile?.display_name || "Unknown Vendor",
+            image: profile?.profile_picture_url || "",
+            highFives: count || 0,
+            category: vendor.business_type || "General",
+            type: "product" as const,
+          };
+        })
+      );
+      setTopVendors(vendorsWithCounts.sort((a, b) => b.highFives - a.highFives).slice(0, 3));
+    }
+
+    // Fetch top listings
+    const { data: listings, error: listingsError } = await supabase
+      .from("listings")
+      .select(`
+        id,
+        title,
+        image_url,
+        price,
+        listing_type,
+        vendor_id
+      `)
+      .eq("status", "active")
+      .limit(6);
+
+    if (!listingsError && listings) {
+      const listingsWithCounts = await Promise.all(
+        listings.map(async (listing) => {
+          // Get vendor profile and name
+          const { data: vendorProfile } = await supabase
+            .from("vendor_profiles")
+            .select("user_id")
+            .eq("user_id", listing.vendor_id)
+            .single();
+
+          let vendorName = "Unknown";
+          if (vendorProfile) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("id", vendorProfile.user_id)
+              .single();
+            vendorName = profile?.display_name || "Unknown";
+          }
+
+          const { count } = await supabase
+            .from("favorites")
+            .select("*", { count: "exact", head: true })
+            .eq("item_id", listing.id);
+
+          return {
+            id: listing.id,
+            title: listing.title,
+            vendor: vendorName,
+            vendorId: listing.vendor_id,
+            image: listing.image_url || "",
+            highFives: count || 0,
+            price: listing.price ? `$${listing.price}` : "Contact for price",
+            type: listing.listing_type as any,
+          };
+        })
+      );
+      
+      const sorted = listingsWithCounts.sort((a, b) => b.highFives - a.highFives);
+      setTopListings(sorted.slice(0, 3));
+      setOverlookedItems(sorted.slice(-3).reverse());
+    }
   };
 
-  // Mock data for relatable listings (shown to logged-in shoppers)
-  const relatableListings = [
-    {
-      id: "4",
-      title: "Organic Cotton Tote",
-      vendor: "Eco Goods",
-      vendorId: "4",
-      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300",
-      highFives: 234,
-      price: "$35",
-      type: "product" as const,
-      matchedFilters: ["Eco-friendly", "Handcrafted"]
-    },
-    {
-      id: "5",
-      title: "Local Honey Set",
-      vendor: "Bee Happy Farms",
-      vendorId: "5",
-      image: "https://images.unsplash.com/photo-1587049352846-4a222e784e38?w=300",
-      highFives: 198,
-      price: "$42",
-      type: "product" as const,
-      matchedFilters: ["Local", "Sustainable"]
-    },
-    {
-      id: "6",
-      title: "Wood Carving Workshop",
-      vendor: "Artisan Studio",
-      vendorId: "6",
-      image: "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=300",
-      highFives: 156,
-      price: "$85",
-      type: "experience" as const,
-      matchedFilters: ["Handcrafted", "Local"]
-    },
-  ];
+  const fetchShopperData = async () => {
+    if (!user) return;
 
-  // Mock data for overlooked items (least popular)
-  const overlookedItems = [
-    {
-      id: "7",
-      title: "Vintage Record Player",
-      vendor: "Retro Audio",
-      vendorId: "7",
-      image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=300",
-      highFives: 12,
-      price: "$145",
-      type: "product" as const,
-    },
-    {
-      id: "8",
-      title: "Hand-Knit Scarf",
-      vendor: "Cozy Creations",
-      vendorId: "8",
-      image: "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=300",
-      highFives: 8,
-      price: "$55",
-      type: "product" as const,
-    },
-    {
-      id: "9",
-      title: "Calligraphy Class",
-      vendor: "Write Beautiful",
-      vendorId: "9",
-      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=300",
-      highFives: 15,
-      price: "$65",
-      type: "service" as const,
-    },
-  ];
+    // Fetch followed vendors
+    const { data: followedVendors, error: followError } = await supabase
+      .from("followers")
+      .select(`
+        vendor_id,
+        created_at
+      `)
+      .eq("shopper_id", user.id);
 
-  // Mock data for vendor followers (shown to signed-in vendors)
-  const vendorFollowers = [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
-      location: "Portland, OR",
-      followedDate: "2025-09-20",
-      highFivesGiven: 23,
-    },
-    {
-      id: "2",
-      name: "Mike Chen",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
-      location: "Seattle, WA",
-      followedDate: "2025-09-15",
-      highFivesGiven: 15,
-    },
-    {
-      id: "3",
-      name: "Emma Davis",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
-      location: "San Francisco, CA",
-      followedDate: "2025-09-10",
-      highFivesGiven: 31,
-    },
-  ];
+    if (!followError && followedVendors) {
+      const vendorsWithCounts = await Promise.all(
+        followedVendors.map(async (follow) => {
+          // Get vendor profile
+          const { data: vendorProfile } = await supabase
+            .from("vendor_profiles")
+            .select("business_type, user_id")
+            .eq("user_id", follow.vendor_id)
+            .single();
+
+          // Get profile data
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name, profile_picture_url")
+            .eq("id", follow.vendor_id)
+            .single();
+
+          // Get follower count
+          const { count } = await supabase
+            .from("followers")
+            .select("*", { count: "exact", head: true })
+            .eq("vendor_id", follow.vendor_id);
+
+          return {
+            id: follow.vendor_id,
+            name: profile?.display_name || "Unknown",
+            image: profile?.profile_picture_url || "",
+            highFives: count || 0,
+            category: vendorProfile?.business_type || "General",
+            type: "product" as const,
+            savedDate: follow.created_at,
+          };
+        })
+      );
+      setShopperFavorites(prev => ({ ...prev, vendors: vendorsWithCounts }));
+    }
+
+    // Fetch saved listings
+    const { data: favorites, error: favError } = await supabase
+      .from("favorites")
+      .select(`
+        item_id,
+        folder_name,
+        created_at
+      `)
+      .eq("user_id", user.id);
+
+    if (!favError && favorites && favorites.length > 0) {
+      const listingIds = favorites.map(f => f.item_id);
+      
+      const { data: listings } = await supabase
+        .from("listings")
+        .select(`
+          id,
+          title,
+          image_url,
+          price,
+          listing_type,
+          vendor_id
+        `)
+        .in("id", listingIds);
+
+      if (listings) {
+        const listingsWithDetails = await Promise.all(
+          listings.map(async (listing) => {
+            // Get vendor name
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("id", listing.vendor_id)
+              .single();
+
+            // Get favorites count
+            const { count } = await supabase
+              .from("favorites")
+              .select("*", { count: "exact", head: true })
+              .eq("item_id", listing.id);
+
+            const favorite = favorites.find(f => f.item_id === listing.id);
+
+            return {
+              id: listing.id,
+              title: listing.title,
+              vendor: profile?.display_name || "Unknown",
+              vendorId: listing.vendor_id,
+              image: listing.image_url || "",
+              highFives: count || 0,
+              price: listing.price ? `$${listing.price}` : "Contact for price",
+              type: listing.listing_type as any,
+              folder: favorite?.folder_name || "Favorites",
+            };
+          })
+        );
+        setShopperFavorites(prev => ({ ...prev, listings: listingsWithDetails }));
+      }
+    }
+
+    // Fetch recommendations based on user interests
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("interests")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.interests && profile.interests.length > 0) {
+      const { data: recommendations } = await supabase
+        .from("listings")
+        .select(`
+          id,
+          title,
+          image_url,
+          price,
+          listing_type,
+          tags,
+          vendor_id
+        `)
+        .eq("status", "active")
+        .limit(6);
+
+      if (recommendations) {
+        const recsWithCounts = await Promise.all(
+          recommendations.map(async (listing) => {
+            // Get vendor name
+            const { data: vendorProfile } = await supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("id", listing.vendor_id)
+              .single();
+
+            // Get favorites count
+            const { count } = await supabase
+              .from("favorites")
+              .select("*", { count: "exact", head: true })
+              .eq("item_id", listing.id);
+
+            const matchedFilters = listing.tags?.filter((tag: string) => 
+              profile.interests.some((interest: string) => 
+                interest.toLowerCase().includes(tag.toLowerCase())
+              )
+            ) || [];
+
+            return {
+              id: listing.id,
+              title: listing.title,
+              vendor: vendorProfile?.display_name || "Unknown",
+              vendorId: listing.vendor_id,
+              image: listing.image_url || "",
+              highFives: count || 0,
+              price: listing.price ? `$${listing.price}` : "Contact for price",
+              type: listing.listing_type as any,
+              matchedFilters: matchedFilters.slice(0, 3),
+            };
+          })
+        );
+        setRelatableListings(recsWithCounts.slice(0, 3));
+      }
+    }
+
+    // Also fetch overlooked items for shoppers
+    await fetchGuestData();
+  };
+
+  const fetchVendorData = async () => {
+    if (!user) return;
+
+    // Fetch followers for this vendor
+    const { data: followers, error: followersError } = await supabase
+      .from("followers")
+      .select(`
+        shopper_id,
+        created_at
+      `)
+      .eq("vendor_id", user.id);
+
+    if (!followersError && followers) {
+      const followersData = await Promise.all(
+        followers.map(async (follower) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name, profile_picture_url")
+            .eq("id", follower.shopper_id)
+            .single();
+
+          return {
+            id: follower.shopper_id,
+            name: profile?.display_name || "Unknown Shopper",
+            image: profile?.profile_picture_url || "",
+            location: "Unknown",
+            followedDate: follower.created_at,
+            highFivesGiven: 0,
+          };
+        })
+      );
+      setVendorFollowers(followersData);
+    }
+  };
 
   const getTypeDotColor = (type: "product" | "service" | "experience" | "sale") => {
     switch (type) {
@@ -249,7 +382,6 @@ const HighFives = () => {
     }
   };
 
-  // Filter listings based on active filter
   const filterByType = <T extends { type: "product" | "service" | "experience" | "sale" }>(items: T[]): T[] => {
     if (activeFilter === "all") return items;
     return items.filter(item => item.type === activeFilter);
@@ -263,35 +395,43 @@ const HighFives = () => {
           <Award className="h-6 w-6 text-primary" />
           <h2 className="text-2xl font-bold">Top Rated Vendors</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filterByType(topVendors).map((vendor) => (
-            <Card
-              key={vendor.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate(`/vendor/${vendor.id}`)}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={vendor.image} alt={vendor.name} />
-                    <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={cn("h-2 w-2 rounded-full", getTypeDotColor(vendor.type))} />
-                      <h3 className="font-semibold">{vendor.name}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{vendor.category}</p>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Hand className="h-4 w-4 text-primary" />
-                      <span>{vendor.highFives} High Fives</span>
+        {filterByType(topVendors).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filterByType(topVendors).map((vendor) => (
+              <Card
+                key={vendor.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate(`/vendor/${vendor.id}`)}
+              >
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={vendor.image} alt={vendor.name} />
+                      <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={cn("h-2 w-2 rounded-full", getTypeDotColor(vendor.type))} />
+                        <h3 className="font-semibold">{vendor.name}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{vendor.category}</p>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Hand className="h-4 w-4 text-primary" />
+                        <span>{vendor.highFives} Followers</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              <p>No vendors available yet. Check back soon!</p>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Featured Listings */}
@@ -300,37 +440,51 @@ const HighFives = () => {
           <Sparkles className="h-6 w-6 text-primary" />
           <h2 className="text-2xl font-bold">Featured Listings</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filterByType(topListings).map((listing) => (
-            <Card
-              key={listing.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-              onClick={() => navigate(`/listing/product/${listing.id}`)}
-            >
-              <div className="relative">
-                <img
-                  src={listing.image}
-                  alt={listing.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-2 left-2">
-                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
-                </div>
-              </div>
-              <CardContent className="pt-4">
-                <h3 className="font-semibold mb-1">{listing.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">{listing.price}</span>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Hand className="h-4 w-4 text-primary" />
-                    <span>{listing.highFives}</span>
+        {filterByType(topListings).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filterByType(topListings).map((listing) => (
+              <Card
+                key={listing.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                onClick={() => navigate(`/listing/product/${listing.id}`)}
+              >
+                <div className="relative">
+                  {listing.image ? (
+                    <img
+                      src={listing.image}
+                      alt={listing.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-muted flex items-center justify-center">
+                      <span className="text-muted-foreground">No image</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="pt-4">
+                  <h3 className="font-semibold mb-1">{listing.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">{listing.price}</span>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Hand className="h-4 w-4 text-primary" />
+                      <span>{listing.highFives}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              <p>No listings available yet. Check back soon!</p>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Overlooked Items */}
@@ -340,37 +494,51 @@ const HighFives = () => {
           <h2 className="text-2xl font-bold">Hidden Gems</h2>
           <Badge variant="secondary">Give them some love!</Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filterByType(overlookedItems).map((listing) => (
-            <Card
-              key={listing.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-              onClick={() => navigate(`/listing/product/${listing.id}`)}
-            >
-              <div className="relative">
-                <img
-                  src={listing.image}
-                  alt={listing.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-2 left-2">
-                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
-                </div>
-              </div>
-              <CardContent className="pt-4">
-                <h3 className="font-semibold mb-1">{listing.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">{listing.price}</span>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Hand className="h-4 w-4 text-primary" />
-                    <span>{listing.highFives}</span>
+        {filterByType(overlookedItems).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filterByType(overlookedItems).map((listing) => (
+              <Card
+                key={listing.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                onClick={() => navigate(`/listing/product/${listing.id}`)}
+              >
+                <div className="relative">
+                  {listing.image ? (
+                    <img
+                      src={listing.image}
+                      alt={listing.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-muted flex items-center justify-center">
+                      <span className="text-muted-foreground">No image</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="pt-4">
+                  <h3 className="font-semibold mb-1">{listing.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">{listing.price}</span>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Hand className="h-4 w-4 text-primary" />
+                      <span>{listing.highFives}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              <p>No hidden gems to discover yet!</p>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Call to Action */}
@@ -397,35 +565,44 @@ const HighFives = () => {
           <Hand className="h-6 w-6 text-primary" />
           <h2 className="text-2xl font-bold">My Favorite Vendors</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filterByType(shopperFavorites.vendors).map((vendor) => (
-            <Card
-              key={vendor.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate(`/vendor/${vendor.id}`)}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={vendor.image} alt={vendor.name} />
-                    <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={cn("h-2 w-2 rounded-full", getTypeDotColor(vendor.type))} />
-                      <h3 className="font-semibold">{vendor.name}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{vendor.category}</p>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Hand className="h-4 w-4 text-primary" />
-                      <span>{vendor.highFives} High Fives</span>
+        {filterByType(shopperFavorites.vendors).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filterByType(shopperFavorites.vendors).map((vendor) => (
+              <Card
+                key={vendor.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate(`/vendor/${vendor.id}`)}
+              >
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={vendor.image} alt={vendor.name} />
+                      <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={cn("h-2 w-2 rounded-full", getTypeDotColor(vendor.type))} />
+                        <h3 className="font-semibold">{vendor.name}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{vendor.category}</p>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Hand className="h-4 w-4 text-primary" />
+                        <span>{vendor.highFives} Followers</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              <p>You haven't followed any vendors yet. Start exploring!</p>
+              <Button className="mt-4" onClick={() => navigate("/")}>Browse Vendors</Button>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Saved Listings */}
@@ -434,130 +611,163 @@ const HighFives = () => {
           <Hand className="h-6 w-6 text-primary" />
           <h2 className="text-2xl font-bold">My Saved Listings</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filterByType(shopperFavorites.listings).map((listing) => (
-            <Card
-              key={listing.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-              onClick={() => navigate(`/listing/product/${listing.id}`)}
-            >
-              <div className="relative">
-                <img
-                  src={listing.image}
-                  alt={listing.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-2 left-2">
-                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
-                </div>
-                <Badge className="absolute top-2 right-2">
-                  {listing.folder}
-                </Badge>
-              </div>
-              <CardContent className="pt-4">
-                <h3 className="font-semibold mb-1">{listing.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">{listing.price}</span>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Hand className="h-4 w-4 text-primary" />
-                    <span>{listing.highFives}</span>
+        {filterByType(shopperFavorites.listings).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filterByType(shopperFavorites.listings).map((listing) => (
+              <Card
+                key={listing.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                onClick={() => navigate(`/listing/product/${listing.id}`)}
+              >
+                <div className="relative">
+                  {listing.image ? (
+                    <img
+                      src={listing.image}
+                      alt={listing.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-muted flex items-center justify-center">
+                      <span className="text-muted-foreground">No image</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
                   </div>
+                  <Badge className="absolute top-2 right-2">
+                    {listing.folder}
+                  </Badge>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <CardContent className="pt-4">
+                  <h3 className="font-semibold mb-1">{listing.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">{listing.price}</span>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Hand className="h-4 w-4 text-primary" />
+                      <span>{listing.highFives}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              <p>You haven't saved any listings yet. Start exploring!</p>
+              <Button className="mt-4" onClick={() => navigate("/")}>Browse Listings</Button>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Relatable Listings */}
-      <section>
-        <div className="flex items-center gap-3 mb-6">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">You Might Also Like</h2>
-          <Badge variant="secondary">Based on your preferences</Badge>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filterByType(relatableListings).map((listing) => (
-            <Card
-              key={listing.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-              onClick={() => navigate(`/listing/product/${listing.id}`)}
-            >
-              <div className="relative">
-                <img
-                  src={listing.image}
-                  alt={listing.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-2 left-2">
-                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
-                </div>
-                <div className="absolute bottom-2 left-2 right-2">
-                  <div className="flex flex-wrap gap-1">
-                    {listing.matchedFilters.map((filter, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {filter}
-                      </Badge>
-                    ))}
+      {relatableListings.length > 0 && (
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-bold">You Might Also Like</h2>
+            <Badge variant="secondary">Based on your preferences</Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filterByType(relatableListings).map((listing) => (
+              <Card
+                key={listing.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                onClick={() => navigate(`/listing/product/${listing.id}`)}
+              >
+                <div className="relative">
+                  {listing.image ? (
+                    <img
+                      src={listing.image}
+                      alt={listing.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-muted flex items-center justify-center">
+                      <span className="text-muted-foreground">No image</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
                   </div>
+                  {listing.matchedFilters && listing.matchedFilters.length > 0 && (
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <div className="flex flex-wrap gap-1">
+                        {listing.matchedFilters.map((filter: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {filter}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <CardContent className="pt-4">
-                <h3 className="font-semibold mb-1">{listing.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">{listing.price}</span>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Hand className="h-4 w-4 text-primary" />
-                    <span>{listing.highFives}</span>
+                <CardContent className="pt-4">
+                  <h3 className="font-semibold mb-1">{listing.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">{listing.price}</span>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Hand className="h-4 w-4 text-primary" />
+                      <span>{listing.highFives}</span>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Overlooked Items */}
-      <section>
-        <div className="flex items-center gap-3 mb-6">
-          <Heart className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Hidden Gems</h2>
-          <Badge variant="secondary">Give them some love!</Badge>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {overlookedItems.map((listing) => (
-            <Card
-              key={listing.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-              onClick={() => navigate(`/listing/product/${listing.id}`)}
-            >
-              <div className="relative">
-                <img
-                  src={listing.image}
-                  alt={listing.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-2 left-2">
-                  <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
-                </div>
-              </div>
-              <CardContent className="pt-4">
-                <h3 className="font-semibold mb-1">{listing.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">{listing.price}</span>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Hand className="h-4 w-4 text-primary" />
-                    <span>{listing.highFives}</span>
+      {overlookedItems.length > 0 && (
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <Heart className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-bold">Hidden Gems</h2>
+            <Badge variant="secondary">Give them some love!</Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {overlookedItems.map((listing) => (
+              <Card
+                key={listing.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                onClick={() => navigate(`/listing/product/${listing.id}`)}
+              >
+                <div className="relative">
+                  {listing.image ? (
+                    <img
+                      src={listing.image}
+                      alt={listing.title}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-muted flex items-center justify-center">
+                      <span className="text-muted-foreground">No image</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(listing.type))} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+                <CardContent className="pt-4">
+                  <h3 className="font-semibold mb-1">{listing.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{listing.vendor}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">{listing.price}</span>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Hand className="h-4 w-4 text-primary" />
+                      <span>{listing.highFives}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 
@@ -569,45 +779,65 @@ const HighFives = () => {
           <h2 className="text-2xl font-bold">Your Followers</h2>
           <Badge variant="secondary">{vendorFollowers.length} shoppers</Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vendorFollowers.map((follower) => (
-            <Card
-              key={follower.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate(`/shopper/${follower.id}`)}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4 mb-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={follower.image} alt={follower.name} />
-                    <AvatarFallback>{follower.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">{follower.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{follower.location}</p>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Hand className="h-4 w-4 text-primary" />
-                      <span>{follower.highFivesGiven} High Fives</span>
+        {vendorFollowers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {vendorFollowers.map((follower) => (
+              <Card
+                key={follower.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate(`/shopper/${follower.id}`)}
+              >
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={follower.image} alt={follower.name} />
+                      <AvatarFallback>{follower.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">{follower.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">Followed you</p>
                     </div>
                   </div>
-                </div>
-                <Button 
-                  size="sm" 
-                  className="w-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Open offer coupon modal
-                  }}
-                >
-                  Offer Exclusive Coupon
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <Button 
+                    size="sm" 
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFollower({ id: follower.id, name: follower.name });
+                      setShareDialogOpen(true);
+                    }}
+                  >
+                    Offer Exclusive Coupon
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              <p>No followers yet. Share your profile to attract shoppers!</p>
+            </CardContent>
+          </Card>
+        )}
       </section>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-16 sm:pt-20 pb-24">
+          <div className="container mx-auto px-4 sm:px-6 py-8">
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
