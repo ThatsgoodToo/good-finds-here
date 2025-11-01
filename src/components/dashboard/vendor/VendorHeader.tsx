@@ -123,20 +123,20 @@ const VendorHeader = ({
               >
                 Shopper
               </Button>
-              <Button
-                variant={activeRole === "vendor" || !roles.includes("shopper") ? "default" : "ghost"}
-                size="sm"
-                onClick={() => {
-                  if (roles.includes("shopper")) {
-                    setActiveRole("vendor");
-                    navigate("/dashboard/vendor");
-                  } else {
-                    setShowShopperSignupPrompt(true);
-                  }
-                }}
-              >
-                Vendor
-              </Button>
+            <Button
+              variant={activeRole === "vendor" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => {
+                if (roles.includes("vendor")) {
+                  setActiveRole("vendor");
+                  // Already on vendor dashboard
+                } else {
+                  navigate("/signup/vendor");
+                }
+              }}
+            >
+              Vendor
+            </Button>
             </div>
 
             <Button

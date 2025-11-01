@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useVendorAccess } from "@/hooks/useVendorAccess";
 import SignupModal from "@/components/SignupModal";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,6 +83,7 @@ interface Folder {
 
 const ShopperDashboard = () => {
   const { user, userRole, roles, activeRole, setActiveRole } = useAuth();
+  const { status: vendorStatus, isPending, isRejected } = useVendorAccess();
   const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
@@ -653,15 +655,15 @@ const ShopperDashboard = () => {
                 {/* Toggle between Vendor and Shopper - Always visible */}
                 <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
                   <Button
-                    variant={activeRole === "shopper" || !roles.includes("vendor") ? "default" : "ghost"}
+                    variant={activeRole === "shopper" ? "default" : "ghost"}
                     size="sm"
                     className="px-4"
                     onClick={() => {
-                      if (roles.includes("vendor")) {
+                      if (roles.includes("shopper")) {
                         setActiveRole("shopper");
-                        navigate("/dashboard/shopper");
+                        // Already on shopper dashboard
                       } else {
-                        setShowVendorSignupPrompt(true);
+                        navigate("/signup/shopper");
                       }
                     }}
                   >
@@ -673,8 +675,20 @@ const ShopperDashboard = () => {
                     className="px-4"
                     onClick={() => {
                       if (roles.includes("vendor")) {
-                        setActiveRole("vendor");
-                        navigate("/dashboard/vendor");
+                        // Check vendor application status
+                        if (vendorStatus === "approved") {
+                          setActiveRole("vendor");
+                          navigate("/dashboard/vendor");
+                        } else if (vendorStatus === "pending") {
+                          toast.info("Your vendor application is pending approval");
+                          navigate("/dashboard/vendor");
+                        } else if (vendorStatus === "rejected") {
+                          toast.error("Your vendor application was not approved");
+                          navigate("/dashboard/vendor");
+                        } else {
+                          setActiveRole("vendor");
+                          navigate("/dashboard/vendor");
+                        }
                       } else {
                         setShowVendorSignupPrompt(true);
                       }
