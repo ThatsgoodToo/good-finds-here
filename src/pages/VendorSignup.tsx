@@ -510,7 +510,7 @@ const VendorSignup = () => {
               <CardDescription>
                 {currentStep === 0 && "Where can we find you?"}
                 {currentStep === 1 && "Tell us about what you offer"}
-                {currentStep === 2 && "Share your experience and expertise"}
+                {currentStep === 2 && "Your expertise helps us match you with projects and people who'll appreciate what you do best."}
                 {currentStep === 3 && "What makes your work unique?"}
                 {currentStep === 4 && "Review and confirm your application"}
               </CardDescription>
@@ -614,46 +614,99 @@ const VendorSignup = () => {
                     </div>}
                 </>}
 
-              {/* Page 3: Expertise */}
-              {currentStep === 2 && <>
-                  <div>
-                    <Label htmlFor="duration">Business Duration *</Label>
-                    <Select value={formData.business_duration} onValueChange={val => updateField('business_duration', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="<1">&lt;1 year</SelectItem>
-                        <SelectItem value="1-3">1–3 years</SelectItem>
-                        <SelectItem value="3-5">3–5 years</SelectItem>
-                        <SelectItem value="5-10">5–10 years</SelectItem>
-                        <SelectItem value="10+">10+ years</SelectItem>
-                      </SelectContent>
-                    </Select>
+            {/* Page 3: Expertise */}
+            {currentStep === 2 && <>
+              <div>
+                <Label>Experience Level *</Label>
+                <div className="space-y-3 mt-3">
+                  {/* Radio button option 1: Rising */}
+                  <div 
+                    className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                      formData.business_duration === 'rising' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => updateField('business_duration', 'rising')}
+                  >
+                    <div className="flex items-center h-5">
+                      <input
+                        type="radio"
+                        name="experience-level"
+                        value="rising"
+                        checked={formData.business_duration === 'rising'}
+                        onChange={(e) => updateField('business_duration', e.target.value)}
+                        className="w-4 h-4 text-primary cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="font-semibold cursor-pointer">Rising</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        You're exploring, experimenting, and defining your path. (Typically under 2 years of experience.)
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="craftDev">Craft Development *</Label>
-                    <Select value={formData.craft_development} onValueChange={val => updateField('craft_development', val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="How did you develop your craft?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="self-taught">Self-taught</SelectItem>
-                        <SelectItem value="formal">Formally trained</SelectItem>
-                        <SelectItem value="apprentice">Apprenticeship/mentorship</SelectItem>
-                        <SelectItem value="family">Family tradition</SelectItem>
-                        <SelectItem value="learning">Still learning</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  {/* Radio button option 2: Established */}
+                  <div 
+                    className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                      formData.business_duration === 'established' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => updateField('business_duration', 'established')}
+                  >
+                    <div className="flex items-center h-5">
+                      <input
+                        type="radio"
+                        name="experience-level"
+                        value="established"
+                        checked={formData.business_duration === 'established'}
+                        onChange={(e) => updateField('business_duration', e.target.value)}
+                        className="w-4 h-4 text-primary cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="font-semibold cursor-pointer">Established</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        You've found your rhythm and are growing your craft or business. (Between 2–10 years of experience.)
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="certs">Certifications / Awards (Optional)</Label>
-                    <Textarea id="certs" value={formData.certifications_awards} onChange={e => updateField('certifications_awards', e.target.value)} placeholder="List any relevant certifications or awards..." rows={3} />
+                  {/* Radio button option 3: Rooted */}
+                  <div 
+                    className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                      formData.business_duration === 'rooted' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => updateField('business_duration', 'rooted')}
+                  >
+                    <div className="flex items-center h-5">
+                      <input
+                        type="radio"
+                        name="experience-level"
+                        value="rooted"
+                        checked={formData.business_duration === 'rooted'}
+                        onChange={(e) => updateField('business_duration', e.target.value)}
+                        className="w-4 h-4 text-primary cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="font-semibold cursor-pointer">Rooted</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        You bring depth, mastery, and a distinct signature to what you do. (Over 10 years of experience.)
+                      </p>
+                    </div>
                   </div>
-                </>}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="certs">Certifications / Awards (Optional)</Label>
+                <Textarea id="certs" value={formData.certifications_awards} onChange={e => updateField('certifications_awards', e.target.value)} placeholder="List any relevant certifications or awards..." rows={3} />
+              </div>
+            </>}
 
               {/* Page 4: Practices & Creativity */}
               {currentStep === 3 && <>
