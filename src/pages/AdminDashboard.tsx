@@ -95,8 +95,8 @@ const AdminDashboard = () => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (app) =>
-          app.profiles.full_name?.toLowerCase().includes(query) ||
-          app.profiles.email?.toLowerCase().includes(query) ||
+          app.profiles?.full_name?.toLowerCase().includes(query) ||
+          app.profiles?.email?.toLowerCase().includes(query) ||
           app.business_type?.toLowerCase().includes(query)
       );
     }
