@@ -93,6 +93,8 @@ const ShopperDashboard = () => {
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [customFilterInput, setCustomFilterInput] = useState("");
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [locationInput, setLocationInput] = useState("");
   const [profileSettings, setProfileSettings] = useState({
     location: "Honolulu, Hawaii",
     locationPublic: true,
@@ -121,18 +123,14 @@ const ShopperDashboard = () => {
       
       const { data, error } = await supabase
         .from("profiles")
-        .select("location_public, high_fives_public, city, state_region, country")
+        .select("location_public, high_fives_public, location")
         .eq("id", user.id)
         .single();
 
       if (data && !error) {
-        // Build location string from city, state, country
-        const locationParts = [data.city, data.state_region, data.country].filter(Boolean);
-        const locationString = locationParts.length > 0 ? locationParts.join(", ") : "";
-        
         setProfileSettings((prev) => ({
           ...prev,
-          location: locationString,
+          location: data.location || "",
           locationPublic: data.location_public ?? true,
           highFivesPublic: data.high_fives_public ?? true,
         }));
@@ -392,46 +390,131 @@ const ShopperDashboard = () => {
                   
                   {/* Location */}
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <span>{profileSettings.location}</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5"
-                      title={profileSettings.locationPublic ? "Visible to public" : "Hidden from public"}
-                      onClick={async () => {
-                        const newValue = !profileSettings.locationPublic;
-                        // Optimistic update
-                        setProfileSettings({
-                          ...profileSettings,
-                          locationPublic: newValue
-                        });
-                        
-                        // Update backend
-                        const { error } = await supabase
-                          .from("profiles")
-                          .update({ location_public: newValue })
-                          .eq("id", user?.id);
-                        
-                        if (error) {
-                          // Revert on error
-                          setProfileSettings({
-                            ...profileSettings,
-                            locationPublic: !newValue
-                          });
-                          toast.error("Failed to update location visibility");
-                        } else {
-                          toast.success(newValue ? "Location visible to public" : "Location hidden from public");
-                        }
-                      }}
-                    >
-                      {profileSettings.locationPublic ? (
-                        <Eye className="h-3 w-3 text-muted-foreground" />
-                      ) : (
-                        <EyeOff className="h-3 w-3 text-muted-foreground" />
-                      )}
-                    </Button>
+                    {!isEditingLocation ? (
+                      <>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <span>{profileSettings.location || "Add location"}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          title="Edit location"
+                          onClick={() => {
+                            setLocationInput(profileSettings.location);
+                            setIsEditingLocation(true);
+                          }}
+                        >
+                          <Edit2 className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          title={profileSettings.locationPublic ? "Visible to public" : "Hidden from public"}
+                          onClick={async () => {
+                            const newValue = !profileSettings.locationPublic;
+                            // Optimistic update
+                            setProfileSettings({
+                              ...profileSettings,
+                              locationPublic: newValue
+                            });
+                            
+                            // Update backend
+                            const { error } = await supabase
+                              .from("profiles")
+                              .update({ location_public: newValue })
+                              .eq("id", user?.id);
+                            
+                            if (error) {
+                              // Revert on error
+                              setProfileSettings({
+                                ...profileSettings,
+                                locationPublic: !newValue
+                              });
+                              toast.error("Failed to update location visibility");
+                            } else {
+                              toast.success(newValue ? "Location visible to public" : "Location hidden from public");
+                            }
+                          }}
+                        >
+                          {profileSettings.locationPublic ? (
+                            <Eye className="h-3 w-3 text-muted-foreground" />
+                          ) : (
+                            <EyeOff className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={locationInput}
+                          onChange={(e) => setLocationInput(e.target.value)}
+                          placeholder="City, State"
+                          className="h-7 text-sm max-w-[200px]"
+                          autoFocus
+                          onKeyDown={async (e) => {
+                            if (e.key === "Enter") {
+                              const trimmedLocation = locationInput.trim();
+                              
+                              // Update backend
+                              const { error } = await supabase
+                                .from("profiles")
+                                .update({ location: trimmedLocation })
+                                .eq("id", user?.id);
+                              
+                              if (error) {
+                                toast.error("Failed to update location");
+                              } else {
+                                setProfileSettings({
+                                  ...profileSettings,
+                                  location: trimmedLocation
+                                });
+                                setIsEditingLocation(false);
+                                toast.success("Location updated");
+                              }
+                            } else if (e.key === "Escape") {
+                              setIsEditingLocation(false);
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={async () => {
+                            const trimmedLocation = locationInput.trim();
+                            
+                            // Update backend
+                            const { error } = await supabase
+                              .from("profiles")
+                              .update({ location: trimmedLocation })
+                              .eq("id", user?.id);
+                            
+                            if (error) {
+                              toast.error("Failed to update location");
+                            } else {
+                              setProfileSettings({
+                                ...profileSettings,
+                                location: trimmedLocation
+                              });
+                              setIsEditingLocation(false);
+                              toast.success("Location updated");
+                            }
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={() => setIsEditingLocation(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   
                   {/* External Link */}

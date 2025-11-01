@@ -309,6 +309,7 @@ export type Database = {
           high_fives_public: boolean | null
           id: string
           interests: string[] | null
+          location: string | null
           location_public: boolean | null
           onboarding_completed: boolean | null
           profile_picture_url: string | null
@@ -329,6 +330,7 @@ export type Database = {
           high_fives_public?: boolean | null
           id: string
           interests?: string[] | null
+          location?: string | null
           location_public?: boolean | null
           onboarding_completed?: boolean | null
           profile_picture_url?: string | null
@@ -349,6 +351,7 @@ export type Database = {
           high_fives_public?: boolean | null
           id?: string
           interests?: string[] | null
+          location?: string | null
           location_public?: boolean | null
           onboarding_completed?: boolean | null
           profile_picture_url?: string | null
