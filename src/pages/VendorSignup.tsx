@@ -246,7 +246,7 @@ const VendorSignup = () => {
           email: authData.email,
           password: authData.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/vendor-signup`,
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: authData.fullName
               // Role will be assigned by admin upon application approval
@@ -417,7 +417,7 @@ const VendorSignup = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Password (minimum 6 characters)</Label>
                   <Input id="password" type="password" placeholder="••••••••" value={authData.password} onChange={e => setAuthData({
                   ...authData,
                   password: e.target.value

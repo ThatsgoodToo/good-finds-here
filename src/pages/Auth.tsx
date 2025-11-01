@@ -118,6 +118,7 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      minLength={6}
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
@@ -177,9 +178,7 @@ const Auth = () => {
                       type="button"
                       variant="outline"
                       className="w-full"
-                      onClick={() => {
-                        toast.info("Vendor signup coming soon!");
-                      }}
+                      onClick={() => navigate("/signup/vendor")}
                     >
                       Sell my goods (Vendor)
                     </Button>

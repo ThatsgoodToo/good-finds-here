@@ -84,7 +84,7 @@ const AccountCreationStep = ({ data, onUpdate, onNext, onBack, isExistingUser = 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password (minimum 6 characters)</Label>
               <Input
                 id="password"
                 type="password"
