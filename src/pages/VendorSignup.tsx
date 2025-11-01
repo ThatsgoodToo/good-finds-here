@@ -179,15 +179,15 @@ const VendorSignup = () => {
         break;
       case 1:
         // About Your Business
-        if (!formData.business_description || formData.products_services.length === 0 || formData.business_type.length === 0 || formData.area_of_expertise.length === 0) {
+        if (!formData.business_description || formData.products_services.length === 0) {
           toast.error("Please fill in all required fields");
           return false;
         }
         break;
       case 2:
-        // Expertise
-        if (!formData.business_duration || !formData.craft_development) {
-          toast.error("Please fill in all required fields");
+        // Expertise - Experience Level
+        if (!formData.business_duration) {
+          toast.error("Please select your experience level");
           return false;
         }
         break;
