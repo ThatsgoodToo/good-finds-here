@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
-import { Search, Mic, Globe } from "lucide-react";
+import { Search, Mic } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
-  onToggleMap: () => void;
-  isMapView: boolean;
   isCentered: boolean;
   onWhatsgoodClick?: () => void;
 }
 
-const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodClick }: SearchBarProps) => {
+const SearchBar = ({ onSearch, isCentered, onWhatsgoodClick }: SearchBarProps) => {
   const [query, setQuery] = useState("");
 
   const handleSearch = () => {
@@ -25,7 +23,7 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
     // Hero/Centered search bar layout
     return (
       <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-4 animate-fade-in">
-        {/* What's Good Today Button with Globe Icon */}
+        {/* What's Good Today Button */}
         <div className="flex items-center gap-3 mb-12">
           <Button
             onClick={onWhatsgoodClick}
@@ -37,22 +35,6 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
               WHAT'S GOOD TODAY
             </span>
             <span className="absolute inset-0 bg-primary/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleMap}
-            className={cn(
-              "h-12 w-12 sm:h-14 sm:w-14 rounded-full border transition-colors flex-shrink-0",
-              isMapView 
-                ? "border-primary text-primary hover:bg-primary/10" 
-                : "border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            )}
-            title="Toggle map view"
-            data-tour="view-toggle"
-          >
-            <Globe className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </div>
         
@@ -100,22 +82,6 @@ const SearchBar = ({ onSearch, onToggleMap, isMapView, isCentered, onWhatsgoodCl
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/98 backdrop-blur-sm border-t border-border py-3 animate-slide-up">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-2 max-w-4xl mx-auto">
-          {/* Map toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleMap}
-            className={cn(
-              "h-11 w-11 rounded-full flex-shrink-0",
-              isMapView 
-                ? "text-primary hover:text-primary/80 bg-primary/10" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-            title="Toggle map view"
-          >
-            <Globe className="h-5 w-5" />
-          </Button>
-
           {/* Search input */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

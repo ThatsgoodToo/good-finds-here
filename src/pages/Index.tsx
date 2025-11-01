@@ -8,7 +8,6 @@ import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import MasonryGallery from "@/components/MasonryGallery";
 import ListView from "@/components/ListView";
-import MapView from "@/components/MapView";
 import { CategoryType } from "@/components/ProductCard";
 import { toast } from "sonner";
 import { mapCategoriesToTypes } from "@/lib/categoryMapping";
@@ -18,7 +17,6 @@ type FilterType = "all" | CategoryType;
 const Index = () => {
   const { user, userRole } = useAuth();
   const navigate = useNavigate();
-  const [isMapView, setIsMapView] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [hasSearched, setHasSearched] = useState(false);
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
@@ -45,7 +43,6 @@ const Index = () => {
 
   const handleBack = () => {
     setHasSearched(false);
-    setIsMapView(false);
   };
 
   const handleWhatsgoodClick = () => {
@@ -188,14 +185,12 @@ const Index = () => {
         {/* Hero search (centered) or bottom search bar */}
         <SearchBar
           onSearch={handleSearch}
-          onToggleMap={() => setIsMapView(!isMapView)}
-          isMapView={isMapView}
           isCentered={!hasSearched}
           onWhatsgoodClick={handleWhatsgoodClick}
         />
 
         {/* Content appears after search */}
-        {hasSearched && !isMapView && (
+        {hasSearched && (
           <>
             <FilterBar
               activeFilter={activeFilter}
@@ -211,8 +206,6 @@ const Index = () => {
             )}
           </>
         )}
-
-        {hasSearched && isMapView && <MapView />}
 
         {/* What's Good Today Section - Shows on scroll when not searched */}
         {!hasSearched && (

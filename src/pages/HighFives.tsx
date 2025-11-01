@@ -645,8 +645,6 @@ const HighFives = () => {
 
         <SearchBar
           onSearch={() => {}}
-          onToggleMap={() => {}}
-          isMapView={false}
           isCentered={false}
           onWhatsgoodClick={() => navigate("/")}
         />

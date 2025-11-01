@@ -335,8 +335,6 @@ const AudioListing = () => {
 
         <SearchBar
           onSearch={() => {}}
-          onToggleMap={() => {}}
-          isMapView={false}
           isCentered={false}
           onWhatsgoodClick={() => navigate("/")}
         />

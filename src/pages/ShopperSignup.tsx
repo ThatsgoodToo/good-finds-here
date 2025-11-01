@@ -213,8 +213,6 @@ const ShopperSignup = () => {
         
         <SearchBar
           onSearch={() => {}}
-          onToggleMap={() => {}}
-          isMapView={false}
           isCentered={false}
           onWhatsgoodClick={() => navigate("/")}
         />
