@@ -95,6 +95,8 @@ const ShopperDashboard = () => {
   const [customFilterInput, setCustomFilterInput] = useState("");
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [locationInput, setLocationInput] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
   const [profileSettings, setProfileSettings] = useState({
     location: "Honolulu, Hawaii",
     locationPublic: true,
@@ -380,12 +382,108 @@ const ShopperDashboard = () => {
                   </Button>
                 </div>
                 <div>
-                  <h1 
-                    className="text-2xl sm:text-3xl font-bold hover:text-primary cursor-pointer transition-colors"
-                    onClick={() => navigate(`/shopper/${shopperName.toLowerCase().replace(/\s/g, '-')}`)}
-                  >
-                    {shopperName} Goods
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    {!isEditingName ? (
+                      <>
+                        <h1 
+                          className="text-2xl sm:text-3xl font-bold hover:text-primary cursor-pointer transition-colors"
+                          onClick={() => navigate(`/shopper/${shopperName.toLowerCase().replace(/\s/g, '-')}`)}
+                        >
+                          {shopperName} Goods
+                        </h1>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            setIsEditingName(true);
+                            setNameInput(shopperName);
+                          }}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={nameInput}
+                          onChange={(e) => setNameInput(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              const trimmedName = nameInput.trim();
+                              if (trimmedName.length < 2) {
+                                toast.error("Name must be at least 2 characters");
+                                return;
+                              }
+                              
+                              if (!user) return;
+                              
+                              const oldName = shopperName;
+                              setShopperName(trimmedName);
+                              setIsEditingName(false);
+
+                              const { error } = await supabase
+                                .from('profiles')
+                                .update({ display_name: trimmedName })
+                                .eq('id', user.id);
+
+                              if (error) {
+                                setShopperName(oldName);
+                                toast.error("Failed to update name");
+                              } else {
+                                toast.success("Name updated successfully");
+                              }
+                            } else if (e.key === 'Escape') {
+                              setIsEditingName(false);
+                              setNameInput(shopperName);
+                            }
+                          }}
+                          className="h-10 text-2xl sm:text-3xl font-bold"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            const trimmedName = nameInput.trim();
+                            if (trimmedName.length < 2) {
+                              toast.error("Name must be at least 2 characters");
+                              return;
+                            }
+                            
+                            if (!user) return;
+                            
+                            const oldName = shopperName;
+                            setShopperName(trimmedName);
+                            setIsEditingName(false);
+
+                            const { error } = await supabase
+                              .from('profiles')
+                              .update({ display_name: trimmedName })
+                              .eq('id', user.id);
+
+                            if (error) {
+                              setShopperName(oldName);
+                              toast.error("Failed to update name");
+                            } else {
+                              toast.success("Name updated successfully");
+                            }
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsEditingName(false);
+                            setNameInput(shopperName);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">Shopper Dashboard</p>
                   
                   {/* Location */}
@@ -399,7 +497,6 @@ const ShopperDashboard = () => {
                           variant="ghost"
                           size="icon"
                           className="h-5 w-5"
-                          title="Edit location"
                           onClick={() => {
                             setLocationInput(profileSettings.location);
                             setIsEditingLocation(true);
@@ -411,7 +508,6 @@ const ShopperDashboard = () => {
                           variant="ghost"
                           size="icon"
                           className="h-5 w-5"
-                          title={profileSettings.locationPublic ? "Visible to public" : "Hidden from public"}
                           onClick={async () => {
                             const newValue = !profileSettings.locationPublic;
                             // Optimistic update
@@ -591,20 +687,16 @@ const ShopperDashboard = () => {
                       View Public Profile
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setShowSettingsDialog(true)}>
-                      Account Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      Notification Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      Platform Messages
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setShowSettingsDialog(true)}>
+                    <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
                       Profile Settings
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShowSettingsDialog(true)}>
+                    <DropdownMenuItem onClick={() => navigate('/settings/account')}>
+                      Account Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings/notifications')}>
+                      Notification Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings/privacy')}>
                       Privacy Controls
                     </DropdownMenuItem>
                   </DropdownMenuContent>

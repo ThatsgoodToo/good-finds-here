@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const profileSchema = z.object({
   displayName: z.string().min(2, "Display name must be at least 2 characters"),
+  location: z.string().max(100, "Location must be less than 100 characters").optional(),
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
   avatarUrl: z.string().url().optional().or(z.literal("")),
   locationPublic: z.boolean(),
@@ -37,6 +38,7 @@ const ProfileSettings = () => {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       displayName: "",
+      location: "",
       bio: "",
       avatarUrl: "",
       locationPublic: true,
@@ -66,6 +68,7 @@ const ProfileSettings = () => {
       if (data) {
         form.reset({
           displayName: data.display_name || "",
+          location: data.location || "",
           bio: data.bio || "",
           avatarUrl: data.avatar_url || "",
           locationPublic: data.location_public ?? true,
@@ -86,6 +89,7 @@ const ProfileSettings = () => {
         .from("profiles")
         .update({
           display_name: values.displayName,
+          location: values.location,
           bio: values.bio,
           avatar_url: values.avatarUrl,
           location_public: values.locationPublic,
@@ -138,6 +142,23 @@ const ProfileSettings = () => {
                       <FormControl>
                         <Input placeholder="Your name" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City, State" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Your location (e.g., "San Francisco, CA")
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
