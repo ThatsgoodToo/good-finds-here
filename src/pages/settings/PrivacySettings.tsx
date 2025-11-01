@@ -7,10 +7,10 @@ import { Shield } from "lucide-react";
 const PrivacySettings = () => {
   const navigate = useNavigate();
   const {
-    activeRole
+    roles
   } = useAuth();
   const handleBack = () => {
-    const dashboardPath = activeRole === 'vendor' ? '/vendor/dashboard' : '/dashboard';
+    const dashboardPath = roles.includes('vendor') ? '/vendor/dashboard' : '/dashboard';
     navigate(dashboardPath);
   };
   return <SettingsLayout>

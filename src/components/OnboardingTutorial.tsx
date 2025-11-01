@@ -6,7 +6,7 @@ import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const OnboardingTutorial = () => {
-  const { user, activeRole } = useAuth();
+  const { user, roles } = useAuth();
   const [showHelpButton, setShowHelpButton] = useState(false);
 
   useEffect(() => {
@@ -25,10 +25,10 @@ const OnboardingTutorial = () => {
     } else if (user) {
       setShowHelpButton(true);
     }
-  }, [user, activeRole]);
+  }, [user, roles]);
 
   const getSteps = () => {
-    const isVendor = activeRole === "vendor";
+    const isVendor = roles.includes("vendor");
 
     if (isVendor) {
       return [

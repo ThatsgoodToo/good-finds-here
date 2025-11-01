@@ -27,13 +27,12 @@ interface HeaderProps {
 const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYourGoodsClick }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, userRole, activeRole, roles, signOut } = useAuth();
+  const { user, userRole, roles, signOut } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showFollowersList, setShowFollowersList] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   
-  const effectiveRole = activeRole ?? userRole;
-  const isVendorMode = effectiveRole === "vendor";
+  const isVendor = roles.includes("vendor");
   
   // Check if user is admin
   useEffect(() => {
@@ -52,13 +51,15 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
   const handleYourGoodsClick = () => {
     if (!user) {
       setShowSignupModal(true);
+      return;
+    }
+
+    if (roles.includes("vendor")) {
+      navigate("/vendor/dashboard");
+    } else if (roles.includes("shopper")) {
+      navigate("/dashboard/shopper");
     } else {
-      // Navigate based on effective role
-      if (effectiveRole === "vendor") {
-        navigate("/dashboard/vendor");
-      } else {
-        navigate("/dashboard/shopper");
-      }
+      setShowSignupModal(true);
     }
   };
 
@@ -99,7 +100,7 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
           {/* Hi Fives - Hand Icon */}
           <button 
             onClick={() => {
-              if (isVendorMode) {
+              if (isVendor) {
                 setShowFollowersList(true);
               } else {
                 navigate("/high-fives");
@@ -135,8 +136,8 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
               {user && (
                 <>
                   <DropdownMenuItem className="text-xs font-medium pointer-events-none">
-                    <div className={`px-2 py-1 rounded ${effectiveRole === 'vendor' ? 'bg-vendor-active text-vendor-active-foreground' : effectiveRole === 'shopper' ? 'bg-shopper-active text-shopper-active-foreground' : 'bg-muted text-muted-foreground'}`}>
-                      Signed in as {effectiveRole}
+                    <div className={`px-2 py-1 rounded ${isVendor ? 'bg-vendor-active text-vendor-active-foreground' : 'bg-shopper-active text-shopper-active-foreground'}`}>
+                      Signed in as {isVendor ? 'vendor' : 'shopper'}
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

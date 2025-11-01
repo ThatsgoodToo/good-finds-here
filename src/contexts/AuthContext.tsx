@@ -10,8 +10,6 @@ interface AuthContextType {
   session: Session | null;
   userRole: UserRole | null;
   roles: UserRole[];
-  activeRole: UserRole | null;
-  setActiveRole: (role: UserRole) => void;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -23,7 +21,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [roles, setRoles] = useState<UserRole[]>([]);
-  const [activeRole, setActiveRoleState] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -105,24 +102,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setUserRole(null);
     }
-
-    // Initialize activeRole
-    const savedActiveRole = localStorage.getItem("activeRole") as UserRole | null;
-    if (savedActiveRole && userRoles.includes(savedActiveRole)) {
-      setActiveRoleState(savedActiveRole);
-    } else {
-      // Fallback to primary role
-      const initialRole = data ? (data as UserRole) : userRoles[0] || null;
-      setActiveRoleState(initialRole);
-      if (initialRole) {
-        localStorage.setItem("activeRole", initialRole);
-      }
-    }
-  };
-
-  const setActiveRole = (role: UserRole) => {
-    setActiveRoleState(role);
-    localStorage.setItem("activeRole", role);
   };
 
   const signOut = async () => {
@@ -131,13 +110,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setSession(null);
     setUserRole(null);
     setRoles([]);
-    setActiveRoleState(null);
-    localStorage.removeItem("activeRole");
     navigate("/");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, roles, activeRole, setActiveRole, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, userRole, roles, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

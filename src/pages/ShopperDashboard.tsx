@@ -82,7 +82,7 @@ interface Folder {
 }
 
 const ShopperDashboard = () => {
-  const { user, userRole, roles, activeRole, setActiveRole } = useAuth();
+  const { user, userRole, roles } = useAuth();
   const { status: vendorStatus, isPending, isRejected } = useVendorAccess();
   const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
@@ -134,12 +134,6 @@ const ShopperDashboard = () => {
     setInfoDialogOpen(true);
   };
 
-  // Set active role to shopper when on this page
-  useEffect(() => {
-    if (roles.includes("shopper") && activeRole !== "shopper") {
-      setActiveRole("shopper");
-    }
-  }, [roles, activeRole, setActiveRole]);
 
   // Load privacy settings and location from backend
   useEffect(() => {
@@ -652,52 +646,6 @@ const ShopperDashboard = () => {
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Toggle between Vendor and Shopper - Always visible */}
-                <div className="flex items-center gap-2 p-1 bg-muted rounded-lg">
-                  <Button
-                    variant={activeRole === "shopper" ? "default" : "ghost"}
-                    size="sm"
-                    className="px-4"
-                    onClick={() => {
-                      if (roles.includes("shopper")) {
-                        setActiveRole("shopper");
-                        // Already on shopper dashboard
-                      } else {
-                        navigate("/signup/shopper");
-                      }
-                    }}
-                  >
-                    Shopper
-                  </Button>
-                  <Button
-                    variant={activeRole === "vendor" ? "default" : "ghost"}
-                    size="sm"
-                    className="px-4"
-                    onClick={() => {
-                      if (roles.includes("vendor")) {
-                        // Check vendor application status
-                        if (vendorStatus === "approved") {
-                          setActiveRole("vendor");
-                          navigate("/dashboard/vendor");
-                        } else if (vendorStatus === "pending") {
-                          toast.info("Your vendor application is pending approval");
-                          navigate("/dashboard/vendor");
-                        } else if (vendorStatus === "rejected") {
-                          toast.error("Your vendor application was not approved");
-                          navigate("/dashboard/vendor");
-                        } else {
-                          setActiveRole("vendor");
-                          navigate("/dashboard/vendor");
-                        }
-                      } else {
-                        setShowVendorSignupPrompt(true);
-                      }
-                    }}
-                  >
-                    Vendor
-                  </Button>
-                </div>
-                
                 {/* Info Button */}
                 <Button
                   variant="outline"
@@ -720,18 +668,6 @@ const ShopperDashboard = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    {roles.includes("vendor") && (
-                      <>
-                        <DropdownMenuItem onClick={() => {
-                          setActiveRole("vendor");
-                          navigate("/dashboard/vendor");
-                        }}>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Switch to Vendor Dashboard
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
                     <DropdownMenuItem onClick={() => navigate(`/shopper/${shopperName.toLowerCase().replace(/\s/g, '-')}`)}>
                       View Public Profile
                     </DropdownMenuItem>

@@ -19,10 +19,10 @@ const SettingsLayout = ({
   const location = useLocation();
   const navigate = useNavigate();
   const {
-    activeRole
+    roles
   } = useAuth();
   const handleBack = () => {
-    const dashboardPath = activeRole === 'vendor' ? '/vendor/dashboard' : '/dashboard';
+    const dashboardPath = roles.includes('vendor') ? '/vendor/dashboard' : '/dashboard';
     navigate(dashboardPath);
   };
   const navItems: NavItem[] = [{
@@ -69,7 +69,7 @@ const SettingsLayout = ({
   }];
   const filteredNavItems = navItems.filter(item => {
     if (!item.roles) return true;
-    return item.roles.includes(activeRole || "");
+    return item.roles.some(role => roles.includes(role as any));
   });
   return <div className="min-h-screen bg-background">
       <Header />
