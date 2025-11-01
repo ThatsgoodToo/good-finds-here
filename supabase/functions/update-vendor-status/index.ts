@@ -158,6 +158,20 @@ const handler = async (req: Request): Promise<Response> => {
         console.error("Failed to send approval email:", emailError);
       }
 
+      // Create platform notification for approval
+      try {
+        await supabase.from("notifications").insert({
+          user_id: application.user_id,
+          title: "Application Approved! 🎉",
+          message: "Congratulations! Your vendor application has been approved. You can now create listings and manage your vendor profile.",
+          type: "success",
+          link: "/dashboard/vendor"
+        });
+        console.log("Platform notification created for approval");
+      } catch (notifError) {
+        console.error("Failed to create platform notification:", notifError);
+      }
+
       console.log(`Application ${application_id} approved successfully`);
     } else if (new_status === "rejected") {
       // 1. Update application status
@@ -187,6 +201,24 @@ const handler = async (req: Request): Promise<Response> => {
         console.log("Rejection email sent to:", userEmail);
       } catch (emailError) {
         console.error("Failed to send rejection email:", emailError);
+      }
+
+      // Create platform notification for rejection
+      try {
+        const notifMessage = admin_notes 
+          ? `Your vendor application has been reviewed. ${admin_notes}` 
+          : "Your vendor application could not be approved at this time. Please check your email for more details.";
+        
+        await supabase.from("notifications").insert({
+          user_id: application.user_id,
+          title: "Application Status Update",
+          message: notifMessage,
+          type: "warning",
+          link: "/vendor-signup"
+        });
+        console.log("Platform notification created for rejection");
+      } catch (notifError) {
+        console.error("Failed to create platform notification:", notifError);
       }
 
       console.log(`Application ${application_id} rejected`);

@@ -94,6 +94,22 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("User confirmation failed (non-critical):", userEmailError);
     }
 
+    // Create platform notification for vendor applications
+    if (isVendor) {
+      try {
+        await supabase.from("notifications").insert({
+          user_id: profile.id,
+          title: "Application Received",
+          message: "Your vendor application has been received and is pending review. We'll notify you once it's been reviewed (typically within 5 business days).",
+          type: "info",
+          link: "/dashboard/vendor"
+        });
+        console.log("Platform notification created for vendor application");
+      } catch (notifError) {
+        console.error("Failed to create platform notification:", notifError);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, emailId: adminEmailResponse.data?.id }),
       {

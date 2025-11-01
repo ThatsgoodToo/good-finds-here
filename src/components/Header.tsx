@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import VendorFollowersList from "@/components/VendorFollowersList";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationPopover } from "@/components/NotificationPopover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,6 +114,9 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
 
           {/* Theme Toggle */}
           <ThemeToggle />
+
+          {/* Notifications */}
+          {user && <NotificationPopover />}
           
           {/* Settings Dropdown */}
           <DropdownMenu>
