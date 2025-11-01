@@ -8,6 +8,13 @@ import { Store } from "lucide-react";
 
 const VendorSettings = () => {
   const navigate = useNavigate();
+  const { activeRole } = useAuth();
+
+  useEffect(() => {
+    if (activeRole !== "vendor") {
+      navigate("/settings/profile");
+    }
+  }, [activeRole, navigate]);
 
   return (
     <SettingsLayout>

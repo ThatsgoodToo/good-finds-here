@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/select";
 
 const VendorDashboard = () => {
-  const { user, roles } = useAuth();
+  const { user, roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
   const { status: vendorStatus, isLoading: checkingStatus } = useVendorAccess();
   
@@ -136,6 +136,12 @@ const VendorDashboard = () => {
     }
   }, [user]);
 
+  // Set active role to vendor when on this page
+  useEffect(() => {
+    if (roles.includes("vendor") && activeRole !== "vendor") {
+      setActiveRole("vendor");
+    }
+  }, [roles, activeRole, setActiveRole]);
 
   // Load metrics data
   useEffect(() => {

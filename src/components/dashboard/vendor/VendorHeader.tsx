@@ -41,7 +41,7 @@ const VendorHeader = ({
   onUpdateDescription,
 }: VendorHeaderProps) => {
   const navigate = useNavigate();
-  const { roles } = useAuth();
+  const { roles, activeRole, setActiveRole } = useAuth();
   const [showShopperSignupPrompt, setShowShopperSignupPrompt] = React.useState(false);
   const [showInfoAnimation, setShowInfoAnimation] = React.useState(false);
   const [infoDialogOpen, setInfoDialogOpen] = React.useState(false);
@@ -109,6 +109,38 @@ const VendorHeader = ({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Toggle between Vendor and Shopper - Always visible */}
+            <div className="flex items-center gap-2 border rounded-lg p-1">
+              <Button
+                variant={activeRole === "shopper" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  if (roles.includes("shopper")) {
+                    setActiveRole("shopper");
+                    navigate("/dashboard/shopper");
+                  } else {
+                    setShowShopperSignupPrompt(true);
+                  }
+                }}
+              >
+                Shopper
+              </Button>
+            <Button
+              variant={activeRole === "vendor" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => {
+                if (roles.includes("vendor")) {
+                  setActiveRole("vendor");
+                  // Already on vendor dashboard
+                } else {
+                  navigate("/signup/vendor");
+                }
+              }}
+            >
+              Vendor
+            </Button>
+            </div>
+
             <Button
               variant="outline"
               size="icon"
@@ -129,6 +161,18 @@ const VendorHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                {roles.includes("shopper") && (
+                  <>
+                    <DropdownMenuItem onClick={() => {
+                      setActiveRole("shopper");
+                      navigate("/dashboard/shopper");
+                    }}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Switch to Shopper Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => navigate(`/vendor/${vendorUserId}`)}>
                   View Public Profile
                 </DropdownMenuItem>

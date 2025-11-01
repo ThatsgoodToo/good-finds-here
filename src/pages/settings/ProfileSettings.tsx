@@ -27,12 +27,12 @@ const ProfileSettings = () => {
   } = useToast();
   const {
     user,
-    roles
+    activeRole
   } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const handleBack = () => {
-    const dashboardPath = roles.includes('vendor') ? '/vendor/dashboard' : '/dashboard';
+    const dashboardPath = activeRole === 'vendor' ? '/vendor/dashboard' : '/dashboard';
     navigate(dashboardPath);
   };
   const form = useForm<z.infer<typeof profileSchema>>({

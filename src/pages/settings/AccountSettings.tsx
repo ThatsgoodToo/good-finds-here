@@ -30,7 +30,7 @@ const passwordSchema = z.object({
 const AccountSettings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { activeRole, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
