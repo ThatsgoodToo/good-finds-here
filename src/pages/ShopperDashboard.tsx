@@ -114,20 +114,25 @@ const ShopperDashboard = () => {
     }
   }, [roles, activeRole, setActiveRole]);
 
-  // Load privacy settings from backend
+  // Load privacy settings and location from backend
   useEffect(() => {
     const loadPrivacySettings = async () => {
       if (!user) return;
       
       const { data, error } = await supabase
         .from("profiles")
-        .select("location_public, high_fives_public")
+        .select("location_public, high_fives_public, city, state_region, country")
         .eq("id", user.id)
         .single();
 
       if (data && !error) {
+        // Build location string from city, state, country
+        const locationParts = [data.city, data.state_region, data.country].filter(Boolean);
+        const locationString = locationParts.length > 0 ? locationParts.join(", ") : "";
+        
         setProfileSettings((prev) => ({
           ...prev,
+          location: locationString,
           locationPublic: data.location_public ?? true,
           highFivesPublic: data.high_fives_public ?? true,
         }));
