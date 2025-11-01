@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Sparkles, CheckCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 interface VendorAuthData {
   fullName: string;
@@ -322,6 +322,11 @@ const VendorSignup = () => {
       if (error) throw error;
       toast.success("Application submitted successfully!");
       setCurrentStep(totalSteps); // Show thank you page
+      
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        navigate("/dashboard/vendor");
+      }, 2000);
     } catch (error: any) {
       toast.error(error.message || "Failed to submit application");
     } finally {
@@ -516,6 +521,43 @@ const VendorSignup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Thank You Screen */}
+              {currentStep === totalSteps && (
+                <div className="text-center space-y-6 py-8">
+                  <div className="flex justify-center mb-4">
+                    <div className="h-20 w-20 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                      <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-bold">Application Submitted!</h2>
+                    <p className="text-lg text-muted-foreground">
+                      Thank you for applying to become a vendor on That's Good Too.
+                    </p>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-left">
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div className="space-y-2">
+                        <p className="font-medium text-amber-900 dark:text-amber-100">
+                          What's Next?
+                        </p>
+                        <ul className="space-y-1 text-sm text-amber-800 dark:text-amber-200">
+                          <li>• Your application is now under review</li>
+                          <li>• You'll receive an email within 5 business days</li>
+                          <li>• Once approved, all your information will be pre-filled in your vendor dashboard</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground animate-pulse">
+                    Redirecting you to your dashboard...
+                  </p>
+                </div>
+              )}
+
+              {/* Step Content */}
+              {currentStep < totalSteps && <>
               {/* Page 1: Basic Info */}
               {currentStep === 0 && <>
                   {isExistingUser && <div className="p-4 bg-primary/10 rounded-lg mb-4">
@@ -797,8 +839,10 @@ const VendorSignup = () => {
                     </div>
                   </div>
                 </>}
+              </>}
 
               {/* Navigation Buttons */}
+              {currentStep < totalSteps && (
               <div className="flex justify-between pt-6 border-t">
                 <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
                   <ChevronLeft className="mr-2 h-4 w-4" />
@@ -809,9 +853,10 @@ const VendorSignup = () => {
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button> : <Button onClick={handleSubmit} disabled={loading}>
-                    {loading ? "Submitting..." : "Submit Application"}
-                  </Button>}
-              </div>
+                     {loading ? "Submitting..." : "Submit Application"}
+                   </Button>}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

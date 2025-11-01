@@ -1,10 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Clock, Mail } from "lucide-react";
+import { AlertCircle, Clock, Mail, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const VendorPendingApproval = () => {
   const navigate = useNavigate();
+
+  const handleRefreshStatus = () => {
+    toast.info("Refreshing your application status...");
+    window.location.reload();
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-12 max-w-2xl">
@@ -63,7 +69,15 @@ const VendorPendingApproval = () => {
             </Button>
           </div>
 
-          <div className="pt-4 border-t">
+          <div className="pt-4 border-t space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full gap-2"
+              onClick={handleRefreshStatus}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh Application Status
+            </Button>
             <Button 
               variant="ghost" 
               className="w-full"

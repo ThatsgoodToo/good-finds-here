@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type VendorAccessStatus = "loading" | "approved" | "pending" | "rejected" | "no-application";
 
@@ -28,6 +29,9 @@ export const useVendorAccess = () => {
 
         if (error) {
           console.error("Error checking application status:", error);
+          console.error("Error details:", JSON.stringify(error, null, 2));
+          console.error("User ID:", user.id);
+          toast.error("Failed to load application status. Please refresh the page.");
           setStatus("no-application");
           return;
         }

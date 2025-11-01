@@ -59,6 +59,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Set up realtime subscription for role changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('user_roles_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_roles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Role changed:', payload);
+          // Refresh roles when changes detected
+          fetchUserRole(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchUserRole = async (userId: string) => {
     // Fetch all roles
     const { data: rolesData } = await supabase
