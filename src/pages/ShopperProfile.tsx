@@ -79,60 +79,77 @@ const ShopperProfile = () => {
     checkOwner();
   }, [user, shopperId]);
 
-  // Mock shopper data - In production, fetch from database
-  const shopper = {
-    id: shopperId || "1",
-    name: "Sarah Johnson",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300",
-    location: "Honolulu, Hawaii",
-    locationPublic: true, // Fetch from profiles.location_public
-    bio: "Food lover, sustainable living enthusiast, and supporter of local artisans. Always on the lookout for unique handcrafted items and ethical brands.",
-    website: "https://sarahjohnson.example.com",
-    highFives: 247,
-    highFivesPublic: true, // Fetch from profiles.high_fives_public
-  };
+  // Load shopper data from database
+  const [shopper, setShopper] = useState({
+    id: shopperId || "",
+    name: "",
+    image: "",
+    location: "",
+    locationPublic: true,
+    bio: "",
+    website: "",
+    highFives: 0,
+    highFivesPublic: true,
+  });
 
-  // Mock saved items
-  const savedItems = [
-    {
-      id: "1",
-      type: "vendor" as const,
-      name: "Clay & Co.",
-      image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200",
-      category: "Handcrafted Ceramics",
-    },
-    {
-      id: "2",
-      type: "listing" as const,
-      name: "Heritage Striped Shirt",
-      vendor: "GINEW",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200",
-      category: "Clothing",
-    },
-    {
-      id: "3",
-      type: "vendor" as const,
-      name: "Studio Ceramics",
-      image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=200",
-      category: "Pottery Workshops",
-    },
-    {
-      id: "4",
-      type: "listing" as const,
-      name: "Handcrafted Bowl Set",
-      vendor: "Clay & Co.",
-      image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200",
-      category: "Home Decor",
-    },
-    {
-      id: "5",
-      type: "listing" as const,
-      name: "Organic Skincare Kit",
-      vendor: "Pure Essence",
-      image: "https://images.unsplash.com/photo-1600428449936-7d99b66d3e7c?w=200",
-      category: "Beauty",
-    },
-  ];
+  const [savedItems, setSavedItems] = useState<Array<{
+    id: string;
+    type: "vendor" | "listing";
+    name: string;
+    image: string;
+    category: string;
+    vendor?: string;
+  }>>([]);
+
+  useEffect(() => {
+    const loadShopperProfile = async () => {
+      if (!shopperId) return;
+
+      // Try to find the user by slug
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url, profile_picture_url, bio, location_public, high_fives_public");
+
+      const matchedProfile = profiles?.find((p: any) => {
+        const slugify = (s: string) => s?.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return p.id === shopperId || slugify(p.display_name) === shopperId.toLowerCase();
+      });
+
+      if (matchedProfile) {
+        setShopper({
+          id: matchedProfile.id,
+          name: matchedProfile.display_name || "Shopper",
+          image: matchedProfile.profile_picture_url || matchedProfile.avatar_url || "",
+          location: "", // TODO: Add location to profiles table
+          locationPublic: matchedProfile.location_public ?? true,
+          bio: matchedProfile.bio || "",
+          website: "",
+          highFives: 0, // TODO: Count favorites
+          highFivesPublic: matchedProfile.high_fives_public ?? true,
+        });
+
+        // Load saved items from favorites table
+        const { data: favorites } = await supabase
+          .from("favorites")
+          .select("*")
+          .eq("user_id", matchedProfile.id);
+
+        if (favorites) {
+          setSavedItems(
+            favorites.map((fav: any) => ({
+              id: fav.item_id,
+              type: fav.item_id.startsWith("vendor-") ? "vendor" : "listing",
+              name: fav.folder_name,
+              image: "",
+              category: "",
+            }))
+          );
+        }
+      }
+    };
+
+    loadShopperProfile();
+  }, [shopperId]);
 
   const getTypeDotColor = (type: "vendor" | "listing") => {
     return type === "vendor" ? "bg-green-500" : "bg-blue-500";

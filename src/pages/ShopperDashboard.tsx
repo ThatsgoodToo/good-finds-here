@@ -137,8 +137,28 @@ const ShopperDashboard = () => {
     loadPrivacySettings();
   }, [user]);
 
-  const shopperName = "Sarah Martinez"; // Demo name
-  const shopperImage = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200";
+  // Load user profile data
+  const [shopperName, setShopperName] = useState("");
+  const [shopperImage, setShopperImage] = useState("");
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, profile_picture_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (data) {
+        setShopperName(data.display_name || user.email?.split('@')[0] || "Shopper");
+        setShopperImage(data.profile_picture_url || data.avatar_url || "");
+      }
+    };
+
+    loadProfile();
+  }, [user]);
 
   // Standard filter categories with options
   const standardFilters = {
@@ -152,167 +172,32 @@ const ShopperDashboard = () => {
     "Type": ["Handcrafted", "Vintage", "Custom Made", "Small Batch", "Mass Produced"],
   };
 
-  const [preferences, setPreferences] = useState([
-    { id: "1", name: "Handcrafted", category: "Type" },
-    { id: "2", name: "Eco-friendly", category: "Sustainability" },
-    { id: "3", name: "Local", category: "Location" },
-    { id: "4", name: "Free Shipping", category: "Shipping" },
-    { id: "5", name: "Women-Owned", category: "Ownership" },
-  ]);
+  const [preferences, setPreferences] = useState<Array<{ id: string; name: string; category: string }>>([]);
 
-  const [folders, setFolders] = useState<Folder[]>([
-    { 
-      id: "1", 
-      name: "Travel", 
-      count: 12,
-      items: [
-        { 
-          id: "1", 
-          title: "Portable Speaker", 
-          vendor: "Audio Co.", 
-          vendorId: "1",
-          image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=200", 
-          type: "product",
-          saved: true
-        },
-        { 
-          id: "2", 
-          title: "Travel Journal", 
-          vendor: "Paper Goods", 
-          vendorId: "2",
-          image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=200", 
-          type: "product",
-          saved: true
-        },
-        { 
-          id: "3", 
-          title: "Hiking Backpack", 
-          vendor: "Outdoor Gear", 
-          vendorId: "3",
-          image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200", 
-          type: "product",
-          saved: true
-        },
-      ]
-    },
-    { 
-      id: "2", 
-      name: "Kid Snacks", 
-      count: 8,
-      items: [
-        { 
-          id: "4", 
-          title: "Organic Fruit Bars", 
-          vendor: "Healthy Bites", 
-          vendorId: "4",
-          image: "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=200", 
-          type: "product",
-          saved: true
-        },
-        { 
-          id: "5", 
-          title: "Trail Mix Variety Pack", 
-          vendor: "Nature's Best", 
-          vendorId: "5",
-          image: "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=200", 
-          type: "product",
-          saved: true
-        },
-      ]
-    },
-    { 
-      id: "3", 
-      name: "Free Shipping", 
-      count: 15,
-      items: [
-        { 
-          id: "6", 
-          title: "Handcrafted Bowl Set", 
-          vendor: "Clay & Co.", 
-          vendorId: "1",
-          image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=200", 
-          type: "product",
-          saved: true
-        },
-      ]
-    },
-    { 
-      id: "4", 
-      name: "Music", 
-      count: 6,
-      items: [
-        { 
-          id: "7", 
-          title: "Vinyl Record Collection", 
-          vendor: "Retro Sounds", 
-          vendorId: "6",
-          image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=200", 
-          type: "product",
-          saved: true
-        },
-      ]
-    },
-  ]);
+  const [folders, setFolders] = useState<Folder[]>([]);
 
-  const activeCoupons = [
-    { 
-      id: "1", 
-      vendor: "Clay & Co.", 
-      vendorId: "1",
-      code: "SAVE15", 
-      discount: "15% off", 
-      expires: "Dec 31, 2025",
-      claimed: false,
-      vendorUrl: "https://clayandco.example.com",
-      thumbnail: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300",
-      listingTitle: "Handcrafted Bowl Set"
-    },
-    { 
-      id: "2", 
-      vendor: "GINEW", 
-      vendorId: "2",
-      code: "HERITAGE20", 
-      discount: "20% off heritage items", 
-      expires: "Jan 15, 2026",
-      claimed: true,
-      vendorUrl: "https://ginew.example.com",
-      thumbnail: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300",
-      listingTitle: "Heritage Striped Shirt"
-    },
-    { 
-      id: "3", 
-      vendor: "Studio Ceramics", 
-      vendorId: "3",
-      code: "FREESHIP", 
-      discount: "Free Shipping", 
-      expires: "Feb 28, 2026",
-      claimed: false,
-      vendorUrl: "https://studioceramics.example.com",
-      thumbnail: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300",
-      listingTitle: "Pottery Workshop Experience"
-    },
-  ];
+  const [activeCoupons, setActiveCoupons] = useState<Array<{
+    id: string;
+    vendor: string;
+    vendorId: string;
+    code: string;
+    discount: string;
+    expires: string;
+    claimed: boolean;
+    vendorUrl: string;
+    thumbnail: string;
+    listingTitle: string;
+  }>>([]);
 
-  const newOffers = [
-    { 
-      id: "1", 
-      title: "New Artisan Pottery Collection", 
-      vendor: "Studio Ceramics", 
-      vendorId: "3",
-      discount: "20% off",
-      image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300",
-      matchedFilters: ["Handcrafted", "Local"]
-    },
-    { 
-      id: "2", 
-      title: "Organic Honey Bundle", 
-      vendor: "Bee Happy Farms", 
-      vendorId: "4",
-      discount: "Buy 2 Get 1",
-      image: "https://images.unsplash.com/photo-1587049352846-4a222e784e38?w=300",
-      matchedFilters: ["Eco-friendly", "Local"]
-    },
-  ];
+  const [newOffers, setNewOffers] = useState<Array<{
+    id: string;
+    title: string;
+    vendor: string;
+    vendorId: string;
+    discount: string;
+    image: string;
+    matchedFilters: string[];
+  }>>([]);
 
   const getTypeDotColor = (type: "product" | "service" | "experience" | "sale") => {
     switch (type) {

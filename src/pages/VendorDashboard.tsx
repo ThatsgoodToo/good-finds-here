@@ -55,10 +55,49 @@ const VendorDashboard = () => {
   const [refreshCoupons, setRefreshCoupons] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedShopper, setSelectedShopper] = useState<{ id: string; name: string } | null>(null);
-  const [subcategories, setSubcategories] = useState(["Ceramics", "Pottery", "Sustainable", "Local", "Eco-friendly"]);
-  const [vendorDescription, setVendorDescription] = useState(
-    "Handcrafted ceramics and pottery made with sustainable practices. Family-owned business since 2015."
-  );
+  // Load user profile data
+  const [shopperName, setShopperName] = useState("");
+  const [shopperImage, setShopperImage] = useState("");
+  const [vendorName, setVendorName] = useState("");
+  const [vendorImage, setVendorImage] = useState("");
+  const [location, setLocation] = useState("");
+  const [externalUrl, setExternalUrl] = useState("");
+  const [vendorDescription, setVendorDescription] = useState("");
+  const [subcategories, setSubcategories] = useState<string[]>([]);
+  const [mainCategories, setMainCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadVendorProfile = async () => {
+      if (!user) return;
+
+      const { data: vendorProfile } = await supabase
+        .from("vendor_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, profile_picture_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (vendorProfile) {
+        setVendorName(vendorProfile.business_type || profile?.display_name || "Vendor");
+        setLocation(`${vendorProfile.city}, ${vendorProfile.state_region}`);
+        setExternalUrl(vendorProfile.website || "");
+        setVendorDescription(vendorProfile.business_description || "");
+        setSubcategories(vendorProfile.area_of_expertise || []);
+        setMainCategories(vendorProfile.products_services || []);
+      }
+
+      if (profile) {
+        setVendorImage(profile.profile_picture_url || profile.avatar_url || "");
+      }
+    };
+
+    loadVendorProfile();
+  }, [user]);
   
   const { sharesRemaining, maxShares } = useVendorShareLimits();
 
@@ -110,90 +149,125 @@ const VendorDashboard = () => {
     return null;
   }
 
-  // Demo vendor data
-  const vendorName = "Clay & Co.";
-  const vendorImage = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200";
-  const location = "Boise, Idaho";
-  const externalUrl = "https://clayandco.example.com";
+  // Metrics with real data from database
+  const [metrics, setMetrics] = useState({
+    clicks: 0,
+    sales: 0,
+    activeOffers: 0,
+    followers: 0,
+  });
 
-  // Metrics
-  const metrics = {
-    clicks: 1247,
-    sales: 89,
-    activeOffers: 12,
-    followers: 456,
-  };
+  useEffect(() => {
+    const loadMetrics = async () => {
+      if (!user) return;
 
-  // Recent visitors
-  const recentVisitors = [
-    {
-      id: "1",
-      name: "Sarah Martinez",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
-      lastVisit: "2 hours ago",
-      itemsViewed: 5,
-    },
-    {
-      id: "2",
-      name: "Michael Chen",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200",
-      lastVisit: "5 hours ago",
-      itemsViewed: 3,
-    },
-    {
-      id: "3",
-      name: "Emma Wilson",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200",
-      lastVisit: "1 day ago",
-      itemsViewed: 8,
-    },
-  ];
+      const { data: vendorProfile } = await supabase
+        .from("vendor_profiles")
+        .select("profile_views, clicks_to_website")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-  // Listings
-  const listings = [
-    {
-      id: "1",
-      title: "Handcrafted Bowl Set",
-      type: "product" as const,
-      price: "$89.99",
-      inventory: "12 available",
-      activeOffer: true,
-      offerDetails: "15% off",
-      couponClaims: 23,
-      status: "active" as const,
-    },
-    {
-      id: "2",
-      title: "Pottery Workshop",
-      type: "service" as const,
-      price: "$125/session",
-      inventory: "5 spots/week",
-      activeOffer: true,
-      offerDetails: "First session 20% off",
-      couponClaims: 8,
-      status: "active" as const,
-    },
-    {
-      id: "3",
-      title: "Custom Vase",
-      type: "product" as const,
-      price: "$145.00",
-      inventory: "Made to order",
-      activeOffer: false,
-      status: "warning" as const,
-    },
-    {
-      id: "4",
-      title: "Behind the Scenes Video",
-      type: "content" as const,
-      price: "Free",
-      inventory: "Unlimited",
-      activeOffer: false,
-      status: "active" as const,
-    },
-  ];
+      const { data: coupons } = await supabase
+        .from("coupons")
+        .select("id")
+        .eq("vendor_id", user.id)
+        .eq("active_status", true);
 
-  const mainCategories = ["Handcrafted", "Home Goods", "Art"];
+      const { data: followers } = await supabase
+        .from("followers")
+        .select("id")
+        .eq("vendor_id", user.id);
+
+      setMetrics({
+        clicks: vendorProfile?.clicks_to_website || 0,
+        sales: 0, // TODO: Implement sales tracking
+        activeOffers: coupons?.length || 0,
+        followers: followers?.length || 0,
+      });
+    };
+
+    loadMetrics();
+  }, [user]);
+
+  // Recent visitors/followers from database
+  const [recentVisitors, setRecentVisitors] = useState<Array<{
+    id: string;
+    name: string;
+    image: string;
+    lastVisit: string;
+    itemsViewed: number;
+  }>>([]);
+
+  useEffect(() => {
+    const loadFollowers = async () => {
+      if (!user) return;
+
+      const { data: followers } = await supabase
+        .from("followers")
+        .select(`
+          shopper_id,
+          created_at,
+          profiles!followers_shopper_id_fkey(display_name, avatar_url, profile_picture_url)
+        `)
+        .eq("vendor_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (followers) {
+        setRecentVisitors(
+          followers.map((f: any) => ({
+            id: f.shopper_id,
+            name: f.profiles?.display_name || "Shopper",
+            image: f.profiles?.profile_picture_url || f.profiles?.avatar_url || "",
+            lastVisit: new Date(f.created_at).toLocaleDateString(),
+            itemsViewed: 0,
+          }))
+        );
+      }
+    };
+
+    loadFollowers();
+  }, [user]);
+
+  // Listings from database
+  const [listings, setListings] = useState<Array<{
+    id: string;
+    title: string;
+    type: "product" | "service" | "content";
+    price: string;
+    inventory: string;
+    activeOffer: boolean;
+    offerDetails?: string;
+    couponClaims?: number;
+    status: "active" | "warning";
+  }>>([]);
+
+  useEffect(() => {
+    const loadListings = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("vendor_id", user.id);
+
+      if (data) {
+        setListings(
+          data.map((listing) => ({
+            id: listing.id,
+            title: listing.title,
+            type: listing.listing_type as "product" | "service" | "content",
+            price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
+            inventory: "Available",
+            activeOffer: false,
+            status: listing.status === "active" ? "active" : "warning",
+          }))
+        );
+      }
+    };
+
+    loadListings();
+  }, [user]);
 
   const handleMetricClick = (metric: string) => {
     setSelectedMetric(metric);

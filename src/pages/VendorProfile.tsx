@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const VendorProfile = () => {
   const navigate = useNavigate();
@@ -51,92 +52,135 @@ const VendorProfile = () => {
     }
   }, [user]);
 
-  // Mock vendor data
-  const vendor = {
-    name: "Clay & Co.",
-    verified: true,
-    website: "https://clayandco.example.com",
-    bio: "Handcrafted ceramic pieces inspired by nature. Each item is uniquely made with sustainable practices and local materials. We specialize in functional pottery that brings beauty to everyday life.",
-    profileImage: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300",
-    location: "Boise, Idaho",
-    priceRange: "Accessible - $15-$150",
-    category: "Handcrafted Ceramics",
-    expertise: "10+ years",
-    shipping: ["Shipping", "Pickup", "In Person"],
-    ownership: "Women-Owned",
-    sustainable: ["Eco-friendly materials", "Low-waste production", "Locally sourced"],
-    activeOffers: 3,
-    highFives: 247,
-  };
+  // Load vendor data from database
+  const [vendor, setVendor] = useState({
+    name: "",
+    verified: false,
+    website: "",
+    bio: "",
+    profileImage: "",
+    location: "",
+    priceRange: "",
+    category: "",
+    expertise: "",
+    shipping: [] as string[],
+    ownership: "",
+    sustainable: [] as string[],
+    activeOffers: 0,
+    highFives: 0,
+  });
 
-  const listings = {
-    images: [
-      {
-        id: "1",
-        url: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=500",
-        title: "Handcrafted Bowl Set",
-        type: "product" as CategoryType,
-        types: ["product"] as CategoryType[],
-        hasOffer: true,
-      },
-      {
-        id: "2",
-        url: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=500",
-        title: "Ceramic Vase",
-        type: "product" as CategoryType,
-        types: ["product"] as CategoryType[],
-        hasOffer: false,
-      },
-      {
-        id: "3",
-        url: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=500",
-        title: "Pottery Workshop",
-        type: "experience" as CategoryType,
-        types: ["experience"] as CategoryType[],
-        hasOffer: true,
-      },
-      {
-        id: "4",
-        url: "https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?w=500",
-        title: "Custom Orders",
-        type: "service" as CategoryType,
-        types: ["service"] as CategoryType[],
-        hasOffer: false,
-      },
-    ],
-    videos: [],
-    audio: [],
-  };
+  const [listings, setListings] = useState({
+    images: [] as Array<{
+      id: string;
+      url: string;
+      title: string;
+      type: CategoryType;
+      types: CategoryType[];
+      hasOffer: boolean;
+    }>,
+    videos: [] as any[],
+    audio: [] as any[],
+  });
 
-  const offers = [
-    { id: "1", title: "15% off Bowl Sets", type: "product", thumbnail: listings.images[0].url },
-    { id: "2", title: "Free Workshop Entry", type: "experience", thumbnail: listings.images[2].url },
-    { id: "3", title: "Buy 2 Get 1 Free", type: "product", thumbnail: listings.images[1].url },
-  ];
+  const [offers, setOffers] = useState<Array<{
+    id: string;
+    title: string;
+    type: string;
+    thumbnail: string;
+  }>>([]);
 
-  const relatedVendors = [
-    {
-      id: "1",
-      name: "Studio Ceramics",
-      category: "Pottery & Art",
-      type: "experience" as CategoryType,
-      image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=200",
-    },
-    {
-      id: "2",
-      name: "Metalworks",
-      category: "Handcrafted Jewelry",
-      type: "product" as CategoryType,
-      image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=200",
-    },
-    {
-      id: "3",
-      name: "Pure Essence",
-      category: "Organic Goods",
-      type: "product" as CategoryType,
-      image: "https://images.unsplash.com/photo-1600428449936-7d99b66d3e7c?w=200",
-    },
-  ];
+  const [relatedVendors, setRelatedVendors] = useState<Array<{
+    id: string;
+    name: string;
+    category: string;
+    type: CategoryType;
+    image: string;
+  }>>([]);
+
+  useEffect(() => {
+    const loadVendorProfile = async () => {
+      if (!vendorId) return;
+
+      // Find vendor profile by ID or slug
+      const { data: vendorProfiles } = await supabase
+        .from("vendor_profiles")
+        .select("*");
+
+      const matchedVendor = vendorProfiles?.find((v: any) => {
+        const slugify = (s: string) => s?.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return v.id === vendorId || v.user_id === vendorId || slugify(v.business_type) === vendorId.toLowerCase();
+      });
+
+      if (matchedVendor) {
+        // Get profile separately
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name, avatar_url, profile_picture_url, bio")
+          .eq("id", matchedVendor.user_id)
+          .maybeSingle();
+
+        setVendor({
+          name: matchedVendor.business_type || profile?.display_name || "Vendor",
+          verified: matchedVendor.status === "active",
+          website: matchedVendor.website || "",
+          bio: matchedVendor.business_description || profile?.bio || "",
+          profileImage: profile?.profile_picture_url || profile?.avatar_url || "",
+          location: `${matchedVendor.city}, ${matchedVendor.state_region}`,
+          priceRange: matchedVendor.pricing_style || "",
+          category: matchedVendor.business_type || "",
+          expertise: matchedVendor.business_duration || "",
+          shipping: matchedVendor.shipping_options || [],
+          ownership: "",
+          sustainable: matchedVendor.sustainable_methods || [],
+          activeOffers: 0,
+          highFives: 0,
+        });
+
+        // Load listings
+        const { data: listingsData } = await supabase
+          .from("listings")
+          .select("*")
+          .eq("vendor_id", matchedVendor.user_id)
+          .eq("status", "active");
+
+        if (listingsData) {
+          setListings({
+            images: listingsData.map((listing: any) => ({
+              id: listing.id,
+              url: listing.image_url || "",
+              title: listing.title,
+              type: listing.listing_type as CategoryType,
+              types: [listing.listing_type] as CategoryType[],
+              hasOffer: false,
+            })),
+            videos: [],
+            audio: [],
+          });
+        }
+
+        // Load active offers
+        const { data: couponsData } = await supabase
+          .from("coupons")
+          .select("*")
+          .eq("vendor_id", matchedVendor.user_id)
+          .eq("active_status", true);
+
+        if (couponsData) {
+          setOffers(
+            couponsData.map((coupon: any) => ({
+              id: coupon.id,
+              title: `${coupon.discount_value}${coupon.discount_type === 'percentage' ? '%' : ''} off`,
+              type: "product",
+              thumbnail: "",
+            }))
+          );
+        }
+      }
+    };
+
+    loadVendorProfile();
+  }, [vendorId]);
 
   const folders = [
     { id: "1", name: "Travel" },
