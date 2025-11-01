@@ -140,8 +140,9 @@ const handler = async (req: Request): Promise<Response> => {
         profile_id: profileData?.[0]?.id
       });
 
-      // 3. Add vendor role to user_roles
-      const { error: roleError } = await supabase
+      // 3. Add vendor AND shopper roles to user_roles
+      // Vendors automatically get shopper privileges
+      const { error: vendorRoleError } = await supabase
         .from("user_roles")
         .upsert({
           user_id: application.user_id,
@@ -150,12 +151,26 @@ const handler = async (req: Request): Promise<Response> => {
           onConflict: 'user_id,role'
         });
 
-      if (roleError) {
-        console.error("Error adding vendor role:", roleError);
-        throw new Error(`Failed to add vendor role: ${roleError.message}`);
+      if (vendorRoleError) {
+        console.error("Error adding vendor role:", vendorRoleError);
+        throw new Error(`Failed to add vendor role: ${vendorRoleError.message}`);
       }
 
-      console.log("Vendor role added successfully for user:", application.user_id);
+      const { error: shopperRoleError } = await supabase
+        .from("user_roles")
+        .upsert({
+          user_id: application.user_id,
+          role: "shopper",
+        }, {
+          onConflict: 'user_id,role'
+        });
+
+      if (shopperRoleError) {
+        console.error("Error adding shopper role:", shopperRoleError);
+        throw new Error(`Failed to add shopper role: ${shopperRoleError.message}`);
+      }
+
+      console.log("Vendor and shopper roles added successfully for user:", application.user_id);
 
       // 4. Send approval email
       const userEmail = application.profiles.email;
