@@ -2,12 +2,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { XCircle, Mail, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import Header from "@/components/Header";
 
 const VendorApplicationRejected = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-12 max-w-2xl">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container mx-auto px-4 sm:px-6 py-12 max-w-2xl pt-20">
       <Card className="border-destructive/50">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
@@ -70,6 +73,7 @@ const VendorApplicationRejected = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

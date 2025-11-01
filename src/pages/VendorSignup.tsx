@@ -248,8 +248,8 @@ const VendorSignup = () => {
           options: {
             emailRedirectTo: `${window.location.origin}/vendor-signup`,
             data: {
-              full_name: authData.fullName,
-              role: "vendor"
+              full_name: authData.fullName
+              // Role will be assigned by admin upon application approval
             }
           }
         });

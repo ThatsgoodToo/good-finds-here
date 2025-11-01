@@ -248,22 +248,14 @@ const VendorDashboard = () => {
     );
   }
 
+  // Show pending approval page if application is pending
   if (vendorStatus === "pending") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <VendorPendingApproval />
-      </div>
-    );
+    return <VendorPendingApproval />;
   }
 
+  // Show rejection page if application was rejected
   if (vendorStatus === "rejected") {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <VendorApplicationRejected />
-      </div>
-    );
+    return <VendorApplicationRejected />;
   }
 
   if (vendorStatus === "no-application") {

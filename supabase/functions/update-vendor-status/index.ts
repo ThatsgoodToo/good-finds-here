@@ -84,10 +84,15 @@ const handler = async (req: Request): Promise<Response> => {
         })
         .eq("id", application_id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating application status:", updateError);
+        throw new Error(`Failed to update application: ${updateError.message}`);
+      }
+
+      console.log("Application status updated to approved");
 
       // 2. Create vendor_profiles record
-      const { error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("vendor_profiles")
         .insert({
           user_id: application.user_id,
@@ -122,25 +127,35 @@ const handler = async (req: Request): Promise<Response> => {
           subscription_status: "active",
           profile_views: 0,
           clicks_to_website: 0,
-        });
+        })
+        .select();
 
       if (profileError) {
         console.error("Error creating vendor profile:", profileError);
-        throw profileError;
+        throw new Error(`Failed to create vendor profile: ${profileError.message}`);
       }
+
+      console.log("Vendor profile created successfully:", {
+        user_id: application.user_id,
+        profile_id: profileData?.[0]?.id
+      });
 
       // 3. Add vendor role to user_roles
       const { error: roleError } = await supabase
         .from("user_roles")
-        .insert({
+        .upsert({
           user_id: application.user_id,
           role: "vendor",
+        }, {
+          onConflict: 'user_id,role'
         });
 
-      if (roleError && !roleError.message?.includes("duplicate")) {
+      if (roleError) {
         console.error("Error adding vendor role:", roleError);
-        throw roleError;
+        throw new Error(`Failed to add vendor role: ${roleError.message}`);
       }
+
+      console.log("Vendor role added successfully for user:", application.user_id);
 
       // 4. Send approval email
       const userEmail = application.profiles.email;
