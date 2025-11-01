@@ -21,6 +21,7 @@ interface VendorHeaderProps {
   location: string;
   externalUrl: string;
   description: string;
+  vendorUserId: string;
   onUploadImage: () => void;
   onUpdateLocation: (location: string) => void;
   onUpdateExternalUrl: (url: string) => void;
@@ -33,6 +34,7 @@ const VendorHeader = ({
   location,
   externalUrl,
   description,
+  vendorUserId,
   onUploadImage,
   onUpdateLocation,
   onUpdateExternalUrl,
@@ -171,7 +173,7 @@ const VendorHeader = ({
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem onClick={() => navigate(`/vendor/${vendorName.toLowerCase().replace(/\s/g, '-')}`)}>
+                <DropdownMenuItem onClick={() => navigate(`/vendor/${vendorUserId}`)}>
                   View Public Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

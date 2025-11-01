@@ -356,6 +356,7 @@ const VendorDashboard = () => {
           location={location}
           externalUrl={externalUrl}
           description={vendorDescription}
+          vendorUserId={user?.id || ""}
           onUploadImage={handleUploadImage}
           onUpdateLocation={handleUpdateLocation}
           onUpdateExternalUrl={handleUpdateExternalUrl}
