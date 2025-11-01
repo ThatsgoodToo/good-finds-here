@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Mail, Phone } from "lucide-react";
+import { Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 
@@ -94,23 +94,12 @@ const SupportPage = () => {
           <p className="text-muted-foreground">Get help from our support team</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <MessageSquare className="h-8 w-8 mb-2" />
-              <CardTitle>Live Chat</CardTitle>
-              <CardDescription>Chat with our support team</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full">Start Chat</Button>
-            </CardContent>
-          </Card>
-
+        <div className="grid gap-6">
           <Card>
             <CardHeader>
               <Mail className="h-8 w-8 mb-2" />
-              <CardTitle>Email</CardTitle>
-              <CardDescription>connect@thatsgoodtoo.shop</CardDescription>
+              <CardTitle>Email Support</CardTitle>
+              <CardDescription>Send us an email at connect@thatsgoodtoo.shop</CardDescription>
             </CardHeader>
             <CardContent>
               <Button 
@@ -120,17 +109,6 @@ const SupportPage = () => {
               >
                 Send Email
               </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Phone className="h-8 w-8 mb-2" />
-              <CardTitle>Phone</CardTitle>
-              <CardDescription>1-800-123-4567</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full">Call Now</Button>
             </CardContent>
           </Card>
         </div>

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Settings,
   Store,
+  ArrowLeft,
 } from "lucide-react";
 
 interface SettingsLayoutProps {
@@ -28,7 +29,13 @@ interface NavItem {
 
 const SettingsLayout = ({ children }: SettingsLayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { activeRole } = useAuth();
+
+  const handleBack = () => {
+    const dashboardPath = activeRole === 'vendor' ? '/vendor/dashboard' : '/dashboard';
+    navigate(dashboardPath);
+  };
 
   const navItems: NavItem[] = [
     {
@@ -96,6 +103,13 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
         <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
           {/* Sidebar Navigation */}
           <aside className="space-y-2">
+            <button 
+              onClick={handleBack}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 -ml-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
+            </button>
             <h2 className="text-lg font-semibold mb-4">Settings</h2>
             <nav className="space-y-1">
               {filteredNavItems.map((item) => (
