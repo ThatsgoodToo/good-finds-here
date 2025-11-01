@@ -85,12 +85,12 @@ const VendorHeader = ({
               </Button>
             </div>
             <div>
-              <h1 
-                className="text-2xl sm:text-3xl font-bold hover:text-primary cursor-pointer transition-colors"
-                onClick={() => navigate(`/vendor/${vendorName.toLowerCase().replace(/\s/g, '-')}`)}
-              >
-                {vendorName} Goods
-              </h1>
+        <h1 
+          className="text-2xl sm:text-3xl font-bold hover:text-primary cursor-pointer transition-colors"
+          onClick={() => navigate(`/vendor/${vendorUserId}`)}
+        >
+          {vendorName} Goods
+        </h1>
               <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                 <span>{location}</span>
               </div>
