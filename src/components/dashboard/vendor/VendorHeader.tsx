@@ -144,7 +144,6 @@ const VendorHeader = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/settings/account")}>Account Settings</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings/notifications")}>Notification Settings</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings/messages")}>Platform Messages</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings/vendor")}>Vendor Settings</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings/privacy")}>Privacy Controls</DropdownMenuItem>
               </DropdownMenuContent>

@@ -6,7 +6,6 @@ import Header from "@/components/Header";
 import {
   User,
   Bell,
-  Mail,
   Shield,
   HelpCircle,
   FileText,
@@ -46,11 +45,6 @@ const SettingsLayout = ({ children }: SettingsLayoutProps) => {
       title: "Notifications",
       href: "/settings/notifications",
       icon: <Bell className="h-4 w-4" />,
-    },
-    {
-      title: "Messages",
-      href: "/settings/messages",
-      icon: <Mail className="h-4 w-4" />,
     },
     {
       title: "Vendor Settings",

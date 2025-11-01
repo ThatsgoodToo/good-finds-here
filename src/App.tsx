@@ -24,7 +24,6 @@ import NotFound from "./pages/NotFound";
 import AccountSettings from "./pages/settings/AccountSettings";
 import ProfileSettings from "./pages/settings/ProfileSettings";
 import NotificationSettings from "./pages/settings/NotificationSettings";
-import Messages from "./pages/settings/Messages";
 import VendorSettings from "./pages/settings/VendorSettings";
 import PrivacySettings from "./pages/settings/PrivacySettings";
 import HelpPage from "./pages/HelpPage";
@@ -66,7 +65,6 @@ const App = () => {
               <Route path="/settings/account" element={<AccountSettings />} />
               <Route path="/settings/profile" element={<ProfileSettings />} />
               <Route path="/settings/notifications" element={<NotificationSettings />} />
-              <Route path="/settings/messages" element={<Messages />} />
               <Route path="/settings/vendor" element={<VendorSettings />} />
               <Route path="/settings/privacy" element={<PrivacySettings />} />
               

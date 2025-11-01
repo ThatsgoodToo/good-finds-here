@@ -151,9 +151,6 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                   <DropdownMenuItem onClick={() => navigate("/settings/notifications")} className="cursor-pointer">
                     Notifications
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings/messages")} className="cursor-pointer">
-                    Messages
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/settings/profile")} className="cursor-pointer">
                     Profile Settings
                   </DropdownMenuItem>
