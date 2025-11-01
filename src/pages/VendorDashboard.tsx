@@ -55,9 +55,8 @@ const VendorDashboard = () => {
   const [refreshCoupons, setRefreshCoupons] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedShopper, setSelectedShopper] = useState<{ id: string; name: string } | null>(null);
-  // Load user profile data
-  const [shopperName, setShopperName] = useState("");
-  const [shopperImage, setShopperImage] = useState("");
+  
+  // All profile and data state declarations
   const [vendorName, setVendorName] = useState("");
   const [vendorImage, setVendorImage] = useState("");
   const [location, setLocation] = useState("");
@@ -65,6 +64,38 @@ const VendorDashboard = () => {
   const [vendorDescription, setVendorDescription] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [mainCategories, setMainCategories] = useState<string[]>([]);
+  
+  // Metrics state
+  const [metrics, setMetrics] = useState({
+    clicks: 0,
+    sales: 0,
+    activeOffers: 0,
+    followers: 0,
+  });
+
+  // Recent visitors state
+  const [recentVisitors, setRecentVisitors] = useState<Array<{
+    id: string;
+    name: string;
+    image: string;
+    lastVisit: string;
+    itemsViewed: number;
+  }>>([]);
+
+  // Listings state
+  const [listings, setListings] = useState<Array<{
+    id: string;
+    title: string;
+    type: "product" | "service" | "content";
+    price: string;
+    inventory: string;
+    activeOffer: boolean;
+    offerDetails?: string;
+    couponClaims?: number;
+    status: "active" | "warning";
+  }>>([]);
+  
+  const { sharesRemaining, maxShares } = useVendorShareLimits();
 
   useEffect(() => {
     const loadVendorProfile = async () => {
@@ -99,8 +130,6 @@ const VendorDashboard = () => {
     loadVendorProfile();
   }, [user]);
   
-  const { sharesRemaining, maxShares } = useVendorShareLimits();
-
   useEffect(() => {
     if (!user) {
       setShowSignupModal(true);
@@ -113,6 +142,99 @@ const VendorDashboard = () => {
       setActiveRole("vendor");
     }
   }, [roles, activeRole, setActiveRole]);
+
+  // Load metrics data
+  useEffect(() => {
+    const loadMetrics = async () => {
+      if (!user) return;
+
+      const { data: vendorProfile } = await supabase
+        .from("vendor_profiles")
+        .select("profile_views, clicks_to_website")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const { data: coupons } = await supabase
+        .from("coupons")
+        .select("id")
+        .eq("vendor_id", user.id)
+        .eq("active_status", true);
+
+      const { data: followers } = await supabase
+        .from("followers")
+        .select("id")
+        .eq("vendor_id", user.id);
+
+      setMetrics({
+        clicks: vendorProfile?.clicks_to_website || 0,
+        sales: 0,
+        activeOffers: coupons?.length || 0,
+        followers: followers?.length || 0,
+      });
+    };
+
+    loadMetrics();
+  }, [user]);
+
+  // Load followers/recent visitors
+  useEffect(() => {
+    const loadFollowers = async () => {
+      if (!user) return;
+
+      const { data: followers } = await supabase
+        .from("followers")
+        .select(`
+          shopper_id,
+          created_at,
+          profiles!followers_shopper_id_fkey(display_name, avatar_url, profile_picture_url)
+        `)
+        .eq("vendor_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (followers) {
+        setRecentVisitors(
+          followers.map((f: any) => ({
+            id: f.shopper_id,
+            name: f.profiles?.display_name || "Shopper",
+            image: f.profiles?.profile_picture_url || f.profiles?.avatar_url || "",
+            lastVisit: new Date(f.created_at).toLocaleDateString(),
+            itemsViewed: 0,
+          }))
+        );
+      }
+    };
+
+    loadFollowers();
+  }, [user]);
+
+  // Load listings
+  useEffect(() => {
+    const loadListings = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("vendor_id", user.id);
+
+      if (data) {
+        setListings(
+          data.map((listing) => ({
+            id: listing.id,
+            title: listing.title,
+            type: listing.listing_type as "product" | "service" | "content",
+            price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
+            inventory: "Available",
+            activeOffer: false,
+            status: listing.status === "active" ? "active" : "warning",
+          }))
+        );
+      }
+    };
+
+    loadListings();
+  }, [user]);
 
   // Check vendor access status
   if (checkingStatus) {
@@ -148,126 +270,6 @@ const VendorDashboard = () => {
     navigate("/signup/vendor");
     return null;
   }
-
-  // Metrics with real data from database
-  const [metrics, setMetrics] = useState({
-    clicks: 0,
-    sales: 0,
-    activeOffers: 0,
-    followers: 0,
-  });
-
-  useEffect(() => {
-    const loadMetrics = async () => {
-      if (!user) return;
-
-      const { data: vendorProfile } = await supabase
-        .from("vendor_profiles")
-        .select("profile_views, clicks_to_website")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const { data: coupons } = await supabase
-        .from("coupons")
-        .select("id")
-        .eq("vendor_id", user.id)
-        .eq("active_status", true);
-
-      const { data: followers } = await supabase
-        .from("followers")
-        .select("id")
-        .eq("vendor_id", user.id);
-
-      setMetrics({
-        clicks: vendorProfile?.clicks_to_website || 0,
-        sales: 0, // TODO: Implement sales tracking
-        activeOffers: coupons?.length || 0,
-        followers: followers?.length || 0,
-      });
-    };
-
-    loadMetrics();
-  }, [user]);
-
-  // Recent visitors/followers from database
-  const [recentVisitors, setRecentVisitors] = useState<Array<{
-    id: string;
-    name: string;
-    image: string;
-    lastVisit: string;
-    itemsViewed: number;
-  }>>([]);
-
-  useEffect(() => {
-    const loadFollowers = async () => {
-      if (!user) return;
-
-      const { data: followers } = await supabase
-        .from("followers")
-        .select(`
-          shopper_id,
-          created_at,
-          profiles!followers_shopper_id_fkey(display_name, avatar_url, profile_picture_url)
-        `)
-        .eq("vendor_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (followers) {
-        setRecentVisitors(
-          followers.map((f: any) => ({
-            id: f.shopper_id,
-            name: f.profiles?.display_name || "Shopper",
-            image: f.profiles?.profile_picture_url || f.profiles?.avatar_url || "",
-            lastVisit: new Date(f.created_at).toLocaleDateString(),
-            itemsViewed: 0,
-          }))
-        );
-      }
-    };
-
-    loadFollowers();
-  }, [user]);
-
-  // Listings from database
-  const [listings, setListings] = useState<Array<{
-    id: string;
-    title: string;
-    type: "product" | "service" | "content";
-    price: string;
-    inventory: string;
-    activeOffer: boolean;
-    offerDetails?: string;
-    couponClaims?: number;
-    status: "active" | "warning";
-  }>>([]);
-
-  useEffect(() => {
-    const loadListings = async () => {
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("listings")
-        .select("*")
-        .eq("vendor_id", user.id);
-
-      if (data) {
-        setListings(
-          data.map((listing) => ({
-            id: listing.id,
-            title: listing.title,
-            type: listing.listing_type as "product" | "service" | "content",
-            price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
-            inventory: "Available",
-            activeOffer: false,
-            status: listing.status === "active" ? "active" : "warning",
-          }))
-        );
-      }
-    };
-
-    loadListings();
-  }, [user]);
 
   const handleMetricClick = (metric: string) => {
     setSelectedMetric(metric);
