@@ -323,9 +323,9 @@ const VendorSignup = () => {
       toast.success("Application submitted successfully!");
       setCurrentStep(totalSteps); // Show thank you page
       
-      // Redirect to dashboard after 2 seconds
+      // Redirect to pending approval page after 2 seconds
       setTimeout(() => {
-        navigate("/dashboard/vendor");
+        navigate("/vendor/pending-approval");
       }, 2000);
     } catch (error: any) {
       toast.error(error.message || "Failed to submit application");

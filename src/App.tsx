@@ -31,6 +31,7 @@ import SupportPage from "./pages/SupportPage";
 import AboutPage from "./pages/AboutPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
+import VendorPendingApproval from "./components/VendorPendingApproval";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/signup/shopper" element={<ShopperSignup />} />
               <Route path="/signup/vendor" element={<VendorSignup />} />
+              <Route path="/vendor/pending-approval" element={<VendorPendingApproval />} />
               <Route path="/dashboard/shopper" element={<ShopperDashboard />} />
               <Route path="/dashboard/vendor" element={<VendorDashboard />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
