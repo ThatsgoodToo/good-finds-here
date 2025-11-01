@@ -158,12 +158,14 @@ const VendorSignup = () => {
       [field]: value
     }));
   };
-  const toggleArrayItem = (field: keyof VendorApplication, item: string) => {
+  const toggleArrayItem = (field: keyof VendorApplication, item: string, checked: boolean) => {
     const currentArray = formData[field] as string[];
-    if (currentArray.includes(item)) {
-      updateField(field, currentArray.filter(i => i !== item));
+    if (checked) {
+      if (!currentArray.includes(item)) {
+        updateField(field, [...currentArray, item]);
+      }
     } else {
-      updateField(field, [...currentArray, item]);
+      updateField(field, currentArray.filter(i => i !== item));
     }
   };
   const validateStep = () => {
@@ -573,7 +575,7 @@ const VendorSignup = () => {
                     <Label>Products or Services Offered *</Label>
                     <div className="space-y-2 mt-2">
                       {["Designed, made, grown, or collected", "Services offered", "An Experience"].map(item => <div key={item} className="flex items-center gap-2">
-                          <Checkbox checked={formData.products_services.includes(item)} onCheckedChange={() => toggleArrayItem('products_services', item)} />
+                          <Checkbox checked={formData.products_services.includes(item)} onCheckedChange={(checked) => toggleArrayItem('products_services', item, checked as boolean)} />
                           <Label className="font-normal">{item}</Label>
                         </div>)}
                     </div>
@@ -583,7 +585,7 @@ const VendorSignup = () => {
                     <Label>Business Type *</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                       {["Art & Design", "Fashion & Accessories", "Food & Beverage", "Home & Lifestyle", "Wellness & Body Care", "Tech & Innovation", "Education & Experiences", "Other"].map(item => <div key={item} className="flex items-center gap-2">
-                          <Checkbox checked={formData.area_of_expertise.includes(item)} onCheckedChange={() => toggleArrayItem('area_of_expertise', item)} />
+                          <Checkbox checked={formData.area_of_expertise.includes(item)} onCheckedChange={(checked) => toggleArrayItem('area_of_expertise', item, checked as boolean)} />
                           <Label className="font-normal text-sm">{item}</Label>
                         </div>)}
                     </div>
@@ -676,7 +678,7 @@ const VendorSignup = () => {
                     <Label>Sustainable / Local / Small-Scale Methods</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                       {["♻️ Upcycled/recycled", "🌿 Eco-friendly", "🧵 Handcrafted/small-batch", "🏠 Locally made", "🚜 Locally sourced", "🔋 Low-waste/zero-waste", "🌞 Ethical labor", "💧 Energy-conscious", "🌎 Community-based", "🪴 Regenerative/circular", "🧡 Social impact", "🪡 Made-to-order"].map(item => <div key={item} className="flex items-center gap-2">
-                          <Checkbox checked={formData.sustainable_methods.includes(item)} onCheckedChange={() => toggleArrayItem('sustainable_methods', item)} />
+                          <Checkbox checked={formData.sustainable_methods.includes(item)} onCheckedChange={(checked) => toggleArrayItem('sustainable_methods', item, checked as boolean)} />
                           <Label className="font-normal text-sm">{item}</Label>
                         </div>)}
                     </div>
@@ -694,21 +696,21 @@ const VendorSignup = () => {
                     <h3 className="font-semibold">Required Agreements</h3>
                     
                     <div className="flex items-start gap-2">
-                      <Checkbox checked={formData.info_accurate} onCheckedChange={checked => updateField('info_accurate', checked)} />
+                      <Checkbox checked={formData.info_accurate} onCheckedChange={(checked) => updateField('info_accurate', checked as boolean)} />
                       <Label className="font-normal">
                         I confirm the information is accurate
                       </Label>
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <Checkbox checked={formData.understands_review} onCheckedChange={checked => updateField('understands_review', checked)} />
+                      <Checkbox checked={formData.understands_review} onCheckedChange={(checked) => updateField('understands_review', checked as boolean)} />
                       <Label className="font-normal">
                         I understand TGT reviews applications and approval is at our discretion
                       </Label>
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <Checkbox checked={formData.agrees_to_terms} onCheckedChange={checked => updateField('agrees_to_terms', checked)} />
+                      <Checkbox checked={formData.agrees_to_terms} onCheckedChange={(checked) => updateField('agrees_to_terms', checked as boolean)} />
                       <Label className="font-normal">
                         I agree to TGT Vendor Guidelines & Terms of Use{" "}
                         <Button variant="link" className="p-0 h-auto" onClick={() => setShowTermsDialog(true)}>
@@ -718,7 +720,7 @@ const VendorSignup = () => {
                     </div>
 
                     <div className="flex items-start gap-2 pt-2 border-t">
-                      <Checkbox checked={formData.receive_updates} onCheckedChange={checked => updateField('receive_updates', checked)} />
+                      <Checkbox checked={formData.receive_updates} onCheckedChange={(checked) => updateField('receive_updates', checked as boolean)} />
                       <Label className="font-normal">
                         Yes, I'd like to receive updates, tips, and promotional opportunities (Optional)
                       </Label>
