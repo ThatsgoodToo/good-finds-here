@@ -1,10 +1,8 @@
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from "lucide-react";
-
 const AboutPage = () => {
-  return (
-    <SettingsLayout>
+  return <SettingsLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">About Us</h1>
@@ -19,10 +17,7 @@ const AboutPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p>
-              We're building a platform that connects shoppers with unique vendors offering
-              products, services, and experiences.
-            </p>
+            <p>We're building a platform that connects shoppers with local vendors offering products, services, and experiences.</p>
             <p>
               Our goal is to create a vibrant marketplace where small businesses and artisans
               can thrive while providing shoppers with exclusive offers and personalized
@@ -48,8 +43,6 @@ const AboutPage = () => {
           </CardContent>
         </Card>
       </div>
-    </SettingsLayout>
-  );
+    </SettingsLayout>;
 };
-
 export default AboutPage;
