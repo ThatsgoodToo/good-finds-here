@@ -108,7 +108,7 @@ const ShopperProfile = () => {
       // Try to find the user by slug
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, display_name, avatar_url, profile_picture_url, bio, location_public, high_fives_public");
+        .select("id, display_name, avatar_url, bio, location_public, high_fives_public");
 
       const matchedProfile = profiles?.find((p: any) => {
         const slugify = (s: string) => s?.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -119,7 +119,7 @@ const ShopperProfile = () => {
         setShopper({
           id: matchedProfile.id,
           name: matchedProfile.display_name || "Shopper",
-          image: matchedProfile.profile_picture_url || matchedProfile.avatar_url || "",
+          image: matchedProfile.avatar_url || "",
           location: "", // TODO: Add location to profiles table
           locationPublic: matchedProfile.location_public ?? true,
           bio: matchedProfile.bio || "",
