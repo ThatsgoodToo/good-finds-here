@@ -9,9 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Upload, ExternalLink, Edit2, RefreshCw } from "lucide-react";
+import { Settings, Upload, ExternalLink, Edit2, RefreshCw, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ShopperSignupPrompt from "@/components/ShopperSignupPrompt";
+import DashboardInfoDialog from "@/components/DashboardInfoDialog";
+import { cn } from "@/lib/utils";
 
 interface VendorHeaderProps {
   vendorName: string;
@@ -39,6 +41,24 @@ const VendorHeader = ({
   const navigate = useNavigate();
   const { roles, activeRole, setActiveRole } = useAuth();
   const [showShopperSignupPrompt, setShowShopperSignupPrompt] = React.useState(false);
+  const [showInfoAnimation, setShowInfoAnimation] = React.useState(false);
+  const [infoDialogOpen, setInfoDialogOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const key = "tgt_dashboard_info_seen_vendor";
+    const hasSeenInfo = localStorage.getItem(key);
+    
+    if (!hasSeenInfo) {
+      setShowInfoAnimation(true);
+    }
+  }, []);
+
+  const handleInfoClick = () => {
+    const key = "tgt_dashboard_info_seen_vendor";
+    localStorage.setItem(key, "true");
+    setShowInfoAnimation(false);
+    setInfoDialogOpen(true);
+  };
 
   return (
     <div className="border-b border-border bg-card">
@@ -119,6 +139,19 @@ const VendorHeader = ({
               </Button>
             </div>
 
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleInfoClick}
+              className={cn(
+                "relative",
+                showInfoAnimation && "animate-pulse ring-2 ring-primary ring-offset-2"
+              )}
+              aria-label="Dashboard guide and help"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -174,6 +207,11 @@ const VendorHeader = ({
       <ShopperSignupPrompt 
         open={showShopperSignupPrompt} 
         onOpenChange={setShowShopperSignupPrompt}
+      />
+      <DashboardInfoDialog 
+        open={infoDialogOpen}
+        onOpenChange={setInfoDialogOpen}
+        dashboardType="vendor"
       />
     </div>
   );

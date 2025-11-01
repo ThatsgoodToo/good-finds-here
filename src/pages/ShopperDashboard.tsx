@@ -52,7 +52,8 @@ import {
   Ticket,
   ChevronRight,
   Edit2,
-  Trash2
+  Trash2,
+  HelpCircle
 } from "lucide-react";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
@@ -60,6 +61,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import VendorSignupPrompt from "@/components/VendorSignupPrompt";
+import DashboardInfoDialog from "@/components/DashboardInfoDialog";
 
 interface FolderItem {
   id: string;
@@ -97,6 +99,8 @@ const ShopperDashboard = () => {
   const [locationInput, setLocationInput] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [showInfoAnimation, setShowInfoAnimation] = useState(false);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
   const [profileSettings, setProfileSettings] = useState({
     location: "Honolulu, Hawaii",
     locationPublic: true,
@@ -110,6 +114,23 @@ const ShopperDashboard = () => {
       setShowSignupModal(true);
     }
   }, [user]);
+
+  // Check if user has seen the info animation
+  useEffect(() => {
+    const key = "tgt_dashboard_info_seen_shopper";
+    const hasSeenInfo = localStorage.getItem(key);
+    
+    if (!hasSeenInfo) {
+      setShowInfoAnimation(true);
+    }
+  }, []);
+
+  const handleInfoClick = () => {
+    const key = "tgt_dashboard_info_seen_shopper";
+    localStorage.setItem(key, "true");
+    setShowInfoAnimation(false);
+    setInfoDialogOpen(true);
+  };
 
   // Set active role to shopper when on this page
   useEffect(() => {
@@ -662,6 +683,20 @@ const ShopperDashboard = () => {
                     Vendor
                   </Button>
                 </div>
+                
+                {/* Info Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleInfoClick}
+                  className={cn(
+                    "relative",
+                    showInfoAnimation && "animate-pulse ring-2 ring-primary ring-offset-2"
+                  )}
+                  aria-label="Dashboard guide and help"
+                >
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
                 
                 {/* Settings Gear Icon */}
                 <DropdownMenu>
@@ -1447,6 +1482,11 @@ const ShopperDashboard = () => {
       <VendorSignupPrompt 
         open={showVendorSignupPrompt} 
         onOpenChange={setShowVendorSignupPrompt}
+      />
+      <DashboardInfoDialog 
+        open={infoDialogOpen}
+        onOpenChange={setInfoDialogOpen}
+        dashboardType="shopper"
       />
     </div>
   );
