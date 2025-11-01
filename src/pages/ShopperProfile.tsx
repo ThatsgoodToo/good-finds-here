@@ -105,9 +105,9 @@ const ShopperProfile = () => {
     const loadShopperProfile = async () => {
       if (!shopperId) return;
 
-      // Try to find the user by slug
+      // Try to find the user by slug - use public_profiles view for public access
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("id, display_name, avatar_url, bio, location_public, high_fives_public");
 
       const matchedProfile = profiles?.find((p: any) => {
