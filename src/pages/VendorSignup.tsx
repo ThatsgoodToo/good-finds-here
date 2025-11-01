@@ -759,12 +759,10 @@ const VendorSignup = () => {
                         <SelectValue placeholder="Select style" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="inventive">🎨 Inventive</SelectItem>
-                        <SelectItem value="refined">🌿 Refined</SelectItem>
-                        <SelectItem value="resourceful">🔄 Resourceful</SelectItem>
-                        <SelectItem value="expressive">✨ Expressive</SelectItem>
                         <SelectItem value="practical">⚙️ Practical</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="versatile">🔄 Versatile</SelectItem>
+                        <SelectItem value="experimental">✨ Experimental</SelectItem>
+                        <SelectItem value="other">💡 Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
