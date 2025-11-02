@@ -25,7 +25,8 @@ const OnboardingTutorial = () => {
     } else if (user) {
       setShowHelpButton(true);
     }
-  }, [user, activeRole]);
+  }, [user, activeRole]); // eslint-disable-line react-hooks/exhaustive-deps
+  // startTour is defined below and including it would cause circular dependency
 
   const getSteps = () => {
     const isVendor = activeRole === "vendor";

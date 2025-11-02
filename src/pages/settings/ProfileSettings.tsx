@@ -73,7 +73,8 @@ const ProfileSettings = () => {
       }
     };
     loadProfile();
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  // form and toast are stable references and don't need to be in dependencies
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!user) return;
     setIsLoading(true);
@@ -93,10 +94,10 @@ const ProfileSettings = () => {
         title: "Success",
         description: "Profile updated successfully"
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive"
       });
     } finally {

@@ -61,10 +61,10 @@ const AccountSettings = () => {
         description: "Please check your new email for confirmation link.",
       });
       emailForm.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {
@@ -86,10 +86,10 @@ const AccountSettings = () => {
         description: "Password updated successfully.",
       });
       passwordForm.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {
@@ -110,10 +110,10 @@ const AccountSettings = () => {
         title: "Account deleted",
         description: "Your account has been permanently deleted.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {

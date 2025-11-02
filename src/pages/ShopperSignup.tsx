@@ -128,7 +128,16 @@ const ShopperSignup = () => {
       }
 
       // Update profile with additional data
-      const profileUpdate: any = {
+      interface ProfileUpdate {
+        interests?: string[];
+        age_verified?: boolean;
+        terms_accepted?: boolean;
+        analytics_consent?: boolean;
+        onboarding_completed?: boolean;
+        full_name?: string;
+      }
+
+      const profileUpdate: ProfileUpdate = {
         interests: signupData.interests,
         age_verified: signupData.ageVerified,
         terms_accepted: signupData.termsAccepted,
@@ -162,9 +171,11 @@ const ShopperSignup = () => {
       }
       
       navigate("/dashboard/shopper");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error);
-      toast.error(error.message || "Failed to create account. Please try again.");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create account. Please try again."
+      );
     } finally {
       setLoading(false);
     }
