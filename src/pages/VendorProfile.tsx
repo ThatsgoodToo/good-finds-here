@@ -456,34 +456,14 @@ const VendorProfile = () => {
                 </CardContent>
               </Card>
 
-              {/* Creative Style */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="font-semibold mb-1">Creative Style</h3>
-                      <p className="text-sm text-muted-foreground">{vendor.ownership}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Sustainable Practices */}
               <Card>
                 <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Leaf className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="font-semibold mb-2">Sustainable Practices</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {vendor.sustainable.map((practice, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {practice}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Sustainable Practices</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {vendor.sustainable.join(", ")}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
