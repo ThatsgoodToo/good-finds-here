@@ -35,7 +35,20 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import LocationLink from "@/components/LocationLink";
+
+type Listing = Database['public']['Tables']['listings']['Row'];
+type Coupon = Database['public']['Tables']['coupons']['Row'];
+
+type Offer = {
+  id: string;
+  code: string;
+  title: string;
+  type: string;
+  thumbnail: string;
+  listingId: string | null;
+};
 
 const VendorProfile = () => {
   const navigate = useNavigate();
@@ -44,7 +57,7 @@ const VendorProfile = () => {
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
-  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
@@ -85,18 +98,11 @@ const VendorProfile = () => {
       hasOffer: boolean;
       categories: string[];
     }>,
-    videos: [] as any[],
-    audio: [] as any[],
+    videos: [] as Listing[],
+    audio: [] as Listing[],
   });
 
-  const [offers, setOffers] = useState<Array<{
-    id: string;
-    code: string;
-    title: string;
-    type: string;
-    thumbnail: string;
-    listingId: string | null;
-  }>>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
 
   const [relatedVendors, setRelatedVendors] = useState<Array<{
     id: string;
@@ -115,7 +121,7 @@ const VendorProfile = () => {
         .from("vendor_profiles")
         .select("*");
 
-      const matchedVendor = vendorProfiles?.find((v: any) => {
+      const matchedVendor = vendorProfiles?.find((v) => {
         const slugify = (s: string) => s?.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         return v.id === vendorId || v.user_id === vendorId || slugify(v.business_type) === vendorId.toLowerCase();
       });
@@ -158,7 +164,7 @@ const VendorProfile = () => {
           .lte("start_date", new Date().toISOString());
 
         const activeCouponListingIds = new Set(
-          couponsData?.filter((c: any) => c.listing_id).map((c: any) => c.listing_id) || []
+          couponsData?.filter((c) => c.listing_id).map((c) => c.listing_id) || []
         );
 
         // Load listings
