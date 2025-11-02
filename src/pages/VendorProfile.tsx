@@ -29,7 +29,9 @@ import {
   ChevronRight,
   Ticket,
   MapPin,
-  ArrowLeft
+  ArrowLeft,
+  Sparkles,
+  Leaf
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -421,12 +423,12 @@ const VendorProfile = () => {
                 </CardContent>
               </Card>
 
-              {/* Category & Expertise */}
+              {/* Ownership & Expertise */}
               <Card>
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div>
-                      <h3 className="font-semibold mb-1">Category</h3>
+                      <h3 className="font-semibold mb-1">Ownership</h3>
                       <p className="text-sm text-muted-foreground">{vendor.category}</p>
                     </div>
                     <div>
@@ -454,21 +456,33 @@ const VendorProfile = () => {
                 </CardContent>
               </Card>
 
-              {/* Ownership & Sustainable Practices */}
+              {/* Creative Style */}
               <Card>
-                <CardContent className="pt-6 space-y-3">
-                  <div>
-                    <h3 className="font-semibold mb-1">Ownership</h3>
-                    <Badge variant="outline">{vendor.ownership}</Badge>
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold mb-1">Creative Style</h3>
+                      <p className="text-sm text-muted-foreground">{vendor.ownership}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Sustainable Practices</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {vendor.sustainable.map((practice, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {practice}
-                        </Badge>
-                      ))}
+                </CardContent>
+              </Card>
+
+              {/* Sustainable Practices */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <Leaf className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold mb-2">Sustainable Practices</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {vendor.sustainable.map((practice, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {practice}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
