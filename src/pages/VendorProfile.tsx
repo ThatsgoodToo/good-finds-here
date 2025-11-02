@@ -28,7 +28,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Ticket,
-  MapPin
+  MapPin,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ const VendorProfile = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -113,6 +115,8 @@ const VendorProfile = () => {
       });
 
       if (matchedVendor) {
+        // Check if this is the user's own profile
+        setIsOwnProfile(user?.id === matchedVendor.user_id);
         // Get profile separately
         const { data: profile } = await supabase
           .from("profiles")
@@ -180,7 +184,7 @@ const VendorProfile = () => {
     };
 
     loadVendorProfile();
-  }, [vendorId]);
+  }, [vendorId, user]);
 
   const folders = [
     { id: "1", name: "Travel" },
@@ -222,6 +226,23 @@ const VendorProfile = () => {
       <Header />
       
       <main className="pt-16 sm:pt-20 pb-24">
+        {/* Back to Dashboard Button */}
+        {isOwnProfile && (
+          <div className="border-b border-border bg-muted/30">
+            <div className="container mx-auto px-4 sm:px-6 py-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/dashboard/vendor")}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Top Section - Header */}
         <div className="border-b border-border bg-card">
           <div className="container mx-auto px-4 sm:px-6 py-8">
