@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import LocationLink from "@/components/LocationLink";
 import { supabase } from "@/integrations/supabase/client";
+import { mapCategoriesToTypes } from "@/lib/categoryMapping";
+import type { CategoryType } from "@/components/ProductCard";
 
 const VideoListing = () => {
   const navigate = useNavigate();
@@ -76,10 +78,12 @@ const VideoListing = () => {
           setVendor({
             id: listingData.vendor_id,
             name: vendorProfile?.business_name || profile?.display_name || "Vendor",
+            business_name: vendorProfile?.business_name || profile?.display_name || "Vendor",
             logo: profile?.avatar_url || "",
             website: vendorProfile?.website || listingData.website_url || "",
             location: vendorProfile ? `${vendorProfile.city}, ${vendorProfile.state_region}` : listingData.location || "",
             verified: vendorProfile?.status === "active",
+            shipping_options: vendorProfile?.shipping_options || [],
           });
         }
 
@@ -230,17 +234,6 @@ const VideoListing = () => {
               </Link>
               
               <div className="space-y-2">
-                {vendor?.website && (
-                  <Button
-                    variant="link"
-                    className="text-sm gap-1"
-                    onClick={() => window.open(vendor.website, "_blank")}
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    website
-                  </Button>
-                )}
-                
                 {vendor?.location && (
                   <LocationLink 
                     location={vendor.location}
@@ -308,17 +301,42 @@ const VideoListing = () => {
 
           {/* Video Details */}
           <div className="space-y-6">
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-2xl sm:text-3xl font-bold">{listing.title}</h1>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 shrink-0"
-                onClick={() => setShowFolderDialog(true)}
-              >
-                <Hand className="h-4 w-4" />
-                {highFivesCount.toLocaleString()}
-              </Button>
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-2xl sm:text-3xl font-bold">{listing.title}</h1>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 shrink-0"
+                  onClick={() => setShowFolderDialog(true)}
+                >
+                  <Hand className="h-4 w-4" />
+                  {highFivesCount.toLocaleString()}
+                </Button>
+              </div>
+              
+              {/* Category Dots */}
+              <div className="flex items-center gap-2">
+                {listing.categories && mapCategoriesToTypes(listing.categories).map((type: CategoryType, index: number) => (
+                  <div
+                    key={`category-${index}`}
+                    className={`w-3 h-3 rounded-full ring-1 ring-border ${
+                      type === "product" ? "bg-category-product" :
+                      type === "service" ? "bg-category-service" :
+                      type === "experience" ? "bg-category-experience" :
+                      "bg-category-sale"
+                    }`}
+                  />
+                ))}
+                {activeCoupon && (
+                  <div className="w-3 h-3 rounded-full ring-1 ring-border bg-category-sale" />
+                )}
+              </div>
+
+              {/* Price */}
+              {listing.price && (
+                <p className="text-xl font-semibold">${listing.price}</p>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -326,6 +344,31 @@ const VideoListing = () => {
                 <div>
                   <h3 className="font-semibold mb-2">description</h3>
                   <p className="text-sm text-muted-foreground">{listing.description}</p>
+                </div>
+              )}
+
+              {/* Connect Button */}
+              {vendor?.website && (
+                <div>
+                  <Button
+                    className="w-full sm:w-auto gap-2"
+                    onClick={() => window.open(vendor.website, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Vendor Website
+                  </Button>
+                </div>
+              )}
+
+              {/* Shipping Options */}
+              {vendor?.shipping_options && vendor.shipping_options.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2">Shipping Options</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {vendor.shipping_options.map((option: string, index: number) => (
+                      <Badge key={index} variant="secondary">{option}</Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 
