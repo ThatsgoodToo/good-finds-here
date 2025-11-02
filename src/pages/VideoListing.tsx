@@ -24,6 +24,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { mapCategoriesToTypes } from "@/lib/categoryMapping";
 import type { CategoryType } from "@/components/ProductCard";
 
+// Video URL parsing utilities
+const getVideoEmbedUrl = (url: string | null): string | null => {
+  if (!url) return null;
+
+  // YouTube patterns
+  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const youtubeMatch = url.match(youtubeRegex);
+  if (youtubeMatch && youtubeMatch[1]) {
+    return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+  }
+
+  // Vimeo patterns
+  const vimeoRegex = /(?:vimeo\.com\/)(\d+)/i;
+  const vimeoMatch = url.match(vimeoRegex);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+
+  return null;
+};
+
 const VideoListing = () => {
   const navigate = useNavigate();
   const { listingId } = useParams();
@@ -277,39 +298,61 @@ const VideoListing = () => {
 
         {/* Main Content */}
         <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
-          {/* Video Player with Image Carousel */}
-          {images.length > 0 && (
-            <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-8">
-              <img
-                src={images[currentImageIndex]}
-                alt={listing.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              
-              {/* Carousel Controls */}
-              {images.length > 1 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
-                    onClick={prevImage}
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
-                    onClick={nextImage}
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
+          {/* Video Player */}
+          {(() => {
+            const videoUrl = getVideoEmbedUrl(listing.source_url || listing.listing_link);
+            
+            if (videoUrl) {
+              return (
+                <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-8">
+                  <iframe
+                    src={videoUrl}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={listing.title}
+                  />
+                </div>
+              );
+            }
+            
+            // Fallback to image carousel if no video URL
+            if (images.length > 0) {
+              return (
+                <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-8">
+                  <img
+                    src={images[currentImageIndex]}
+                    alt={listing.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  
+                  {images.length > 1 && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                        onClick={prevImage}
+                      >
+                        <ChevronLeft className="h-6 w-6" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                        onClick={nextImage}
+                      >
+                        <ChevronRight className="h-6 w-6" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              );
+            }
+            
+            return null;
+          })()}
 
           {/* Video Details */}
           <div className="space-y-6">
