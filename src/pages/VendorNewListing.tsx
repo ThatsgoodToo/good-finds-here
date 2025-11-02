@@ -43,6 +43,7 @@ const VendorNewListing = () => {
 
   // State variables
   const [loading, setLoading] = useState(false);
+  const [loadingActiveCoupon, setLoadingActiveCoupon] = useState(false);
   const [listingTypes, setListingTypes] = useState<CategoryType[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -286,6 +287,7 @@ const VendorNewListing = () => {
   const fetchActiveCoupon = async () => {
     if (!listingId || !user) return;
     
+    setLoadingActiveCoupon(true);
     try {
       const { data, error } = await supabase
         .from("coupons")
@@ -305,6 +307,8 @@ const VendorNewListing = () => {
       }
     } catch (error) {
       console.error("Error fetching active coupon:", error);
+    } finally {
+      setLoadingActiveCoupon(false);
     }
   };
 
@@ -1058,10 +1062,10 @@ const VendorNewListing = () => {
                           </button>)}
                       </div>}
 
-                    {subcategories.length > 0 && <div className="flex flex-wrap gap-2 mt-2">
+                     {subcategories.length > 0 && <div className="flex flex-wrap gap-2 mt-2">
                         {subcategories.map(sub => <Badge key={sub} variant="secondary" className="gap-1">
                             {sub}
-                            
+                            <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => removeSubcategory(sub)} />
                           </Badge>)}
                       </div>}
                   </div>
@@ -1416,7 +1420,7 @@ const VendorNewListing = () => {
 
       {/* Edit Coupon Dialog */}
       <Dialog open={showEditCoupon} onOpenChange={setShowEditCoupon}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Coupon</DialogTitle>
           </DialogHeader>

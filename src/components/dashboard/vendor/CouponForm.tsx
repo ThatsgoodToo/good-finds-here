@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const couponSchema = z.object({
   code: z.string()
@@ -92,11 +92,7 @@ export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkLis
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to create coupons",
-          variant: "destructive",
-        });
+        toast.error("You must be logged in to create coupons");
         return;
       }
 
@@ -124,19 +120,12 @@ export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkLis
 
       if (response.error) throw response.error;
 
-      toast({
-        title: "Success",
-        description: "Coupon created successfully",
-      });
+      toast.success("Coupon created successfully");
 
       onSuccess();
     } catch (error: any) {
       console.error('Error creating coupon:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create coupon",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to create coupon");
     } finally {
       setIsLoading(false);
     }
@@ -225,8 +214,10 @@ export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkLis
                 mode="single"
                 selected={startDate}
                 onSelect={(date) => {
-                  setStartDate(date);
-                  setValue("start_date", date || new Date());
+                  if (date) {
+                    setStartDate(date);
+                    setValue("start_date", date);
+                  }
                 }}
                 initialFocus
               />
@@ -249,8 +240,10 @@ export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkLis
                 mode="single"
                 selected={endDate}
                 onSelect={(date) => {
-                  setEndDate(date);
-                  setValue("end_date", date || new Date());
+                  if (date) {
+                    setEndDate(date);
+                    setValue("end_date", date);
+                  }
                 }}
                 initialFocus
               />
