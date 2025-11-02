@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import SignupModal from "@/components/SignupModal";
+import ProductCard from "@/components/ProductCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -453,20 +454,17 @@ const VideoListing = () => {
             <h2 className="text-3xl font-bold mb-4">More from {vendor?.business_name}</h2>
             <div className="flex gap-4 overflow-x-auto pb-4">
               {moreFromVendor.map((item) => (
-                <Card 
-                  key={item.id} 
-                  className="shrink-0 w-64 cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => navigate(`/listing/${item.id}`)}
-                >
-                  <CardContent className="p-0">
-                    <div className="relative aspect-video">
-                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-medium">{item.title}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div key={item.id} className="shrink-0 w-64">
+                  <ProductCard
+                    id={item.id}
+                    title={item.title}
+                    price={item.price ? `$${item.price}` : "Free"}
+                    image={item.image_url}
+                    categories={mapCategoriesToTypes(item.categories)}
+                    vendor={vendor?.business_name || ""}
+                    vendorId={item.vendor_id}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -476,22 +474,18 @@ const VideoListing = () => {
         {relatedListings.length > 0 && (
           <div className="container mx-auto px-4 sm:px-6 mt-8">
             <h2 className="text-3xl font-bold mb-4">Relatable Content</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {relatedListings.map((item) => (
-                <Card 
-                  key={item.id} 
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => navigate(`/listing/${item.id}`)}
-                >
-                  <CardContent className="p-0">
-                    <div className="relative aspect-video">
-                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-medium">{item.title}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ProductCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  price={item.price ? `$${item.price}` : "Free"}
+                  image={item.image_url}
+                  categories={mapCategoriesToTypes(item.categories)}
+                  vendor={vendor?.business_name || ""}
+                  vendorId={item.vendor_id}
+                />
               ))}
             </div>
           </div>

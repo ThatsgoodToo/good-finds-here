@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import SignupModal from "@/components/SignupModal";
+import ProductCard from "@/components/ProductCard";
+import { mapCategoriesToTypes } from "@/lib/categoryMapping";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -361,20 +363,17 @@ const AudioListing = () => {
               <h2 className="text-xl font-bold mb-4">More from {vendor?.name}</h2>
               <div className="flex gap-4 overflow-x-auto pb-4">
                 {moreFromVendor.map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className="shrink-0 w-48 cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/listing/${item.id}`)}
-                  >
-                    <CardContent className="p-0">
-                      <div className="relative">
-                        <img src={item.image_url} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" loading="lazy" />
-                      </div>
-                      <div className="p-3">
-                        <p className="text-sm font-medium">{item.title}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div key={item.id} className="shrink-0 w-64">
+                    <ProductCard
+                      id={item.id}
+                      title={item.title}
+                      price={item.price ? `$${item.price}` : "Free"}
+                      image={item.image_url}
+                      categories={mapCategoriesToTypes(item.categories)}
+                      vendor={vendor?.name || ""}
+                      vendorId={item.vendor_id}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -384,22 +383,18 @@ const AudioListing = () => {
           {relatedListings.length > 0 && (
             <div className="mt-8">
               <h2 className="text-xl font-bold mb-4">Relatable Content</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {relatedListings.map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className="cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/listing/${item.id}`)}
-                  >
-                    <CardContent className="p-0">
-                      <div className="relative">
-                        <img src={item.image_url} alt={item.title} className="w-full h-40 object-cover rounded-t-lg" loading="lazy" />
-                      </div>
-                      <div className="p-3">
-                        <p className="text-sm font-medium">{item.title}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ProductCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    price={item.price ? `$${item.price}` : "Free"}
+                    image={item.image_url}
+                    categories={mapCategoriesToTypes(item.categories)}
+                    vendor={vendor?.name || ""}
+                    vendorId={item.vendor_id}
+                  />
                 ))}
               </div>
             </div>
