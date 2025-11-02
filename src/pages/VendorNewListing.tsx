@@ -8,6 +8,7 @@ import VendorPendingApproval from "@/components/VendorPendingApproval";
 import VendorApplicationRejected from "@/components/VendorApplicationRejected";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
 import CouponForm from "@/components/dashboard/vendor/CouponForm";
+import CouponEditForm from "@/components/dashboard/vendor/CouponEditForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,8 @@ const VendorNewListing = () => {
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
   const [pendingCouponData, setPendingCouponData] = useState<any>(null);
   const [noActiveCoupons, setNoActiveCoupons] = useState(false);
+  const [activeCouponDetails, setActiveCouponDetails] = useState<any>(null);
+  const [showEditCoupon, setShowEditCoupon] = useState(false);
 
   // Unified media handling - images only (max 5)
   const [mediaItems, setMediaItems] = useState<Array<{
@@ -135,13 +138,9 @@ const VendorNewListing = () => {
           }
           setMediaItems(items);
 
-          // Check for active coupon
-          const {
-            data: couponData
-          } = await supabase.from("coupons").select("id").eq("listing_id", listingId).eq("active_status", true).gte("end_date", new Date().toISOString()).limit(1);
-          if (couponData && couponData.length > 0) {
-            setHasActiveCoupon(true);
-            setCouponCreated(true);
+          // Check for active coupon and fetch details
+          if (data.id) {
+            await fetchActiveCoupon();
           }
         }
       } catch (error) {
@@ -255,6 +254,106 @@ const VendorNewListing = () => {
     } else {
       setShippingOptions([...shippingOptions, option]);
     }
+  };
+
+  // Fetch active coupon details
+  const fetchActiveCoupon = async () => {
+    if (!listingId || !user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("listing_id", listingId)
+        .eq("vendor_id", user.id)
+        .eq("active_status", true)
+        .gte("end_date", new Date().toISOString())
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" errors
+      
+      if (data) {
+        setActiveCouponDetails(data);
+        setHasActiveCoupon(true);
+        setCouponCreated(true);
+      }
+    } catch (error) {
+      console.error("Error fetching active coupon:", error);
+    }
+  };
+
+  // Remove active coupon
+  const handleRemoveCoupon = async () => {
+    if (!activeCouponDetails || !user) return;
+    
+    const confirmed = confirm(
+      "Are you sure you want to remove this coupon? This action cannot be undone."
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const { error } = await supabase
+        .from("coupons")
+        .delete()
+        .eq("id", activeCouponDetails.id)
+        .eq("vendor_id", user.id);
+      
+      if (error) throw error;
+      
+      setActiveCouponDetails(null);
+      setHasActiveCoupon(false);
+      setCouponCreated(false);
+      toast.success("Coupon removed successfully");
+    } catch (error) {
+      console.error("Error removing coupon:", error);
+      toast.error("Failed to remove coupon");
+    }
+  };
+
+  // Handle Free/No Cost toggle with cleanup
+  const handleFreeToggle = async (checked: boolean) => {
+    if (checked) {
+      // Check if there's existing coupon data
+      const hasCouponData = pendingCouponData || couponCreated || hasActiveCoupon;
+      
+      if (hasCouponData) {
+        // Show confirmation dialog
+        const confirmed = confirm(
+          "Marking this as free will remove any active coupons. Continue?"
+        );
+        
+        if (!confirmed) {
+          return; // Don't toggle to free
+        }
+        
+        // Delete associated coupons if in edit mode
+        if (listingId && user) {
+          try {
+            await supabase
+              .from("coupons")
+              .delete()
+              .eq("listing_id", listingId)
+              .eq("vendor_id", user.id);
+            
+            toast.success("Associated coupons removed");
+          } catch (error) {
+            console.error("Error removing coupons:", error);
+            toast.error("Failed to remove coupons");
+          }
+        }
+      }
+      
+      // Clear all coupon states
+      setPendingCouponData(null);
+      setShowCouponForm(false);
+      setCouponCreated(false);
+      setHasActiveCoupon(false);
+      setActiveCouponDetails(null);
+      setPrice("");
+    }
+    
+    setIsFree(checked);
   };
 
   // Extract metadata from URL for auto-fill
@@ -796,10 +895,7 @@ const VendorNewListing = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Checkbox id="isFree" checked={isFree} onCheckedChange={checked => {
-                    setIsFree(checked as boolean);
-                    if (checked) setPrice("");
-                  }} />
+                    <Checkbox id="isFree" checked={isFree} onCheckedChange={handleFreeToggle} />
                     <Label htmlFor="isFree" className="text-sm font-normal cursor-pointer">
                       Free / No Cost
                     </Label>
@@ -879,8 +975,75 @@ const VendorNewListing = () => {
                 </CardContent>
               </Card>
 
+              {/* Active Coupon Management Section */}
+              {isEditMode && hasActiveCoupon && !isFree && activeCouponDetails && (
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base font-semibold">Active Coupon</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          This listing has an active coupon
+                        </p>
+                      </div>
+                      <Badge variant="default" className="gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        Active
+                      </Badge>
+                    </div>
+                    
+                    {/* Display coupon details */}
+                    <div className="border rounded-lg p-4 bg-muted/50 space-y-3">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Coupon Code</Label>
+                          <p className="font-mono font-semibold">{activeCouponDetails.code}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Discount</Label>
+                          <p className="font-semibold">
+                            {activeCouponDetails.discount_type === 'percentage' 
+                              ? `${activeCouponDetails.discount_value}%` 
+                              : `$${activeCouponDetails.discount_value}`}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Expires</Label>
+                          <p>{new Date(activeCouponDetails.end_date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Uses</Label>
+                          <p>
+                            {activeCouponDetails.used_count}
+                            {activeCouponDetails.max_uses ? ` / ${activeCouponDetails.max_uses}` : ' (unlimited)'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Action buttons */}
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowEditCoupon(true)}
+                      >
+                        Edit Coupon
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleRemoveCoupon}
+                      >
+                        Remove Coupon
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Create Coupon Section */}
-              {listingTypes.length > 0 && !isFree && <Card>
+              {listingTypes.length > 0 && !isFree && !hasActiveCoupon && <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1066,6 +1229,26 @@ const VendorNewListing = () => {
           </div>
         </div>
       </main>
+
+      {/* Edit Coupon Dialog */}
+      <Dialog open={showEditCoupon} onOpenChange={setShowEditCoupon}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Coupon</DialogTitle>
+          </DialogHeader>
+          {activeCouponDetails && (
+            <CouponEditForm
+              coupon={activeCouponDetails}
+              onSuccess={() => {
+                setShowEditCoupon(false);
+                fetchActiveCoupon(); // Refresh coupon details
+                toast.success("Coupon updated successfully");
+              }}
+              onCancel={() => setShowEditCoupon(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>;
