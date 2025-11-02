@@ -20,6 +20,8 @@ import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import LocationLink from "@/components/LocationLink";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 const ProductListing = () => {
   const navigate = useNavigate();
@@ -30,6 +32,14 @@ const ProductListing = () => {
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const [vendor, setVendor] = useState<any>(null);
+  const [listing, setListing] = useState<any>(null);
+  const [activeCoupon, setActiveCoupon] = useState<any>(null);
+  const [moreFromVendor, setMoreFromVendor] = useState<any[]>([]);
+  const [relatedListings, setRelatedListings] = useState<any[]>([]);
+  const [highFivesCount, setHighFivesCount] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -37,49 +47,112 @@ const ProductListing = () => {
     }
   }, [user]);
 
-  // Mock data
-  const vendor = {
-    id: "1",
-    name: "GINEW",
-    logo: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=100",
-    website: "https://ginew.example.com",
-    location: "Sacramento, CA",
-    verified: true,
-    ownership: "Native American Owned",
-    expertise: "Traditional Craftsmanship",
-  };
+  useEffect(() => {
+    const loadListingData = async () => {
+      if (!listingId) return;
 
-  const product = {
-    title: "Striped Heritage Shirt",
-    description: "Handcrafted shirt made with traditional techniques and sustainable materials. Each piece tells a story of cultural heritage and modern design.",
-    images: [
-      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600",
-      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600",
-      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600",
-      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600",
-      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600",
-    ],
-    shipping: ["Shipping", "Pickup", "In-person"],
-    details: {
-      material: "100% Organic Cotton",
-      colors: ["Rust", "Cream", "Brown"],
-      sizes: ["S", "M", "L", "XL"],
-      quantity: "In Stock",
-    },
-    highFives: 1114,
-    filters: ["Experience", "vibrational", "nourish", "watch & listen", "restore"],
-  };
+      try {
+        setLoading(true);
 
-  const moreFromVendor = [
-    { id: "1", title: "Denim Jacket", image: product.images[0], types: ["product"] },
-    { id: "2", title: "Leather Belt", image: product.images[0], types: ["product"] },
-    { id: "3", title: "Canvas Bag", image: product.images[0], types: ["product"] },
-  ];
+        // Fetch listing data
+        const { data: listingData, error: listingError } = await supabase
+          .from("listings")
+          .select("*")
+          .eq("id", listingId)
+          .maybeSingle();
 
-  const relatedListings = [
-    { id: "1", title: "Similar Shirt", vendor: "Another Brand", image: product.images[0], types: ["product"] },
-    { id: "2", title: "Handwoven Top", vendor: "Artisan Co", image: product.images[0], types: ["product"] },
-  ];
+        if (listingError) throw listingError;
+        if (!listingData) {
+          toast.error("Listing not found");
+          return;
+        }
+
+        setListing(listingData);
+
+        // Fetch vendor profile
+        const { data: vendorProfile } = await supabase
+          .from("vendor_profiles")
+          .select("*")
+          .eq("user_id", listingData.vendor_id)
+          .maybeSingle();
+
+        // Fetch vendor's public profile for avatar
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name, avatar_url, profile_picture_url")
+          .eq("id", listingData.vendor_id)
+          .maybeSingle();
+
+        setVendor({
+          id: listingData.vendor_id,
+          name: vendorProfile?.business_name || profile?.display_name || "Vendor",
+          logo: profile?.profile_picture_url || profile?.avatar_url || "",
+          website: vendorProfile?.website || listingData.website_url || "",
+          location: vendorProfile ? `${vendorProfile.city}, ${vendorProfile.state_region}` : "",
+          verified: vendorProfile?.status === "active",
+          ownership: vendorProfile?.business_type || "",
+          expertise: vendorProfile?.business_duration || "",
+          shipping: vendorProfile?.shipping_options || [],
+        });
+
+        // Fetch active coupon for this listing
+        const { data: coupons } = await supabase
+          .from("coupons")
+          .select("*")
+          .eq("listing_id", listingId)
+          .eq("active_status", true)
+          .gte("end_date", new Date().toISOString())
+          .lte("start_date", new Date().toISOString())
+          .limit(1);
+
+        if (coupons && coupons.length > 0) {
+          setActiveCoupon(coupons[0]);
+        }
+
+        // Fetch more from vendor
+        const { data: vendorListings } = await supabase
+          .from("listings")
+          .select("*")
+          .eq("vendor_id", listingData.vendor_id)
+          .eq("status", "active")
+          .neq("id", listingId)
+          .limit(6);
+
+        if (vendorListings) {
+          setMoreFromVendor(vendorListings);
+        }
+
+        // Fetch related listings (same category)
+        const { data: related } = await supabase
+          .from("listings")
+          .select("*, vendor:vendor_profiles!inner(business_name)")
+          .eq("status", "active")
+          .contains("categories", listingData.categories || [])
+          .neq("id", listingId)
+          .limit(8);
+
+        if (related) {
+          setRelatedListings(related);
+        }
+
+        // Get high fives count
+        const { count } = await supabase
+          .from("favorites")
+          .select("*", { count: "exact", head: true })
+          .eq("item_id", listingId);
+
+        setHighFivesCount(count || 0);
+
+      } catch (error) {
+        console.error("Error loading listing:", error);
+        toast.error("Failed to load listing");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadListingData();
+  }, [listingId]);
 
   const categoryColors: Record<string, string> = {
     product: "bg-category-product",
@@ -106,11 +179,71 @@ const ProductListing = () => {
     setShowCouponDialog(true);
   };
 
-  const handleConfirmClaim = () => {
-    toast.success("Coupon claimed! Redirecting to vendor site...");
-    window.open("https://bandcamp.com/", "_blank");
+  const handleConfirmClaim = async () => {
+    if (!activeCoupon || !user) return;
+
+    try {
+      // Record coupon usage
+      await supabase.from("coupon_usage").insert({
+        coupon_id: activeCoupon.id,
+        user_id: user.id,
+        listing_id: listingId,
+      });
+
+      // Increment used_count
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("used_count")
+        .eq("id", activeCoupon.id)
+        .single();
+
+      if (coupon) {
+        await supabase
+          .from("coupons")
+          .update({ used_count: coupon.used_count + 1 })
+          .eq("id", activeCoupon.id);
+      }
+
+      toast.success(`Coupon code: ${activeCoupon.code}`);
+      
+      if (vendor?.website) {
+        window.open(vendor.website, "_blank");
+      }
+    } catch (error) {
+      console.error("Error claiming coupon:", error);
+      toast.error("Failed to claim coupon");
+    }
+    
     setShowCouponDialog(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-16 sm:pt-20 pb-24">
+          <div className="container mx-auto px-4 sm:px-6 py-8">
+            <p className="text-center text-muted-foreground">Loading...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!listing || !vendor) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-16 sm:pt-20 pb-24">
+          <div className="container mx-auto px-4 sm:px-6 py-8">
+            <p className="text-center text-muted-foreground">Listing not found</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const listingImages = listing.image_url ? [listing.image_url] : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,50 +312,56 @@ const ProductListing = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left - Product Images */}
             <div className="space-y-4">
-              <div className="flex gap-4">
-                {/* Thumbnail Strip */}
-                <div className="flex flex-col gap-2 w-16">
-                  {product.images.map((img, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={`border-2 rounded-lg overflow-hidden transition-all ${
-                        selectedImage === index
-                          ? "border-primary"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <img
-                        src={img}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-full h-16 object-cover"
-                        loading="lazy"
-                      />
-                    </button>
-                  ))}
-                  {product.images.length > 5 && (
-                    <button className="border-2 border-border rounded-lg h-16 flex items-center justify-center text-sm text-muted-foreground hover:border-primary transition-colors">
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
+              {listingImages.length > 0 ? (
+                <div className="flex gap-4">
+                  {listingImages.length > 1 && (
+                    <div className="flex flex-col gap-2 w-16">
+                      {listingImages.map((img, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImage(index)}
+                          className={cn(
+                            "border-2 rounded-lg overflow-hidden transition-all",
+                            selectedImage === index
+                              ? "border-primary"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <img
+                            src={img}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-16 object-cover"
+                            loading="lazy"
+                          />
+                        </button>
+                      ))}
+                    </div>
                   )}
-                </div>
 
-                {/* Main Image */}
-                <div className="flex-1">
-                  <img
-                    src={product.images[selectedImage]}
-                    alt={product.title}
-                    className="w-full rounded-lg"
-                    loading="lazy"
-                  />
+                  <div className="flex-1">
+                    <img
+                      src={listingImages[selectedImage]}
+                      alt={listing.title}
+                      className="w-full rounded-lg"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-muted rounded-lg aspect-square flex items-center justify-center">
+                  <p className="text-muted-foreground">No image available</p>
+                </div>
+              )}
             </div>
 
             {/* Right - Product Details */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-4">{product.title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-4">{listing.title}</h1>
+                
+                {listing.price && (
+                  <p className="text-xl font-semibold mb-4">${listing.price}</p>
+                )}
                 
                 <div className="flex items-center gap-3 mb-4">
                   <Button
@@ -232,130 +371,179 @@ const ProductListing = () => {
                     onClick={() => setShowFolderDialog(true)}
                   >
                     <Hand className="h-4 w-4" />
-                    {product.highFives.toLocaleString()}
+                    {highFivesCount.toLocaleString()}
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Description:</h3>
-                  <p className="text-sm text-muted-foreground">{product.description}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-1">Ownership</h3>
-                  <p className="text-sm text-muted-foreground">{vendor.ownership}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-1">Expertise</h3>
-                  <p className="text-sm text-muted-foreground">{vendor.expertise}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Shipping Options</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.shipping.map((option, index) => (
-                      <Badge key={index} variant="secondary">{option}</Badge>
-                    ))}
+                {listing.description && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Description</h3>
+                    <p className="text-sm text-muted-foreground">{listing.description}</p>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <h3 className="font-semibold mb-2">Details</h3>
-                  <div className="text-sm space-y-1">
-                    <p>Size, color, material</p>
-                    <p className="text-muted-foreground">
-                      {product.details.sizes.join(", ")} | {product.details.colors.join(", ")} | {product.details.material}
-                    </p>
-                    <p className="text-muted-foreground">Info as applicable</p>
+                {vendor.ownership && (
+                  <div>
+                    <h3 className="font-semibold mb-1">Ownership</h3>
+                    <p className="text-sm text-muted-foreground">{vendor.ownership}</p>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <h3 className="font-semibold mb-2">Active Offer</h3>
-                  <Card>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{activeOffer.title}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{activeOffer.description}</p>
+                {vendor.expertise && (
+                  <div>
+                    <h3 className="font-semibold mb-1">Expertise</h3>
+                    <p className="text-sm text-muted-foreground">{vendor.expertise}</p>
+                  </div>
+                )}
+
+                {vendor.shipping && vendor.shipping.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Shipping Options</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {vendor.shipping.map((option: string, index: number) => (
+                        <Badge key={index} variant="secondary">{option}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {listing.tags && listing.tags.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {listing.tags.map((tag: string, index: number) => (
+                        <Badge key={index} variant="outline">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeCoupon && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Active Offer</h3>
+                    <Card>
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              {activeCoupon.discount_value}{activeCoupon.discount_type === 'percentage' ? '%' : '$'} off
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">Code: {activeCoupon.code}</p>
+                          </div>
+                          <Button size="sm" onClick={handleClaimCoupon} className="gap-2 shrink-0">
+                            <Ticket className="h-4 w-4" />
+                            Claim
+                          </Button>
                         </div>
-                        <Button size="sm" onClick={handleClaimCoupon} className="gap-2 shrink-0">
-                          <Ticket className="h-4 w-4" />
-                          Claim
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
 
-                <div>
-                  <h3 className="font-semibold mb-2">Filters, {product.filters.join(", ")}</h3>
-                </div>
+                {listing.categories && listing.categories.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Categories</h3>
+                    <p className="text-sm text-muted-foreground">{listing.categories.join(", ")}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* More from Vendor */}
-          <div className="mt-12">
-            <h2 className="text-xl font-bold mb-4">More from {vendor.name}</h2>
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              {moreFromVendor.map((item) => (
-                <Card key={item.id} className="shrink-0 w-48 cursor-pointer hover:shadow-lg transition-shadow">
-                  <CardContent className="p-0">
-                    <div className="relative">
-                      <img src={item.image} alt={item.title} className="w-full h-48 object-cover rounded-t-lg" loading="lazy" />
-                      {item.types && item.types.length > 0 && (
-                        <div className="absolute top-2 left-2 flex gap-1">
-                          {item.types.map((type: string, idx: number) => (
-                            <div
-                              key={idx}
-                              className={`h-3 w-3 rounded-full ring-1 ring-border ${categoryColors[type] || "bg-category-product"}`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-medium">{item.title}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          {moreFromVendor.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-xl font-bold mb-4">More from {vendor.name}</h2>
+              <div className="flex gap-4 overflow-x-auto pb-4">
+                {moreFromVendor.map((item) => (
+                  <Card 
+                    key={item.id} 
+                    className="shrink-0 w-48 cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => {
+                      const isVideo = item.categories?.includes("video");
+                      const isAudio = item.categories?.includes("audio");
+                      if (isVideo) {
+                        navigate(`/listing/video/${item.id}`);
+                      } else if (isAudio) {
+                        navigate(`/listing/audio/${item.id}`);
+                      } else {
+                        navigate(`/listing/product/${item.id}`);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-0">
+                      <div className="relative">
+                        <img 
+                          src={item.image_url || "/placeholder.svg"} 
+                          alt={item.title} 
+                          className="w-full h-48 object-cover rounded-t-lg" 
+                          loading="lazy" 
+                        />
+                        {item.listing_type && (
+                          <div className="absolute top-2 left-2">
+                            <div className={cn("h-3 w-3 rounded-full ring-1 ring-border", categoryColors[item.listing_type] || "bg-category-product")} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-medium truncate">{item.title}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Related Listings */}
-          <div className="mt-8">
-            <h2 className="text-xl font-bold mb-4">Relatable Listings</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {relatedListings.map((item) => (
-                <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                  <CardContent className="p-0">
-                    <div className="relative">
-                      <img src={item.image} alt={item.title} className="w-full h-40 object-cover rounded-t-lg" loading="lazy" />
-                      {item.types && item.types.length > 0 && (
-                        <div className="absolute top-2 left-2 flex gap-1">
-                          {item.types.map((type: string, idx: number) => (
-                            <div
-                              key={idx}
-                              className={`h-3 w-3 rounded-full ring-1 ring-border ${categoryColors[type] || "bg-category-product"}`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-medium">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{item.vendor}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          {relatedListings.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-bold mb-4">Related Listings</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {relatedListings.map((item) => (
+                  <Card 
+                    key={item.id} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => {
+                      const isVideo = item.categories?.includes("video");
+                      const isAudio = item.categories?.includes("audio");
+                      if (isVideo) {
+                        navigate(`/listing/video/${item.id}`);
+                      } else if (isAudio) {
+                        navigate(`/listing/audio/${item.id}`);
+                      } else {
+                        navigate(`/listing/product/${item.id}`);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-0">
+                      <div className="relative">
+                        <img 
+                          src={item.image_url || "/placeholder.svg"} 
+                          alt={item.title} 
+                          className="w-full h-40 object-cover rounded-t-lg" 
+                          loading="lazy" 
+                        />
+                        {item.listing_type && (
+                          <div className="absolute top-2 left-2">
+                            <div className={cn("h-3 w-3 rounded-full ring-1 ring-border", categoryColors[item.listing_type] || "bg-category-product")} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-medium truncate">{item.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.vendor?.business_name || "Vendor"}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <SearchBar
@@ -416,23 +604,25 @@ const ProductListing = () => {
           <DialogHeader>
             <DialogTitle>Claim Exclusive Offer</DialogTitle>
             <DialogDescription>
-              {activeOffer.title}
+              Use code <span className="font-mono font-semibold text-foreground">{activeCoupon?.code}</span> for{" "}
+              {activeCoupon?.discount_value}{activeCoupon?.discount_type === 'percentage' ? '%' : '$'} off
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Your coupon code:</p>
+              <p className="text-lg font-mono font-bold">{activeCoupon?.code}</p>
+            </div>
             <p className="text-sm text-muted-foreground">
-              {activeOffer.description}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              This will redirect you to {vendor.name}'s website where you can use this exclusive offer at checkout.
+              Click below to visit {vendor?.name}'s website and apply this code at checkout.
             </p>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setShowCouponDialog(false)}>
                 Cancel
               </Button>
               <Button className="flex-1 gap-2" onClick={handleConfirmClaim}>
-                <Ticket className="h-4 w-4" />
-                Claim & Visit Site
+                <ExternalLink className="h-4 w-4" />
+                Visit Site
               </Button>
             </div>
           </div>
