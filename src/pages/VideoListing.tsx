@@ -302,18 +302,7 @@ const VideoListing = () => {
           {/* Video Details */}
           <div className="space-y-6">
             <div className="space-y-3">
-              <div className="flex items-start justify-between gap-4">
-                <h1 className="text-2xl sm:text-3xl font-bold">{listing.title}</h1>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 shrink-0"
-                  onClick={() => setShowFolderDialog(true)}
-                >
-                  <Hand className="h-4 w-4" />
-                  {highFivesCount.toLocaleString()}
-                </Button>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold">{listing.title}</h1>
               
               {/* Category Dots */}
               <div className="flex items-center gap-2">
@@ -337,6 +326,28 @@ const VideoListing = () => {
               {listing.price && (
                 <p className="text-xl font-semibold">${listing.price}</p>
               )}
+
+              {/* Visit Website Button */}
+              {vendor?.website && (
+                <Button
+                  className="w-full sm:w-auto gap-2"
+                  onClick={() => window.open(vendor.website, "_blank")}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Visit Website
+                </Button>
+              )}
+
+              {/* High Fives */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 w-full sm:w-auto"
+                onClick={() => setShowFolderDialog(true)}
+              >
+                <Hand className="h-4 w-4" />
+                High Five ({highFivesCount.toLocaleString()})
+              </Button>
             </div>
 
             <div className="space-y-4">
@@ -417,20 +428,6 @@ const VideoListing = () => {
                       <Badge key={index} variant="secondary">{tag}</Badge>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Visit Site Button at Bottom */}
-              {vendor?.website && (
-                <div className="pt-4">
-                  <Button
-                    className="w-full gap-2"
-                    size="lg"
-                    onClick={() => window.open(vendor.website, "_blank")}
-                  >
-                    <ExternalLink className="h-5 w-5" />
-                    Visit Site
-                  </Button>
                 </div>
               )}
             </div>
