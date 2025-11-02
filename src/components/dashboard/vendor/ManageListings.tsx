@@ -63,9 +63,9 @@ const ManageListings = ({
 
   const getTypeBadge = (type: "product" | "service" | "experience") => {
     const configs = {
-      product: { label: "P", color: "#00D5FF", name: "Product" },
-      service: { label: "S", color: "#F97316", name: "Service" },
-      experience: { label: "E", color: "#D946EF", name: "Experience" },
+      product: { label: "P", colorClass: "bg-category-product", name: "Product" },
+      service: { label: "S", colorClass: "bg-category-service", name: "Service" },
+      experience: { label: "E", colorClass: "bg-category-experience", name: "Experience" },
     };
     
     const config = configs[type];
@@ -74,10 +74,7 @@ const ManageListings = ({
       <Tooltip>
         <TooltipTrigger>
           <Badge variant="outline" className="gap-1.5 text-xs">
-            <span 
-              className="h-2 w-2 rounded-full" 
-              style={{ backgroundColor: config.color }}
-            />
+            <span className={`h-2 w-2 rounded-full ${config.colorClass}`} />
             <span>{config.label}</span>
           </Badge>
         </TooltipTrigger>
