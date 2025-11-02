@@ -24,3 +24,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.update-vendor-status]
+
+[functions.fetch-url-metadata]
+verify_jwt = false

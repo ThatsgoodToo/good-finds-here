@@ -198,53 +198,33 @@ const VendorNewListing = () => {
     image: string | null;
   } | null> => {
     try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname.replace('www.', '').toLowerCase();
+      console.log('Fetching metadata for URL:', url);
       
-      // YouTube-specific extraction
-      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
-        const videoId = extractYouTubeId(url);
-        if (videoId) {
-          return {
-            title: `YouTube Video ${videoId}`,
-            description: `Watch this video on YouTube`,
-            image: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
-          };
-        }
+      const { data, error } = await supabase.functions.invoke('fetch-url-metadata', {
+        body: { url }
+      });
+
+      if (error) {
+        console.error('Error fetching URL metadata:', error);
+        toast.error('Could not fetch URL details. Please enter manually.');
+        return null;
       }
-      
-      // Spotify-specific extraction  
-      if (hostname.includes('spotify.com')) {
-        const pathParts = urlObj.pathname.split('/').filter(Boolean);
-        const type = pathParts[0]; // track, album, playlist
-        return {
-          title: `${type.charAt(0).toUpperCase() + type.slice(1)} on Spotify`,
-          description: `Listen to this ${type} on Spotify`,
-          image: `https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=800`
-        };
+
+      if (data.error) {
+        console.warn('Metadata fetch returned error:', data.error);
+        toast.warning(data.error);
+        return null;
       }
-      
-      // SoundCloud extraction
-      if (hostname.includes('soundcloud.com')) {
-        const pathParts = urlObj.pathname.split('/').filter(Boolean);
-        const trackName = pathParts[pathParts.length - 1]?.replace(/[-_]/g, ' ');
-        return {
-          title: trackName ? trackName.charAt(0).toUpperCase() + trackName.slice(1) : 'SoundCloud Track',
-          description: 'Listen on SoundCloud',
-          image: `https://images.unsplash.com/photo-1611339555312-e607c8352fd7?w=800`
-        };
-      }
-      
-      // Generic URL - extract from path
-      const pathParts = urlObj.pathname.split('/').filter(Boolean);
-      const suggestedTitle = pathParts[pathParts.length - 1]?.replace(/[-_]/g, ' ') || hostname;
-      
+
+      console.log('Metadata fetched successfully:', data);
       return {
-        title: suggestedTitle.charAt(0).toUpperCase() + suggestedTitle.slice(1),
-        description: `Content from ${hostname}`,
-        image: null
+        title: data.title,
+        description: data.description,
+        image: data.image
       };
     } catch (e) {
+      console.error('Exception fetching URL metadata:', e);
+      toast.error('Could not fetch URL details. Please enter manually.');
       return null;
     }
   };
@@ -377,26 +357,41 @@ const VendorNewListing = () => {
 
   const handleAddVideo = async () => {
     if (newVideoUrl && videoEmbeds.length < 5) {
-      setVideoEmbeds([...videoEmbeds, newVideoUrl]);
+      const loadingToast = toast.loading('Fetching video details...');
       
-      // Extract metadata and auto-fill
-      const metadata = await extractUrlMetadata(newVideoUrl);
-      if (metadata) {
-        if (!title.trim()) {
-          setTitle(metadata.title);
-          toast.info("Title auto-filled from video URL");
+      try {
+        setVideoEmbeds([...videoEmbeds, newVideoUrl]);
+        
+        // Extract metadata and auto-fill
+        const metadata = await extractUrlMetadata(newVideoUrl);
+        
+        if (metadata) {
+          // Auto-fill title if empty
+          if (!title.trim()) {
+            setTitle(metadata.title);
+            toast.success('Title auto-filled from video', { id: loadingToast });
+          } else {
+            toast.dismiss(loadingToast);
+          }
+          
+          // Auto-fill description if empty
+          if (!description.trim()) {
+            setDescription(metadata.description);
+          }
+          
+          // Add preview image if available
+          if (metadata.image && images.length < 5) {
+            setImages([...images, metadata.image]);
+            toast.success('Preview image added from video');
+          }
+        } else {
+          toast.dismiss(loadingToast);
         }
-        if (!description.trim()) {
-          setDescription(metadata.description);
-          toast.info("Description auto-filled from video URL");
-        }
-        if (metadata.image && images.length < 5) {
-          setImages([...images, metadata.image]);
-          toast.success("Preview image generated from video URL");
-        }
+        
+        setNewVideoUrl("");
+      } catch (error) {
+        toast.error('Failed to process video URL', { id: loadingToast });
       }
-      
-      setNewVideoUrl("");
     } else if (videoEmbeds.length >= 5) {
       toast.error("Maximum 5 videos allowed");
     }
@@ -404,26 +399,41 @@ const VendorNewListing = () => {
 
   const handleAddAudio = async () => {
     if (newAudioUrl && audioEmbeds.length < 5) {
-      setAudioEmbeds([...audioEmbeds, newAudioUrl]);
+      const loadingToast = toast.loading('Fetching audio details...');
       
-      // Extract metadata and auto-fill
-      const metadata = await extractUrlMetadata(newAudioUrl);
-      if (metadata) {
-        if (!title.trim()) {
-          setTitle(metadata.title);
-          toast.info("Title auto-filled from audio URL");
+      try {
+        setAudioEmbeds([...audioEmbeds, newAudioUrl]);
+        
+        // Extract metadata and auto-fill
+        const metadata = await extractUrlMetadata(newAudioUrl);
+        
+        if (metadata) {
+          // Auto-fill title if empty
+          if (!title.trim()) {
+            setTitle(metadata.title);
+            toast.success('Title auto-filled from audio', { id: loadingToast });
+          } else {
+            toast.dismiss(loadingToast);
+          }
+          
+          // Auto-fill description if empty
+          if (!description.trim()) {
+            setDescription(metadata.description);
+          }
+          
+          // Add preview image if available
+          if (metadata.image && images.length < 5) {
+            setImages([...images, metadata.image]);
+            toast.success('Preview image added from audio');
+          }
+        } else {
+          toast.dismiss(loadingToast);
         }
-        if (!description.trim()) {
-          setDescription(metadata.description);
-          toast.info("Description auto-filled from audio URL");
-        }
-        if (metadata.image && images.length < 5) {
-          setImages([...images, metadata.image]);
-          toast.success("Preview image generated from audio URL");
-        }
+        
+        setNewAudioUrl("");
+      } catch (error) {
+        toast.error('Failed to process audio URL', { id: loadingToast });
       }
-      
-      setNewAudioUrl("");
     } else if (audioEmbeds.length >= 5) {
       toast.error("Maximum 5 audio embeds allowed (including 1 playlist)");
     }
