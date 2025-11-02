@@ -24,17 +24,57 @@ const Index = () => {
 
   useEffect(() => {
     const fetchListings = async () => {
-      const { data, error } = await supabase
+      // Fetch active listings
+      const { data: listingsData, error: listingsError } = await supabase
         .from("listings")
-        .select(`
-          *,
-          vendor_profiles!inner(business_name, display_name:profiles(display_name))
-        `)
+        .select("*")
         .eq("status", "active");
       
-      if (data) {
-        setDbListings(data);
+      if (listingsError) {
+        console.error("Error fetching listings:", listingsError);
+        return;
       }
+
+      if (!listingsData || listingsData.length === 0) {
+        setDbListings([]);
+        return;
+      }
+
+      // Get unique vendor IDs
+      const vendorIds = [...new Set(listingsData.map(l => l.vendor_id))];
+      
+      // Fetch vendor profiles for these vendors
+      const { data: vendorsData, error: vendorsError } = await supabase
+        .from("vendor_profiles")
+        .select("user_id, business_name")
+        .in("user_id", vendorIds);
+      
+      if (vendorsError) {
+        console.error("Error fetching vendors:", vendorsError);
+      }
+
+      // Fetch profiles for display names as fallback
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", vendorIds);
+
+      // Create maps for quick lookups
+      const vendorMap = new Map(vendorsData?.map(v => [v.user_id, v.business_name]) || []);
+      const profileMap = new Map(profilesData?.map(p => [p.id, p.display_name]) || []);
+
+      // Merge the data
+      const listingsWithVendors = listingsData.map(listing => ({
+        ...listing,
+        vendor_profiles: {
+          business_name: vendorMap.get(listing.vendor_id),
+          display_name: {
+            display_name: profileMap.get(listing.vendor_id)
+          }
+        }
+      }));
+      
+      setDbListings(listingsWithVendors);
     };
     
     fetchListings();
