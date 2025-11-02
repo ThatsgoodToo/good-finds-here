@@ -185,13 +185,23 @@ const ShopperDashboard = () => {
       
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url, profile_picture_url")
+        .select("display_name, avatar_url, profile_picture_url, interests")
         .eq("id", user.id)
         .maybeSingle();
 
       if (data) {
         setShopperName(data.display_name || user.email?.split('@')[0] || "Shopper");
         setShopperImage(data.profile_picture_url || data.avatar_url || "");
+        
+        // Load interests from database and transform to preferences format
+        if (data.interests && Array.isArray(data.interests) && data.interests.length > 0) {
+          const loadedPreferences = data.interests.map((interest, index) => ({
+            id: `interest-${index}-${Date.now()}`,
+            name: interest,
+            category: "Custom"
+          }));
+          setPreferences(loadedPreferences);
+        }
       }
     };
 
@@ -317,22 +327,42 @@ const ShopperDashboard = () => {
     }
   };
 
-  const handleRemovePreference = (prefId: string) => {
-    setPreferences(preferences.filter(p => p.id !== prefId));
+  const handleRemovePreference = async (prefId: string) => {
+    const updatedPreferences = preferences.filter(p => p.id !== prefId);
+    setPreferences(updatedPreferences);
     toast.success("Preference removed");
+    
+    // Sync to database
+    if (user) {
+      const interests = updatedPreferences.map(p => p.name);
+      await supabase
+        .from("profiles")
+        .update({ interests })
+        .eq("id", user.id);
+    }
   };
 
-  const handleAddPreference = (category: string, value: string) => {
+  const handleAddPreference = async (category: string, value: string) => {
     const newPref = {
       id: Date.now().toString(),
       name: value,
       category: category
     };
-    setPreferences([...preferences, newPref]);
+    const updatedPreferences = [...preferences, newPref];
+    setPreferences(updatedPreferences);
     toast.success(`Added ${value} to preferences`);
+    
+    // Sync to database
+    if (user) {
+      const interests = updatedPreferences.map(p => p.name);
+      await supabase
+        .from("profiles")
+        .update({ interests })
+        .eq("id", user.id);
+    }
   };
 
-  const handleAddCustomFilter = () => {
+  const handleAddCustomFilter = async () => {
     if (!customFilterInput.trim()) {
       toast.error("Please enter a filter");
       return;
@@ -342,9 +372,19 @@ const ShopperDashboard = () => {
       name: customFilterInput.trim(),
       category: "Custom"
     };
-    setPreferences([...preferences, newPref]);
+    const updatedPreferences = [...preferences, newPref];
+    setPreferences(updatedPreferences);
     toast.success(`Added "${customFilterInput}" to preferences`);
     setCustomFilterInput("");
+    
+    // Sync to database
+    if (user) {
+      const interests = updatedPreferences.map(p => p.name);
+      await supabase
+        .from("profiles")
+        .update({ interests })
+        .eq("id", user.id);
+    }
   };
 
   const openFolderDetails = (folderId: string) => {
