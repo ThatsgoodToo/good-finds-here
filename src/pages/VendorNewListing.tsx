@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link, Info, Tag, Gift, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import LocationLink from "@/components/LocationLink";
 type CategoryType = "product" | "service" | "experience";
 type ListingType = CategoryType;
 const VendorNewListing = () => {
@@ -1330,9 +1331,11 @@ const VendorNewListing = () => {
                           
                           {vendorProfile.website}
                           
-                          <p className="text-xs text-muted-foreground">
-                            location {vendorProfile.location}
-                          </p>
+                          <LocationLink 
+                            location={vendorProfile.location}
+                            iconSize="sm"
+                            className="text-xs"
+                          />
                         </div>
                       </div>
                     </div>

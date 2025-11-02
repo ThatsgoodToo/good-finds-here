@@ -19,6 +19,7 @@ import { ExternalLink, CheckCircle, Hand, ChevronLeft, ChevronRight, Ticket, Arr
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import LocationLink from "@/components/LocationLink";
 
 const VideoListing = () => {
   const navigate = useNavigate();
@@ -137,9 +138,11 @@ const VideoListing = () => {
                   webiste
                 </Button>
                 
-                <p className="text-sm text-muted-foreground">
-                  location {vendor.location}
-                </p>
+                <LocationLink 
+                  location={vendor.location}
+                  iconSize="sm"
+                  className="text-sm"
+                />
               </div>
             </div>
           </div>

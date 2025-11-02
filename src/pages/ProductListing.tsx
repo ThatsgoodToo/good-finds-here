@@ -19,6 +19,7 @@ import { ExternalLink, CheckCircle, Hand, ChevronDown, Ticket, ArrowLeft } from 
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import LocationLink from "@/components/LocationLink";
 
 const ProductListing = () => {
   const navigate = useNavigate();
@@ -152,9 +153,11 @@ const ProductListing = () => {
                   website
                 </Button>
                 
-                <p className="text-sm text-muted-foreground">
-                  location {vendor.location}
-                </p>
+                <LocationLink 
+                  location={vendor.location}
+                  iconSize="sm"
+                  className="text-sm"
+                />
               </div>
             </div>
           </div>

@@ -18,7 +18,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import VendorLocationMap from "@/components/VendorLocationMap";
 import { 
   ExternalLink, 
   CheckCircle, 
@@ -28,11 +27,13 @@ import {
   Hand,
   ChevronLeft,
   ChevronRight,
-  Ticket
+  Ticket,
+  MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import LocationLink from "@/components/LocationLink";
 
 const VendorProfile = () => {
   const navigate = useNavigate();
@@ -43,7 +44,6 @@ const VendorProfile = () => {
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [newFolderName, setNewFolderName] = useState("");
-  const [showLocationMap, setShowLocationMap] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
 
   useEffect(() => {
@@ -374,20 +374,15 @@ const VendorProfile = () => {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-3">
-                    <button
-                      onClick={() => setShowLocationMap(true)}
-                      className="flex items-start gap-3 w-full text-left group cursor-pointer"
-                    >
-                      <div>
-                        <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">Location</h3>
-                        <p className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                          {vendor.location}
-                        </p>
-                        <p className="text-xs text-primary mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          Click to view on map
-                        </p>
-                      </div>
-                    </button>
+                    <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">Location</h3>
+                      <LocationLink 
+                        location={vendor.location}
+                        showIcon={false}
+                        className="text-sm"
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -605,14 +600,6 @@ const VendorProfile = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Location Map Dialog */}
-      <VendorLocationMap
-        isOpen={showLocationMap}
-        onClose={() => setShowLocationMap(false)}
-        location={vendor.location}
-        vendorName={vendor.name}
-      />
 
       <SignupModal open={showSignupModal} onOpenChange={setShowSignupModal} />
     </div>

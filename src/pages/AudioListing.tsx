@@ -19,6 +19,7 @@ import { ExternalLink, CheckCircle, Hand, Ticket, ArrowLeft } from "lucide-react
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import LocationLink from "@/components/LocationLink";
 
 const AudioListing = () => {
   const navigate = useNavigate();
@@ -148,9 +149,11 @@ const AudioListing = () => {
                   webiste
                 </Button>
                 
-                <p className="text-sm text-muted-foreground">
-                  location {vendor.location}
-                </p>
+                <LocationLink 
+                  location={vendor.location}
+                  iconSize="sm"
+                  className="text-sm"
+                />
               </div>
             </div>
           </div>
