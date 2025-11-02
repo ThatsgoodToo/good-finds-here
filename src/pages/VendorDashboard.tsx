@@ -219,6 +219,8 @@ const VendorDashboard = () => {
   }, [user]);
 
   // Load listings
+  const [listingsRefreshTrigger, setListingsRefreshTrigger] = useState(0);
+  
   useEffect(() => {
     const loadListings = async () => {
       if (!user) return;
@@ -229,22 +231,52 @@ const VendorDashboard = () => {
         .eq("vendor_id", user.id);
 
       if (data) {
-        setListings(
-          data.map((listing) => ({
-            id: listing.id,
-            title: listing.title,
-            type: listing.listing_type as "product" | "service" | "content",
-            price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
-            inventory: "Available",
-            activeOffer: false,
-            status: listing.status === "active" ? "active" : "warning",
-          }))
+        // For each listing, check if it has an active coupon
+        const listingsWithCoupons = await Promise.all(
+          data.map(async (listing) => {
+            // Query for active coupons linked to this listing
+            const { data: couponData } = await supabase
+              .from("coupons")
+              .select("id, code, discount_type, discount_value, used_count")
+              .eq("listing_id", listing.id)
+              .eq("active_status", true)
+              .gte("end_date", new Date().toISOString())
+              .limit(1);
+
+            const activeCoupon = couponData?.[0];
+            
+            return {
+              id: listing.id,
+              title: listing.title,
+              type: listing.listing_type as "product" | "service" | "content",
+              price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
+              inventory: "Available",
+              activeOffer: !!activeCoupon,
+              offerDetails: activeCoupon 
+                ? `${activeCoupon.code} - ${activeCoupon.discount_value}${activeCoupon.discount_type === 'percentage' ? '%' : '$'} off`
+                : undefined,
+              couponClaims: activeCoupon?.used_count || undefined,
+              status: (listing.status === "active" ? "active" : "warning") as "active" | "warning",
+            };
+          })
         );
+
+        setListings(listingsWithCoupons);
       }
     };
 
     loadListings();
-  }, [user]);
+  }, [user, listingsRefreshTrigger]);
+
+  // Refresh listings when tab regains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      setListingsRefreshTrigger(prev => prev + 1);
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   // Check vendor access status
   if (checkingStatus) {

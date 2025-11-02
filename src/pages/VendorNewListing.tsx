@@ -516,14 +516,17 @@ const VendorNewListing = () => {
         title: title.trim(),
         description: description.trim(),
         listing_type: listingTypes[0],
-        // Primary type
         price: isFree ? 0 : parseFloat(price) || null,
         category: category || null,
         categories: subcategories,
         image_url: images[0] || null,
         source_url: sourceUrl.trim(),
-        listing_link: listingLink.trim() || null, // Allow null if empty
-        status: "active"
+        listing_link: listingLink.trim() || null,
+        status: "active",
+        shipping_options: shippingOptions.length > 0 ? shippingOptions : null,
+        tags: subcategories,
+        generic_category: category,
+        generic_subcategory: subcategories[0] || null,
       };
       if (isEditMode && listingId) {
         // Update existing listing
@@ -535,6 +538,17 @@ const VendorNewListing = () => {
         // Link selected coupon to this listing if one was chosen
         if (selectedCouponId) {
           try {
+            // First check if this coupon is already linked to another listing
+            const { data: existingCoupon } = await supabase
+              .from("coupons")
+              .select("listing_id")
+              .eq("id", selectedCouponId)
+              .single();
+            
+            if (existingCoupon?.listing_id && existingCoupon.listing_id !== listingId) {
+              console.warn(`Coupon is being moved from listing ${existingCoupon.listing_id} to ${listingId}`);
+            }
+            
             const { error: couponError } = await supabase
               .from("coupons")
               .update({ listing_id: listingId })
@@ -544,6 +558,18 @@ const VendorNewListing = () => {
           } catch (couponError) {
             console.error('Error linking coupon:', couponError);
             toast.error("Listing saved but coupon linking failed");
+          }
+        }
+
+        // If no coupon is selected and this is edit mode, unlink any previously linked coupon
+        if (!selectedCouponId && !pendingCouponData && isEditMode && listingId) {
+          try {
+            await supabase
+              .from("coupons")
+              .update({ listing_id: null })
+              .eq("listing_id", listingId);
+          } catch (error) {
+            console.error('Error unlinking coupon:', error);
           }
         }
 
@@ -581,6 +607,17 @@ const VendorNewListing = () => {
         // Link selected coupon to this listing if one was chosen
         if (selectedCouponId && newListing) {
           try {
+            // Check if coupon is already linked
+            const { data: existingCoupon } = await supabase
+              .from("coupons")
+              .select("listing_id")
+              .eq("id", selectedCouponId)
+              .single();
+            
+            if (existingCoupon?.listing_id) {
+              console.warn(`Coupon is being moved from listing ${existingCoupon.listing_id} to ${newListing.id}`);
+            }
+            
             const { error: couponError } = await supabase
               .from("coupons")
               .update({ listing_id: newListing.id })
@@ -949,16 +986,26 @@ const VendorNewListing = () => {
                         </Badge>}
                     </div>
 
-                {/* Select Existing Coupon */}
-                {!couponCreated && availableCoupons.length > 0 && (
+                {/* Select Existing Coupon - Allow editing even if coupon exists */}
+                {availableCoupons.length > 0 && !showCouponForm && (
                   <div className="space-y-2">
-                    <Label htmlFor="selectCoupon">Link Existing Coupon (Optional)</Label>
+                    <Label htmlFor="selectCoupon">
+                      {couponCreated ? "Current Linked Coupon" : "Link Existing Coupon (Optional)"}
+                    </Label>
                     <Select 
                       value={selectedCouponId || "none"} 
                       onValueChange={(value) => {
-                        setSelectedCouponId(value === "none" ? null : value);
-                        if (value !== "none") {
-                          setShowCouponForm(false); // Hide create form if selecting existing
+                        const newValue = value === "none" ? null : value;
+                        setSelectedCouponId(newValue);
+                        
+                        // Update states based on selection
+                        if (newValue) {
+                          setShowCouponForm(false);
+                          setHasActiveCoupon(true);
+                          setCouponCreated(true);
+                        } else {
+                          setHasActiveCoupon(false);
+                          setCouponCreated(false);
                         }
                       }}
                     >
@@ -977,13 +1024,15 @@ const VendorNewListing = () => {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      Choose an existing active coupon to link to this listing
+                      {couponCreated 
+                        ? "Change the linked coupon or select 'No coupon' to remove" 
+                        : "Choose an existing active coupon to link to this listing"}
                     </p>
                   </div>
                 )}
 
-                {/* Divider */}
-                {!couponCreated && availableCoupons.length > 0 && (
+                {/* Divider - only show if not already linked and create form not shown */}
+                {!couponCreated && !showCouponForm && availableCoupons.length > 0 && (
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t" />

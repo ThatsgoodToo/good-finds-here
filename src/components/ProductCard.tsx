@@ -39,15 +39,20 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
   // Check for active coupon
   useEffect(() => {
     const checkActiveCoupon = async () => {
-      const { data: couponData } = await supabase
+      console.log('[ProductCard] Checking active coupon for listing:', id);
+      
+      const { data: couponData, error } = await supabase
         .from("coupons")
-        .select("id")
+        .select("id, code, listing_id")
         .eq("listing_id", id)
         .eq("active_status", true)
         .gte("end_date", new Date().toISOString())
         .limit(1);
 
+      console.log('[ProductCard] Coupon query result:', { couponData, error });
+
       if (couponData && couponData.length > 0) {
+        console.log('[ProductCard] Active coupon found:', couponData[0]);
         setHasActiveCoupon(true);
         
         // Get listing link
@@ -57,7 +62,11 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
           .eq("id", id)
           .single();
         
+        console.log('[ProductCard] Listing link:', listingData?.listing_link);
         setListingLink(listingData?.listing_link || null);
+      } else {
+        console.log('[ProductCard] No active coupon found for this listing');
+        setHasActiveCoupon(false);
       }
     };
 
