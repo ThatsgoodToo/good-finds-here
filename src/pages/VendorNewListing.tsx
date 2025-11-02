@@ -488,6 +488,9 @@ const VendorNewListing = () => {
       if (metadata) {
         setTitle(metadata.title);
         setDescription(metadata.description);
+        
+        // Auto-set source URL from import
+        setSourceUrl(importUrl.trim());
 
         // Only add image if under 5 limit
         if (metadata.image && !mediaItems.some(m => m.url === metadata.image)) {
@@ -515,8 +518,6 @@ const VendorNewListing = () => {
           toast.info('Audio listing detected and set');
         }
 
-        // Set source URL if not already set
-        if (!sourceUrl) setSourceUrl(importUrl);
         setShowImportDialog(false);
         setImportUrl("");
         setImportError(null);
@@ -538,6 +539,8 @@ const VendorNewListing = () => {
           suggestedTitle: potentialTitle || null,
           sourceUrl: importUrl
         });
+        // Preserve the URL even on error
+        setSourceUrl(importUrl.trim());
       }
     } catch (error) {
       toast.dismiss(loadingToast);
@@ -664,12 +667,32 @@ const VendorNewListing = () => {
       return;
     }
 
-    // Images are now optional - no validation needed
+    // Validate mediaType matches content for video/audio
+    if (mediaType === 'video' || mediaType === 'audio') {
+      const url = sourceUrl.toLowerCase();
+      if (!url.includes('youtube') && !url.includes('youtu.be') && 
+          !url.includes('spotify') && !url.includes('soundcloud')) {
+        const confirmed = confirm(
+          `You selected ${mediaType} but the URL doesn't appear to be from a media platform. Continue anyway?`
+        );
+        if (!confirmed) return;
+      }
+    }
+
+    // Validate price format if not free
+    if (!isFree && price) {
+      const priceNum = parseFloat(price);
+      if (isNaN(priceNum) || priceNum < 0) {
+        toast.error("Price must be a valid positive number");
+        return;
+      }
+    }
 
     if (!user) {
       toast.error("You must be logged in to save a listing");
       return;
     }
+    
     setLoading(true);
     try {
       // Separate media items by type for database
@@ -679,16 +702,27 @@ const VendorNewListing = () => {
         title: title.trim(),
         description: description.trim(),
         listing_type: mediaType,
-        // Use the selected media type (product/video/audio)
         listing_types: listingTypes,
-        // All selected types for categorization
         price: isFree ? 0 : parseFloat(price) || null,
         category: category || null,
         categories: subcategories,
         image_url: images[0] || null,
         source_url: sourceUrl.trim(),
+        listing_link: sourceUrl.trim(), // Use source_url as listing_link
+        website_url: vendorProfile?.website || null, // Include vendor website
         status: "active"
       };
+
+      console.log('[SAVE LISTING] Preparing to save:', {
+        isEditMode,
+        listingId,
+        listingData,
+        mediaType,
+        listingTypes,
+        pendingCouponData,
+        imageCount: images.length,
+        vendorWebsite: vendorProfile?.website
+      });
       if (isEditMode && listingId) {
         // Update existing listing
         const {
@@ -748,8 +782,30 @@ const VendorNewListing = () => {
 
         // Handle coupon attachment for new listings
         if (pendingCouponData?.couponId && newListing) {
-          // Attach existing coupon
+          // Attach existing coupon with verification
           try {
+            // First verify the coupon still exists and is valid
+            const { data: couponCheck, error: checkError } = await supabase
+              .from("coupons")
+              .select("id, active_status")
+              .eq("id", pendingCouponData.couponId)
+              .eq("vendor_id", user.id)
+              .maybeSingle();
+            
+            if (checkError) {
+              console.error("Error checking coupon:", checkError);
+              throw new Error("Failed to verify coupon");
+            }
+
+            if (!couponCheck) {
+              throw new Error("Selected coupon no longer exists");
+            }
+
+            if (!couponCheck.active_status) {
+              throw new Error("Selected coupon is no longer active");
+            }
+
+            // Now attach the coupon
             const { error: couponError } = await supabase
               .from("coupons")
               .update({ listing_id: newListing.id })
@@ -758,12 +814,18 @@ const VendorNewListing = () => {
 
             if (couponError) {
               console.error("Error attaching coupon:", couponError);
-              toast.error("Listing created but failed to attach coupon");
-            } else {
-              toast.success("Listing created and coupon attached!");
+              throw couponError;
             }
-          } catch (error) {
+            
+            console.log('[COUPON ATTACHED] Successfully attached coupon to listing:', {
+              couponId: pendingCouponData.couponId,
+              listingId: newListing.id
+            });
+            
+            toast.success("Listing created and coupon attached!");
+          } catch (error: any) {
             console.error("Error in coupon attachment:", error);
+            toast.warning(`Listing created but coupon attachment failed: ${error.message}`);
           }
         } else if (pendingCouponData && newListing && !pendingCouponData.couponId) {
           // Create new coupon

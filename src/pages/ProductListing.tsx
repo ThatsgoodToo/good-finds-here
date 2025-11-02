@@ -277,14 +277,16 @@ const ProductListing = () => {
                   )}
                 </div>
                 
-                <Button
-                  variant="link"
-                  className="text-sm gap-1"
-                  onClick={() => window.open("https://bandcamp.com/", "_blank")}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  website
-                </Button>
+                {vendor?.website && (
+                  <Button
+                    variant="link"
+                    className="text-sm gap-1"
+                    onClick={() => window.open(vendor.website, "_blank")}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    website
+                  </Button>
+                )}
                 
                 <LocationLink 
                   location={vendor.location}
