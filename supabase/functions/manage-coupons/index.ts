@@ -1,10 +1,61 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.1";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Validation schemas
+const createCouponSchema = z.object({
+  code: z.string()
+    .trim()
+    .min(3, 'Code must be at least 3 characters')
+    .max(20, 'Code must be at most 20 characters')
+    .regex(/^[A-Z0-9-]+$/, 'Code must contain only uppercase letters, numbers, and hyphens')
+    .transform(val => val.toUpperCase()),
+  discount_type: z.enum(['percentage', 'fixed_amount', 'free_shipping'], {
+    errorMap: () => ({ message: 'Invalid discount type' })
+  }),
+  discount_value: z.number()
+    .positive('Discount value must be positive')
+    .max(10000, 'Discount value too large'),
+  max_uses: z.number().int().positive().optional().nullable(),
+  start_date: z.string().datetime(),
+  end_date: z.string().datetime(),
+  is_recurring: z.boolean().optional(),
+  recurrence_pattern: z.enum(['weekly', 'monthly', 'quarterly', 'yearly', 'custom']).optional().nullable(),
+  listing_id: z.string().uuid('Invalid listing ID format').optional().nullable(),
+}).refine(data => {
+  if (data.discount_type === 'percentage') {
+    return data.discount_value >= 1 && data.discount_value <= 100;
+  }
+  return true;
+}, {
+  message: 'Percentage discount must be between 1 and 100',
+  path: ['discount_value'],
+}).refine(data => {
+  const start = new Date(data.start_date);
+  const end = new Date(data.end_date);
+  return start < end;
+}, {
+  message: 'End date must be after start date',
+  path: ['end_date'],
+});
+
+const updateCouponSchema = z.object({
+  id: z.string().uuid('Invalid coupon ID format'),
+  discount_value: z.number().positive().max(10000).optional(),
+  max_uses: z.number().int().positive().optional().nullable(),
+  end_date: z.string().datetime().optional(),
+  is_recurring: z.boolean().optional(),
+  recurrence_pattern: z.enum(['weekly', 'monthly', 'quarterly', 'yearly', 'custom']).optional().nullable(),
+});
+
+const couponIdSchema = z.object({
+  id: z.string().uuid('Invalid coupon ID format'),
+});
 
 interface CouponRequest {
   action: 'create' | 'update' | 'delete' | 'get' | 'list';
@@ -71,67 +122,35 @@ serve(async (req) => {
       case 'create': {
         if (!coupon) throw new Error('Coupon data required');
 
-        // Normalize code to uppercase
-        coupon.code = coupon.code?.toUpperCase();
-
-        // Validate coupon data
-        if (!coupon.code || coupon.code.length < 3 || coupon.code.length > 20) {
-          throw new Error('Code must be 3-20 characters');
-        }
-
-        if (!/^[A-Z0-9-]+$/.test(coupon.code)) {
-          throw new Error('Code must contain only uppercase letters, numbers, and hyphens');
-        }
-
-        if (!coupon.discount_type || !['percentage', 'fixed_amount', 'free_shipping'].includes(coupon.discount_type)) {
-          throw new Error('Invalid discount type');
-        }
-
-        if (!coupon.discount_value || coupon.discount_value <= 0) {
-          throw new Error('Discount value must be positive');
-        }
-
-        if (coupon.discount_type === 'percentage' && (coupon.discount_value < 1 || coupon.discount_value > 100)) {
-          throw new Error('Percentage discount must be between 1 and 100');
-        }
-
-        if (!coupon.start_date || !coupon.end_date) {
-          throw new Error('Start and end dates required');
-        }
-
-        const startDate = new Date(coupon.start_date);
-        const endDate = new Date(coupon.end_date);
-
-        if (startDate >= endDate) {
-          throw new Error('End date must be after start date');
-        }
+        // Validate and sanitize input
+        const validatedCoupon = createCouponSchema.parse(coupon);
 
         // Check for duplicate code
         const { data: existing } = await supabaseClient
           .from('coupons')
           .select('id')
           .eq('vendor_id', user.id)
-          .eq('code', coupon.code)
+          .eq('code', validatedCoupon.code)
           .single();
 
         if (existing) {
           throw new Error('Coupon code already exists');
         }
 
-        // Create coupon
+        // Create coupon with validated data
         const { data, error } = await supabaseClient
           .from('coupons')
           .insert({
             vendor_id: user.id,
-            code: coupon.code.toUpperCase(),
-            discount_type: coupon.discount_type,
-            discount_value: coupon.discount_value,
-            max_uses: coupon.max_uses || null,
-            start_date: coupon.start_date,
-            end_date: coupon.end_date,
-            is_recurring: coupon.is_recurring || false,
-            recurrence_pattern: coupon.recurrence_pattern || null,
-            listing_id: coupon.listing_id || null,
+            code: validatedCoupon.code,
+            discount_type: validatedCoupon.discount_type,
+            discount_value: validatedCoupon.discount_value,
+            max_uses: validatedCoupon.max_uses ?? null,
+            start_date: validatedCoupon.start_date,
+            end_date: validatedCoupon.end_date,
+            is_recurring: validatedCoupon.is_recurring ?? false,
+            recurrence_pattern: validatedCoupon.recurrence_pattern ?? null,
+            listing_id: validatedCoupon.listing_id ?? null,
             active_status: true,
           })
           .select()
@@ -148,18 +167,21 @@ serve(async (req) => {
       case 'update': {
         if (!coupon?.id) throw new Error('Coupon ID required');
 
+        // Validate and sanitize input
+        const validatedUpdate = updateCouponSchema.parse(coupon);
+
         const updateData: any = {};
         
-        if (coupon.discount_value) updateData.discount_value = coupon.discount_value;
-        if (coupon.max_uses !== undefined) updateData.max_uses = coupon.max_uses;
-        if (coupon.end_date) updateData.end_date = coupon.end_date;
-        if (coupon.is_recurring !== undefined) updateData.is_recurring = coupon.is_recurring;
-        if (coupon.recurrence_pattern) updateData.recurrence_pattern = coupon.recurrence_pattern;
+        if (validatedUpdate.discount_value !== undefined) updateData.discount_value = validatedUpdate.discount_value;
+        if (validatedUpdate.max_uses !== undefined) updateData.max_uses = validatedUpdate.max_uses;
+        if (validatedUpdate.end_date !== undefined) updateData.end_date = validatedUpdate.end_date;
+        if (validatedUpdate.is_recurring !== undefined) updateData.is_recurring = validatedUpdate.is_recurring;
+        if (validatedUpdate.recurrence_pattern !== undefined) updateData.recurrence_pattern = validatedUpdate.recurrence_pattern;
 
         const { data, error } = await supabaseClient
           .from('coupons')
           .update(updateData)
-          .eq('id', coupon.id)
+          .eq('id', validatedUpdate.id)
           .eq('vendor_id', user.id)
           .select()
           .single();
@@ -175,10 +197,13 @@ serve(async (req) => {
       case 'delete': {
         if (!coupon?.id) throw new Error('Coupon ID required');
 
+        // Validate coupon ID format
+        const { id } = couponIdSchema.parse(coupon);
+
         const { error } = await supabaseClient
           .from('coupons')
           .delete()
-          .eq('id', coupon.id)
+          .eq('id', id)
           .eq('vendor_id', user.id);
 
         if (error) throw error;
@@ -192,10 +217,13 @@ serve(async (req) => {
       case 'get': {
         if (!coupon?.id) throw new Error('Coupon ID required');
 
+        // Validate coupon ID format
+        const { id } = couponIdSchema.parse(coupon);
+
         const { data, error } = await supabaseClient
           .from('coupons')
           .select('*')
-          .eq('id', coupon.id)
+          .eq('id', id)
           .eq('vendor_id', user.id)
           .single();
 
