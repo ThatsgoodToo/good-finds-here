@@ -23,6 +23,52 @@ import { toast } from "sonner";
 import LocationLink from "@/components/LocationLink";
 import { supabase } from "@/integrations/supabase/client";
 
+// Audio URL parsing utilities
+const getAudioEmbedUrl = (url: string | null): { embedUrl: string; type: 'iframe' | 'audio' } | null => {
+  if (!url) return null;
+
+  // Bandcamp
+  if (url.includes('bandcamp.com')) {
+    const trackMatch = url.match(/\/track\/([^/?]+)/);
+    const albumMatch = url.match(/\/album\/([^/?]+)/);
+    if (trackMatch) {
+      return { embedUrl: `https://bandcamp.com/EmbeddedPlayer/track=${trackMatch[1]}/size=large/`, type: 'iframe' };
+    }
+    if (albumMatch) {
+      return { embedUrl: `https://bandcamp.com/EmbeddedPlayer/album=${albumMatch[1]}/size=large/`, type: 'iframe' };
+    }
+  }
+
+  // SoundCloud
+  if (url.includes('soundcloud.com')) {
+    return { 
+      embedUrl: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`, 
+      type: 'iframe' 
+    };
+  }
+
+  // Spotify
+  const spotifyRegex = /open\.spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/;
+  const spotifyMatch = url.match(spotifyRegex);
+  if (spotifyMatch) {
+    return { embedUrl: `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`, type: 'iframe' };
+  }
+
+  // YouTube (for audio)
+  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const youtubeMatch = url.match(youtubeRegex);
+  if (youtubeMatch) {
+    return { embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}`, type: 'iframe' };
+  }
+
+  // Direct audio file
+  if (url.match(/\.(mp3|wav|ogg|m4a)$/i)) {
+    return { embedUrl: url, type: 'audio' };
+  }
+
+  return null;
+};
+
 const AudioListing = () => {
   const navigate = useNavigate();
   const { listingId } = useParams();
@@ -275,16 +321,57 @@ const AudioListing = () => {
         {/* Main Content */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left - Cover Art */}
+            {/* Left - Audio Player or Cover Art */}
             <div className="lg:col-span-1">
-              {listing.image_url && (
-                <img
-                  src={listing.image_url}
-                  alt={listing.title}
-                  className="w-full rounded-lg"
-                  loading="lazy"
-                />
-              )}
+              {(() => {
+                const audioEmbed = getAudioEmbedUrl(listing.source_url || listing.listing_link);
+                
+                if (audioEmbed) {
+                  if (audioEmbed.type === 'iframe') {
+                    return (
+                      <div className="w-full rounded-lg overflow-hidden bg-black">
+                        <iframe
+                          src={audioEmbed.embedUrl}
+                          className="w-full h-[400px]"
+                          allow="autoplay"
+                          title={listing.title}
+                        />
+                      </div>
+                    );
+                  } else if (audioEmbed.type === 'audio') {
+                    return (
+                      <div className="w-full space-y-4">
+                        {listing.image_url && (
+                          <img
+                            src={listing.image_url}
+                            alt={listing.title}
+                            className="w-full rounded-lg"
+                            loading="lazy"
+                          />
+                        )}
+                        <audio controls className="w-full">
+                          <source src={audioEmbed.embedUrl} />
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    );
+                  }
+                }
+                
+                // Fallback to cover art only
+                if (listing.image_url) {
+                  return (
+                    <img
+                      src={listing.image_url}
+                      alt={listing.title}
+                      className="w-full rounded-lg"
+                      loading="lazy"
+                    />
+                  );
+                }
+                
+                return null;
+              })()}
             </div>
 
             {/* Right - Audio Player & Details */}
