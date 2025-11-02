@@ -1058,7 +1058,7 @@ const VendorNewListing = () => {
                   {/* Listing Type Dots */}
                   {listingTypes.length > 0 && <div className="flex gap-1.5 items-center">
                       {listingTypes.map(type => <div key={type} className={cn("w-3 h-3 rounded-full ring-1 ring-border", type === "product" && "bg-category-product", type === "service" && "bg-category-service", type === "experience" && "bg-category-experience")} />)}
-                      {selectedCouponId && listingLink && <div className="w-3 h-3 rounded-full bg-category-sale ring-1 ring-border cursor-pointer hover:scale-110 transition-transform" onClick={() => window.open(listingLink, "_blank")} title="Active coupon - Click to view offer" />}
+                      {selectedCouponId && <div className="w-3 h-3 rounded-full bg-category-sale ring-1 ring-border" title="Active coupon linked" />}
                     </div>}
 
                   {/* Media Preview */}
