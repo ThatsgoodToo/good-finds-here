@@ -55,14 +55,14 @@ const getAudioEmbedUrl = (url: string | null): { embedUrl: string; type: 'iframe
   }
 
   // YouTube Shorts pattern
-  const shortsRegex = /(?:youtube\.com\/shorts\/)([^"&?\/\s]{11})/i;
+  const shortsRegex = /(?:youtube\.com\/shorts\/)([^"&?/\s]{11})/i;
   const shortsMatch = url.match(shortsRegex);
   if (shortsMatch && shortsMatch[1]) {
     return { embedUrl: `https://www.youtube.com/embed/${shortsMatch[1]}`, type: 'iframe' };
   }
 
   // YouTube standard patterns (for audio)
-  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const youtubeRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i;
   const youtubeMatch = url.match(youtubeRegex);
   if (youtubeMatch) {
     return { embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}`, type: 'iframe' };

@@ -154,7 +154,7 @@ const VendorSignup = () => {
   }, [user, isDualRole]);
   const totalSteps = 5;
   const progress = (currentStep + 1) / totalSteps * 100;
-  const updateField = (field: keyof VendorApplication, value: any) => {
+  const updateField = (field: keyof VendorApplication, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -356,9 +356,9 @@ const VendorSignup = () => {
       setTimeout(() => {
         navigate("/vendor/pending-approval");
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Submission error:", error);
-      toast.error(error.message || "Failed to submit application. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to submit application. Please try again.");
     } finally {
       setLoading(false);
     }

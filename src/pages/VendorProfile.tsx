@@ -175,7 +175,7 @@ const VendorProfile = () => {
           .eq("status", "active");
 
         if (listingsData) {
-          const listingsWithOffers = listingsData.map((listing: any) => {
+          const listingsWithOffers = listingsData.map((listing) => {
             const hasActiveCoupon = activeCouponListingIds.has(listing.id);
             const types: CategoryType[] = [listing.listing_type as CategoryType];
             
@@ -207,7 +207,7 @@ const VendorProfile = () => {
           setVendor(prev => ({ ...prev, activeOffers: couponsData.length }));
           
           setOffers(
-            couponsData.map((coupon: any) => ({
+            couponsData.map((coupon) => ({
               id: coupon.id,
               code: coupon.code,
               title: `${coupon.discount_value}${coupon.discount_type === 'percentage' ? '%' : '$'} off`,
@@ -256,7 +256,7 @@ const VendorProfile = () => {
     setShowFolderDialog(true);
   };
 
-  const handleClaimCoupon = (offer: any) => {
+  const handleClaimCoupon = (offer: Offer) => {
     setSelectedOffer(offer);
     setShowCouponDialog(true);
   };
