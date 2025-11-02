@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { mapCategoryToGeneric } from "@/lib/categoryMapping";
 import SignupModal from "@/components/SignupModal";
 import Header from "@/components/Header";
 import VendorPendingApproval from "@/components/VendorPendingApproval";
