@@ -9,25 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Plus, Edit2, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Listing {
   id: string;
@@ -48,8 +31,7 @@ interface ManageListingsProps {
 }
 
 const ManageListings = ({ listings, onAddListing, onEditListing }: ManageListingsProps) => {
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [listingType, setListingType] = useState<string>("");
+  const navigate = useNavigate();
 
   const getStatusBadge = (listing: Listing) => {
     if (listing.status === "warning") {
@@ -75,7 +57,7 @@ const ManageListings = ({ listings, onAddListing, onEditListing }: ManageListing
               <CardTitle>Manage Listings</CardTitle>
               <CardDescription>Your products, services, and content</CardDescription>
             </div>
-            <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+            <Button onClick={() => navigate("/vendor/listing/new")} className="gap-2">
               <Plus className="h-4 w-4" />
               Add New Listing
             </Button>
@@ -126,66 +108,6 @@ const ManageListings = ({ listings, onAddListing, onEditListing }: ManageListing
           </Table>
         </CardContent>
       </Card>
-
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add New Listing</DialogTitle>
-            <DialogDescription>
-              Create a new product, service, or content listing
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="listing-type">Listing Type *</Label>
-              <Select value={listingType} onValueChange={setListingType}>
-                <SelectTrigger id="listing-type">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="product">Product</SelectItem>
-                  <SelectItem value="service">Service</SelectItem>
-                  <SelectItem value="content">Content/Media</SelectItem>
-                </SelectContent>
-              </Select>
-              {(listingType === "product" || listingType === "service") && (
-                <p className="text-xs text-amber-600 mt-1">
-                  ⚠️ Products and Services require at least one active coupon/offer at all times
-                </p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="title">Title *</Label>
-              <Input id="title" placeholder="Enter listing title" />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" placeholder="Describe your listing" rows={3} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="price">Price *</Label>
-                <Input id="price" placeholder="$0.00" />
-              </div>
-              <div>
-                <Label htmlFor="inventory">Inventory</Label>
-                <Input id="inventory" placeholder="Quantity available" />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => {
-                onAddListing();
-                setShowAddDialog(false);
-              }}>
-                Create Listing
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

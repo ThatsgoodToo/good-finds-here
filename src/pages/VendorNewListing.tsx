@@ -161,6 +161,63 @@ const VendorNewListing = () => {
     }
   };
 
+  // Generate preview image from URL
+  const generateUrlPreview = (url: string, type: 'video' | 'audio'): string | null => {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.replace('www.', '').toLowerCase();
+      
+      // Check for YouTube
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+        const videoId = extractYouTubeId(url);
+        if (videoId) {
+          return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        }
+      }
+      
+      // Check for Vimeo
+      if (hostname.includes('vimeo.com')) {
+        // Vimeo thumbnails require API call, so we'll use a placeholder for now
+        return `https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=450&fit=crop`;
+      }
+      
+      // Check for Spotify
+      if (hostname.includes('spotify.com')) {
+        return `https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=800&h=800&fit=crop`;
+      }
+      
+      // Check for SoundCloud
+      if (hostname.includes('soundcloud.com')) {
+        return `https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&h=800&fit=crop`;
+      }
+      
+      // Generic placeholder based on type
+      if (type === 'video') {
+        return `https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=450&fit=crop`;
+      } else {
+        return `https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&h=800&fit=crop`;
+      }
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // Extract YouTube video ID from various URL formats
+  const extractYouTubeId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+      /youtube\.com\/embed\/([^&\n?#]+)/,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return null;
+  };
+
   const handleAddImage = () => {
     if (newImageUrl && images.length < 5) {
       setImages([...images, newImageUrl]);
@@ -221,6 +278,14 @@ const VendorNewListing = () => {
     if (newVideoUrl && videoEmbeds.length < 5) {
       setVideoEmbeds([...videoEmbeds, newVideoUrl]);
       autoFillFromUrl(newVideoUrl);
+      
+      // Generate preview image from video URL
+      const previewImage = generateUrlPreview(newVideoUrl, 'video');
+      if (previewImage && images.length < 5) {
+        setImages([...images, previewImage]);
+        toast.success("Preview image generated from video URL");
+      }
+      
       setNewVideoUrl("");
     } else if (videoEmbeds.length >= 5) {
       toast.error("Maximum 5 videos allowed");
@@ -231,6 +296,14 @@ const VendorNewListing = () => {
     if (newAudioUrl && audioEmbeds.length < 5) {
       setAudioEmbeds([...audioEmbeds, newAudioUrl]);
       autoFillFromUrl(newAudioUrl);
+      
+      // Generate preview image from audio URL
+      const previewImage = generateUrlPreview(newAudioUrl, 'audio');
+      if (previewImage && images.length < 5) {
+        setImages([...images, previewImage]);
+        toast.success("Preview image generated from audio URL");
+      }
+      
       setNewAudioUrl("");
     } else if (audioEmbeds.length >= 5) {
       toast.error("Maximum 5 audio embeds allowed (including 1 playlist)");
@@ -310,8 +383,10 @@ const VendorNewListing = () => {
       toast.error("Please provide offer details");
       return;
     }
-    if (images.length === 0) {
-      toast.error("Please add at least one image");
+    // Require at least one form of media (image, video, or audio URL)
+    const hasMedia = images.length > 0 || videoEmbeds.length > 0 || audioEmbeds.length > 0;
+    if (!hasMedia) {
+      toast.error("Please add at least one image or provide a video/audio URL");
       return;
     }
 
@@ -426,7 +501,8 @@ const VendorNewListing = () => {
               {listingType && (
                 <Card>
                   <CardContent className="pt-6 space-y-4">
-                    <Label className="text-base font-semibold">Media (At least 1 image required)</Label>
+                    <Label className="text-base font-semibold">Media (Provide at least one image or URL)</Label>
+                    <p className="text-sm text-muted-foreground">Images are optional if you provide video or audio URLs</p>
                     
                     {/* Images */}
                     <div>
@@ -851,7 +927,11 @@ const VendorNewListing = () => {
                     </div>
                   ) : (
                     <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground">No images yet</p>
+                      <p className="text-sm text-muted-foreground">
+                        {videoEmbeds.length > 0 || audioEmbeds.length > 0 
+                          ? "Preview will show URL content" 
+                          : "No media yet - add images or URLs above"}
+                      </p>
                     </div>
                   )}
 
