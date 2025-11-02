@@ -129,16 +129,7 @@ const VendorNewListing = () => {
   // Load existing listing data if in edit mode
   useEffect(() => {
     const loadListing = async () => {
-      if (!isEditMode || !listingId) {
-        // Clear state when not in edit mode
-        setTitle("");
-        setDescription("");
-        setPrice("");
-        setIsFree(false);
-        setMediaItems([]);
-        setSourceUrl("");
-        return;
-      }
+      if (!isEditMode || !listingId) return;
       setLoading(true);
       try {
         const {
@@ -147,13 +138,6 @@ const VendorNewListing = () => {
         } = await supabase.from("listings").select("*").eq("id", listingId).single();
         if (error) throw error;
         if (data) {
-          console.log('[LOAD LISTING] Loading data for edit:', {
-            id: data.id,
-            title: data.title,
-            price: data.price,
-            isFree: !data.price || data.price === 0
-          });
-          
           // Load media type
           if (data.listing_type === "video" || data.listing_type === "audio" || data.listing_type === "product") {
             setMediaType(data.listing_type as MediaType);
@@ -737,24 +721,14 @@ const VendorNewListing = () => {
         listingTypes,
         pendingCouponData,
         imageCount: images.length,
-        vendorWebsite: vendorProfile?.website,
-        title: title.trim(),
-        price: isFree ? 0 : parseFloat(price),
-        isFree: isFree
+        vendorWebsite: vendorProfile?.website
       });
       if (isEditMode && listingId) {
         // Update existing listing
         const {
-          data: updatedData,
           error
-        } = await supabase.from("listings").update(listingData).eq("id", listingId).select().single();
+        } = await supabase.from("listings").update(listingData).eq("id", listingId);
         if (error) throw error;
-        
-        console.log('[SAVE SUCCESS] Listing updated:', {
-          id: updatedData?.id,
-          title: updatedData?.title,
-          price: updatedData?.price
-        });
 
         // Handle coupon attachment for existing listings
         if (pendingCouponData?.couponId) {
@@ -805,12 +779,6 @@ const VendorNewListing = () => {
           error
         } = await supabase.from("listings").insert([listingData]).select().single();
         if (error) throw error;
-        
-        console.log('[SAVE SUCCESS] Listing created:', {
-          id: newListing?.id,
-          title: newListing?.title,
-          price: newListing?.price
-        });
 
         // Handle coupon attachment for new listings
         if (pendingCouponData?.couponId && newListing) {
@@ -1293,14 +1261,14 @@ const VendorNewListing = () => {
               )}
 
               {/* Active Coupon Selection Section */}
-              {listingTypes.length > 0 && !hasActiveCoupon && (
+              {listingTypes.length > 0 && !isFree && !hasActiveCoupon && (
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="text-base font-semibold">Active Coupon</Label>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Select an existing coupon or create a new one {isFree && "(works with free items too!)"}
+                          Select an existing coupon or create a new one
                         </p>
                       </div>
                     </div>
