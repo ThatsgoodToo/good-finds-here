@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -49,6 +48,7 @@ const VendorProfile = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"all" | "product" | "service" | "experience" | "sale">("all");
 
   useEffect(() => {
     if (!user) {
@@ -233,6 +233,19 @@ const VendorProfile = () => {
     return colors[type.toLowerCase()] || "bg-category-product";
   };
 
+  const filters = [
+    { type: "all" as const, label: "All", color: "bg-foreground" },
+    { type: "product" as const, label: "Products", color: "bg-category-product" },
+    { type: "service" as const, label: "Services", color: "bg-category-service" },
+    { type: "experience" as const, label: "Experiences", color: "bg-category-experience" },
+    { type: "sale" as const, label: "Sales", color: "bg-category-sale" },
+  ];
+
+  const filteredListings = listings.images.filter((listing) => {
+    if (activeFilter === "all") return true;
+    return listing.types.includes(activeFilter as CategoryType);
+  });
+
   const handleHighFive = () => {
     setShowFolderDialog(true);
   };
@@ -347,22 +360,31 @@ const VendorProfile = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Side - Media Grid */}
             <div className="lg:col-span-2 space-y-4">
-              <Tabs defaultValue="images" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="images">
-                    Images ({listings.images.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="videos">
-                    Videos ({listings.videos.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="audio">
-                    Audio ({listings.audio.length})
-                  </TabsTrigger>
-                </TabsList>
+              {/* Filter Buttons */}
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+                {filters.map((filter) => (
+                  <Button
+                    key={filter.type}
+                    variant={activeFilter === filter.type ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setActiveFilter(filter.type)}
+                    className={cn(
+                      "flex items-center gap-1.5 whitespace-nowrap transition-all px-3 py-1.5 text-sm shrink-0",
+                      activeFilter === filter.type
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card text-foreground border-border hover:bg-muted"
+                    )}
+                  >
+                    <span className={cn("w-2 h-2 rounded-full", filter.color)} />
+                    {filter.label}
+                  </Button>
+                ))}
+              </div>
 
-                <TabsContent value="images" className="mt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {listings.images.map((listing) => (
+              {/* Listings Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredListings.length > 0 ? (
+                  filteredListings.map((listing) => (
                       <div
                         key={listing.id}
                         className="relative group cursor-pointer rounded-lg overflow-hidden aspect-square"
@@ -415,22 +437,13 @@ const VendorProfile = () => {
                           <p className="text-sm font-medium text-white">{listing.title}</p>
                         </div>
                       </div>
-                    ))}
+                    ))
+                ) : (
+                  <div className="col-span-full text-center py-12 text-muted-foreground">
+                    <p>No {activeFilter !== "all" ? filters.find(f => f.type === activeFilter)?.label.toLowerCase() : "listings"} available</p>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="videos" className="mt-4">
-                  <div className="text-center py-12 text-muted-foreground">
-                    <p>No videos available</p>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="audio" className="mt-4">
-                  <div className="text-center py-12 text-muted-foreground">
-                    <p>No audio available</p>
-                  </div>
-                </TabsContent>
-              </Tabs>
+                )}
+              </div>
             </div>
 
             {/* Right Side - Profile Details */}
