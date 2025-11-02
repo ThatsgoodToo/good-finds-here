@@ -282,10 +282,20 @@ const VendorDashboard = () => {
 
             const activeCoupon = couponData?.[0];
             
+            // Map listing types to the three supported categories
+            let mappedType: "product" | "service" | "experience";
+            if (listing.listing_type === "service") {
+              mappedType = "service";
+            } else if (listing.listing_type === "experience" || listing.listing_type === "video" || listing.listing_type === "audio") {
+              mappedType = "experience";
+            } else {
+              mappedType = "product"; // Default for product, material, and others
+            }
+            
             return {
               id: listing.id,
               title: listing.title,
-              type: (listing.listing_type === "experience" ? "experience" : listing.listing_type) as "product" | "service" | "experience",
+              type: mappedType,
               categories: listing.categories || [],
               price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
               inventory: "Available",
