@@ -64,9 +64,8 @@ const VendorNewListing = () => {
   const [pendingCouponData, setPendingCouponData] = useState<any>(null);
   const [noActiveCoupons, setNoActiveCoupons] = useState(false);
   
-  // Unified media handling
-  const [mediaItems, setMediaItems] = useState<Array<{type: 'image' | 'video' | 'audio', url: string}>>([]);
-  const [mediaType, setMediaType] = useState<'image' | 'video' | 'audio'>('image');
+  // Unified media handling - images only (max 5)
+  const [mediaItems, setMediaItems] = useState<Array<{type: 'image', url: string}>>([]);
   const [mediaUrl, setMediaUrl] = useState("");
   
   // Autocomplete subcategories
@@ -143,8 +142,8 @@ const VendorNewListing = () => {
           setSourceUrl(data.source_url || "");
           setListingLink(data.listing_link || "");
           
-          // Load media - convert to unified format
-          const items: Array<{type: 'image' | 'video' | 'audio', url: string}> = [];
+          // Load media - convert to unified format (images only now)
+          const items: Array<{type: 'image', url: string}> = [];
           if (data.image_url) {
             items.push({type: 'image', url: data.image_url});
           }
@@ -271,16 +270,14 @@ const VendorNewListing = () => {
 
   const addMediaItem = () => {
     if (mediaUrl.trim()) {
-      // Auto-detect type if URL pattern matches
-      let detectedType = mediaType;
-      if (mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')) {
-        detectedType = 'video';
-      } else if (mediaUrl.includes('spotify.com') || mediaUrl.includes('soundcloud')) {
-        detectedType = 'audio';
+      if (mediaItems.length >= 5) {
+        toast.error("Maximum 5 images allowed");
+        return;
       }
       
-      setMediaItems([...mediaItems, {type: detectedType, url: mediaUrl}]);
+      setMediaItems([...mediaItems, {type: 'image', url: mediaUrl.trim()}]);
       setMediaUrl("");
+      toast.success(`Image ${mediaItems.length + 1}/5 added`);
     }
   };
 
@@ -372,7 +369,7 @@ const VendorNewListing = () => {
       return;
     }
 
-    const loadingToast = toast.loading('Importing product details...');
+    const loadingToast = toast.loading('Importing listing details...');
     
     try {
       const metadata = await extractUrlMetadata(importUrl);
@@ -381,8 +378,13 @@ const VendorNewListing = () => {
         setTitle(metadata.title);
         setDescription(metadata.description);
         
+        // Only add image if under 5 limit
         if (metadata.image && !mediaItems.some(m => m.url === metadata.image)) {
-          setMediaItems([...mediaItems, {type: 'image', url: metadata.image}]);
+          if (mediaItems.length >= 5) {
+            toast.warning("Image found but you already have 5 images (maximum reached)");
+          } else {
+            setMediaItems([...mediaItems, {type: 'image', url: metadata.image}]);
+          }
         }
         
         if (metadata.price) {
@@ -390,18 +392,21 @@ const VendorNewListing = () => {
           setIsFree(false);
         }
         
-        // Add URL to appropriate media type
+        // Check if URL is video/audio and show info (don't add to mediaItems)
         const hostname = new URL(importUrl).hostname.toLowerCase();
         if (hostname.includes('youtube') || hostname.includes('youtu.be')) {
-          setMediaItems(prev => [...prev, {type: 'video', url: importUrl}]);
+          toast.info('Video metadata imported (video embeds not supported in image gallery)');
         } else if (hostname.includes('spotify') || hostname.includes('soundcloud')) {
-          setMediaItems(prev => [...prev, {type: 'audio', url: importUrl}]);
+          toast.info('Audio metadata imported (audio embeds not supported in image gallery)');
         }
+        
+        // Set source URL if not already set
+        if (!sourceUrl) setSourceUrl(importUrl);
         
         setShowImportDialog(false);
         setImportUrl("");
         setImportError(null);
-        toast.success('Product details imported successfully!', { id: loadingToast });
+        toast.success('Listing details imported successfully!', { id: loadingToast });
       } else {
         toast.dismiss(loadingToast);
         
@@ -450,6 +455,11 @@ const VendorNewListing = () => {
   };
 
   const handleImageUpload = async () => {
+    if (mediaItems.length >= 5) {
+      toast.error("Maximum 5 images allowed");
+      return;
+    }
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -458,7 +468,7 @@ const VendorNewListing = () => {
     input.onchange = async (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || []);
       
-      if (files.length + mediaItems.filter(m => m.type === 'image').length > 5) {
+      if (files.length + mediaItems.length > 5) {
         toast.error("Maximum 5 images allowed");
         return;
       }
@@ -561,10 +571,7 @@ const VendorNewListing = () => {
       return;
     }
     
-    if (mediaItems.length === 0) {
-      toast.error("Please add at least one media item (image, video, or audio)");
-      return;
-    }
+    // Images are now optional - no validation needed
 
     if (!user) {
       toast.error("You must be logged in to save a listing");
@@ -697,10 +704,10 @@ const VendorNewListing = () => {
           }}>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Import Product from URL</DialogTitle>
+                <DialogTitle>Import Listing from URL</DialogTitle>
                 <DialogDescription>
                   {!importError?.show ? (
-                    "Paste a product URL and we'll try to automatically fill in the details."
+                    "Paste a product, image, video, or audio URL and we'll try to automatically fill in the details."
                   ) : (
                     "No problem! Let's create your listing manually."
                   )}
@@ -835,84 +842,71 @@ const VendorNewListing = () => {
                 </CardContent>
               </Card>
 
-              {/* Import from URL Button */}
-              {listingTypes.length > 0 && (
-                <div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowImportDialog(true)}
-                    className="w-full"
-                  >
-                    <Link className="h-4 w-4 mr-2" />
-                    Import Product from URL
-                  </Button>
-                </div>
-              )}
-
-              {/* Unified Media Section */}
+              {/* Images Section - Now Optional */}
               {listingTypes.length > 0 && (
                 <Card>
                   <CardContent className="pt-6 space-y-4">
-                    <Label className="text-base font-semibold">Media (Images, Video, or Audio) *</Label>
-                    <p className="text-sm text-muted-foreground">Add at least one: image URLs, video embeds, or audio embeds</p>
+                    {/* Import Button - Moved Inside */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowImportDialog(true)}
+                      className="w-full"
+                    >
+                      <Link className="h-4 w-4 mr-2" />
+                      Import Listing URL (product, image, video, audio)
+                    </Button>
+
+                    <div className="h-px bg-border my-4" />
+
+                    <Label className="text-base font-semibold">Images (5 Max)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Upload images to showcase your listing (optional, maximum 5)
+                    </p>
                     
                     <div className="space-y-4">
-                      <RadioGroup value={mediaType} onValueChange={(value: any) => setMediaType(value)}>
-                        <div className="flex gap-4">
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="image" id="image" />
-                            <Label htmlFor="image">Image</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="video" id="video" />
-                            <Label htmlFor="video">Video</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="audio" id="audio" />
-                            <Label htmlFor="audio">Audio</Label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-                      
                       <div className="flex gap-2">
                         <Input
                           type="url"
-                          placeholder={`Paste ${mediaType} URL...`}
+                          placeholder="Paste image URL..."
                           value={mediaUrl}
                           onChange={(e) => setMediaUrl(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && addMediaItem()}
+                          disabled={mediaItems.length >= 5}
                         />
                         <Button 
                           type="button" 
                           onClick={addMediaItem}
                           className="shrink-0"
+                          disabled={mediaItems.length >= 5}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        {mediaType === 'image' && (
-                          <Button type="button" variant="outline" onClick={handleImageUpload}>
-                            <Upload className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={handleImageUpload}
+                          disabled={mediaItems.length >= 5}
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
                       </div>
+
+                      {/* Image Counter */}
+                      <p className="text-xs text-muted-foreground text-right">
+                        {mediaItems.length} / 5 images
+                      </p>
                     </div>
                     
                     {mediaItems.length > 0 && (
                       <div className="grid grid-cols-3 gap-4">
                         {mediaItems.map((item, idx) => (
                           <div key={idx} className="relative group">
-                            {item.type === 'image' ? (
-                              <img src={item.url} alt={`Media ${idx + 1}`} className="w-full h-32 object-cover rounded-lg" />
-                            ) : item.type === 'video' ? (
-                              <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">🎥</span>
-                              </div>
-                            ) : (
-                              <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">🎵</span>
-                              </div>
-                            )}
+                            <img 
+                              src={item.url} 
+                              alt={`Image ${idx + 1}`} 
+                              className="w-full h-32 object-cover rounded-lg" 
+                            />
                             <Button
                               type="button"
                               variant="destructive"
