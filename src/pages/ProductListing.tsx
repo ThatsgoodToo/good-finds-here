@@ -181,6 +181,31 @@ const ProductListing = () => {
     setShowCouponDialog(true);
   };
 
+  const handleWebsiteClick = async () => {
+    if (!vendor) return;
+    
+    try {
+      // Insert click record
+      await supabase.from("website_clicks").insert({
+        vendor_id: vendor.id,
+        listing_id: listingId || null,
+      });
+
+      // Increment counter
+      await supabase
+        .from("vendor_profiles")
+        .update({ clicks_to_website: (vendor.clicks_to_website || 0) + 1 })
+        .eq("id", vendor.id);
+
+      // Open website
+      window.open(vendor.website, "_blank");
+    } catch (error) {
+      console.error("Error tracking website click:", error);
+      // Still open the website even if tracking fails
+      window.open(vendor.website, "_blank");
+    }
+  };
+
   const handleConfirmClaim = async () => {
     if (!activeCoupon || !user) return;
 
@@ -204,6 +229,19 @@ const ProductListing = () => {
           .from("coupons")
           .update({ used_count: coupon.used_count + 1 })
           .eq("id", activeCoupon.id);
+      }
+
+      // Track website click
+      if (vendor) {
+        await supabase.from("website_clicks").insert({
+          vendor_id: vendor.id,
+          listing_id: listingId || null,
+        });
+
+        await supabase
+          .from("vendor_profiles")
+          .update({ clicks_to_website: (vendor.clicks_to_website || 0) + 1 })
+          .eq("id", vendor.id);
       }
 
       toast.success(`Coupon code: ${activeCoupon.code}`);
@@ -284,7 +322,7 @@ const ProductListing = () => {
                   <Button
                     variant="link"
                     className="text-sm gap-1"
-                    onClick={() => window.open(vendor.website, "_blank")}
+                    onClick={handleWebsiteClick}
                   >
                     <ExternalLink className="h-3 w-3" />
                     website

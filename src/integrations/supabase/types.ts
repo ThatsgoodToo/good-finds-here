@@ -857,6 +857,42 @@ export type Database = {
           },
         ]
       }
+      website_clicks: {
+        Row: {
+          clicked_at: string
+          id: string
+          listing_id: string | null
+          vendor_id: string
+        }
+        Insert: {
+          clicked_at?: string
+          id?: string
+          listing_id?: string | null
+          vendor_id: string
+        }
+        Update: {
+          clicked_at?: string
+          id?: string
+          listing_id?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_listing"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_vendor"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       public_profiles: {

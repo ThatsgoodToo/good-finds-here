@@ -296,7 +296,22 @@ const AudioListing = () => {
                   <Button
                     variant="link"
                     className="text-sm gap-1"
-                    onClick={() => window.open(vendor.website, "_blank")}
+                    onClick={async () => {
+                      if (!vendor) return;
+                      try {
+                        await supabase.from("website_clicks").insert({
+                          vendor_id: vendor.id,
+                          listing_id: listingId || null,
+                        });
+                        await supabase
+                          .from("vendor_profiles")
+                          .update({ clicks_to_website: (vendor.clicks_to_website || 0) + 1 })
+                          .eq("id", vendor.id);
+                      } catch (error) {
+                        console.error("Error tracking click:", error);
+                      }
+                      window.open(vendor.website, "_blank");
+                    }}
                   >
                     <ExternalLink className="h-3 w-3" />
                     website

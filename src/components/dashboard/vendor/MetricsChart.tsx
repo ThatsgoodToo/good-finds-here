@@ -106,8 +106,45 @@ const MetricsChart = ({ metric, onClose }: MetricsChartProps) => {
             });
             setMonthlyData(monthData);
           }
+        } else if (metric === "clicks") {
+          // Get website clicks over time
+          const { data: clicks } = await supabase
+            .from("website_clicks")
+            .select("clicked_at")
+            .eq("vendor_id", user.id)
+            .order("clicked_at", { ascending: true });
+
+          if (clicks) {
+            // Calculate weekly data
+            const now = new Date();
+            const weekData = Array.from({ length: 7 }, (_, i) => {
+              const date = new Date(now);
+              date.setDate(date.getDate() - (6 - i));
+              const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+              const count = clicks.filter(c => {
+                const clickDate = new Date(c.clicked_at);
+                return clickDate.toDateString() === date.toDateString();
+              }).length;
+              return { name: dayName, value: count };
+            });
+            setWeeklyData(weekData);
+
+            // Calculate monthly data
+            const monthData = Array.from({ length: 4 }, (_, i) => {
+              const weekStart = new Date(now);
+              weekStart.setDate(weekStart.getDate() - ((3 - i) * 7));
+              const weekEnd = new Date(weekStart);
+              weekEnd.setDate(weekEnd.getDate() + 6);
+              const count = clicks.filter(c => {
+                const clickDate = new Date(c.clicked_at);
+                return clickDate >= weekStart && clickDate <= weekEnd;
+              }).length;
+              return { name: `Week ${i + 1}`, value: count };
+            });
+            setMonthlyData(monthData);
+          }
         } else {
-          // For clicks and offers, time-series tracking not yet implemented
+          // For offers, time-series tracking not yet implemented
           setWeeklyData([
             { name: "Mon", value: 0 },
             { name: "Tue", value: 0 },
