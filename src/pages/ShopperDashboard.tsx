@@ -82,7 +82,7 @@ interface Folder {
 }
 
 const ShopperDashboard = () => {
-  const { user, userRole, roles, activeRole, setActiveRole } = useAuth();
+  const { user, userRole, roles, activeRole, setActiveRole, loading } = useAuth();
   const { status: vendorStatus, isPending, isRejected } = useVendorAccess();
   const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
@@ -112,10 +112,10 @@ const ShopperDashboard = () => {
   });
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       setShowSignupModal(true);
     }
-  }, [user]);
+  }, [user, loading]);
 
   // Check if user has seen the info animation
   useEffect(() => {
@@ -134,12 +134,22 @@ const ShopperDashboard = () => {
     setInfoDialogOpen(true);
   };
 
-  // Set active role to shopper when on this page
+  // Verify user has shopper access (vendors also have shopper access)
   useEffect(() => {
-    if (roles.includes("shopper") && activeRole !== "shopper") {
+    if (loading) return;
+    
+    const canAccessShopperDashboard = roles.includes("shopper") || roles.includes("vendor");
+    
+    if (!canAccessShopperDashboard && user) {
+      toast.error("You need to be a shopper to access this page");
+      navigate("/");
+      return;
+    }
+    
+    if (canAccessShopperDashboard && activeRole !== "shopper") {
       setActiveRole("shopper");
     }
-  }, [roles, activeRole, setActiveRole]);
+  }, [roles, activeRole, setActiveRole, loading, user, navigate]);
 
   // Load privacy settings and location from backend
   useEffect(() => {
@@ -342,6 +352,21 @@ const ShopperDashboard = () => {
   };
 
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-2" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">

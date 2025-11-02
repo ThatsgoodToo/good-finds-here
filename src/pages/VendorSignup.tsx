@@ -241,6 +241,7 @@ const VendorSignup = () => {
           return;
         }
         const {
+          data: signUpResponse,
           error
         } = await supabase.auth.signUp({
           email: authData.email,
@@ -257,6 +258,14 @@ const VendorSignup = () => {
           toast.error("Signup failed: " + error.message);
           return;
         }
+        
+        // Wait for session to be established
+        if (!signUpResponse?.session) {
+          console.log("No session returned, user may need to verify email");
+          toast.info("Account created! Redirecting to complete your application...");
+          // Still proceed with application for vendor since they need to submit it
+        }
+        
         toast.success("Account created successfully!");
         setShowAuth(false);
       }

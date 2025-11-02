@@ -116,8 +116,12 @@ const ShopperSignup = () => {
           throw new Error("Account created but no user data returned. Please try signing in.");
         }
         
+        // Wait for session to be established
         if (!authData.session) {
-          console.warn("No session created immediately after signup");
+          console.log("No session returned, user may need to verify email");
+          toast.info("Account created! Please check your email to verify.");
+          navigate("/auth");
+          return;
         }
         
         userId = authData.user.id;
