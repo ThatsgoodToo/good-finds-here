@@ -19,6 +19,9 @@ const VendorSettings = () => {
   const [loading, setLoading] = useState(false);
   const [businessName, setBusinessName] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [location, setLocation] = useState("");
+  const [website, setWebsite] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const hasVendorRole = roles.includes("vendor");
   const hasShopperRole = roles.includes("shopper");
@@ -35,7 +38,7 @@ const VendorSettings = () => {
       
       const { data: vendorData, error: vendorError } = await supabase
         .from("vendor_profiles")
-        .select("location_public, business_name")
+        .select("location_public, business_name, city, state_region, country, website")
         .eq("user_id", user.id)
         .single();
 
@@ -47,6 +50,11 @@ const VendorSettings = () => {
       if (vendorData) {
         setLocationPublic(vendorData.location_public ?? true);
         setBusinessName(vendorData.business_name || "");
+        const fullLocation = [vendorData.city, vendorData.state_region, vendorData.country]
+          .filter(Boolean)
+          .join(", ");
+        setLocation(fullLocation);
+        setWebsite(vendorData.website || "");
       }
 
       const { data: profileData, error: profileError } = await supabase
@@ -91,6 +99,36 @@ const VendorSettings = () => {
       toast.error("Failed to update privacy settings");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveVendorInfo = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    try {
+      // Parse location (format: "City, State, Country")
+      const locationParts = location.split(",").map(part => part.trim());
+      const [city, state_region, country] = locationParts;
+
+      const { error } = await supabase
+        .from("vendor_profiles")
+        .update({ 
+          city: city || null,
+          state_region: state_region || null,
+          country: country || null,
+          website: website || null
+        })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      toast.success("Vendor information updated successfully");
+    } catch (error: any) {
+      console.error("Error updating vendor info:", error);
+      toast.error("Failed to update vendor information");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -150,6 +188,44 @@ const VendorSettings = () => {
                 Your business name is locked for security. Contact support to request a business name change.
               </p>
             </div>
+
+            {/* Location - Editable */}
+            <div className="space-y-2">
+              <Label htmlFor="location">Business Location (Editable)</Label>
+              <Input
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="City, State, Country"
+              />
+              <p className="text-sm text-muted-foreground">
+                Format: City, State, Country (e.g., "San Francisco, CA, USA")
+              </p>
+            </div>
+
+            {/* Website - Editable */}
+            <div className="space-y-2">
+              <Label htmlFor="website">Business Website (Editable)</Label>
+              <Input
+                id="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="https://yourwebsite.com"
+                type="url"
+              />
+              <p className="text-sm text-muted-foreground">
+                Your business website or online store URL
+              </p>
+            </div>
+
+            {/* Save Button */}
+            <Button 
+              onClick={handleSaveVendorInfo} 
+              disabled={isSaving}
+              className="w-full"
+            >
+              {isSaving ? "Saving..." : "Save Vendor Information"}
+            </Button>
           </CardContent>
         </Card>
 
