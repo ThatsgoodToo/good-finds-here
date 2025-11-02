@@ -180,16 +180,15 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
           {/* Bottom Right Overlay */}
           <div className="absolute bottom-3 right-3 bg-background/95 backdrop-blur-sm rounded-md p-2 shadow-md">
             <p className="font-bold text-foreground text-sm leading-tight">{price}</p>
-            <button 
+            <Link 
+              to={`/vendor/${vendorId}`}
               onClick={(e) => {
-                e.preventDefault();
                 e.stopPropagation();
-                window.location.href = `/vendor/${vendorId}`;
               }}
               className="text-muted-foreground hover:text-foreground text-xs leading-tight truncate max-w-[120px] block transition-colors text-left"
             >
               {vendor}
-            </button>
+            </Link>
           </div>
         </Link>
       </div>

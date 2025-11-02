@@ -217,8 +217,9 @@ const AudioListing = () => {
 
       toast.success(`Coupon code: ${activeCoupon.code}`);
       
-      if (vendor?.website) {
-        window.open(vendor.website, "_blank");
+      const targetUrl = listing?.source_url || listing?.listing_link || vendor?.website;
+      if (targetUrl) {
+        window.open(targetUrl, "_blank");
       }
     } catch (error) {
       console.error("Error claiming coupon:", error);
