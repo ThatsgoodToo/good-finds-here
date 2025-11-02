@@ -511,23 +511,22 @@ const VendorNewListing = () => {
     try {
       // Separate media items by type for database
       const images = mediaItems.filter(m => m.type === 'image').map(m => m.url);
-      const listingData = {
-        vendor_id: user.id,
-        title: title.trim(),
-        description: description.trim(),
-        listing_type: listingTypes[0],
-        price: isFree ? 0 : parseFloat(price) || null,
-        category: category || null,
-        categories: subcategories,
-        image_url: images[0] || null,
-        source_url: sourceUrl.trim(),
-        listing_link: listingLink.trim() || null,
-        status: "active",
-        shipping_options: shippingOptions.length > 0 ? shippingOptions : null,
-        tags: subcategories,
-        generic_category: category,
-        generic_subcategory: subcategories[0] || null,
-      };
+    const listingData = {
+      vendor_id: user.id,
+      title: title.trim(),
+      description: description.trim(),
+      listing_type: listingTypes[0],
+      price: isFree ? 0 : parseFloat(price) || null,
+      category: category || null,
+      categories: subcategories,
+      image_url: images[0] || null,
+      source_url: sourceUrl.trim(),
+      listing_link: listingLink.trim() || null,
+      status: "active",
+      tags: subcategories,
+      generic_category: category,
+      generic_subcategory: subcategories[0] || null,
+    };
       if (isEditMode && listingId) {
         // Update existing listing
         const {

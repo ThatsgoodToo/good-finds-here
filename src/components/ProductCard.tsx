@@ -34,7 +34,7 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
   const [folders, setFolders] = useState(["Favorites", "Wishlist", "For Later"]);
   const [saved, setSaved] = useState(isSaved);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
-  const [listingLink, setListingLink] = useState<string | null>(null);
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
 
   // Check for active coupon
   useEffect(() => {
@@ -52,18 +52,18 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
       console.log('[ProductCard] Coupon query result:', { couponData, error });
 
       if (couponData && couponData.length > 0) {
-        console.log('[ProductCard] Active coupon found:', couponData[0]);
-        setHasActiveCoupon(true);
-        
-        // Get listing link
-        const { data: listingData } = await supabase
-          .from("listings")
-          .select("listing_link")
-          .eq("id", id)
-          .single();
-        
-        console.log('[ProductCard] Listing link:', listingData?.listing_link);
-        setListingLink(listingData?.listing_link || null);
+      console.log('[ProductCard] Active coupon found:', couponData[0]);
+      setHasActiveCoupon(true);
+      
+      // Get source URL
+      const { data: listingData } = await supabase
+        .from("listings")
+        .select("source_url")
+        .eq("id", id)
+        .single();
+      
+      console.log('[ProductCard] Source URL:', listingData?.source_url);
+      setSourceUrl(listingData?.source_url || null);
       } else {
         console.log('[ProductCard] No active coupon found for this listing');
         setHasActiveCoupon(false);
@@ -146,13 +146,13 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (listingLink) {
-                  window.open(listingLink, "_blank");
+                if (sourceUrl) {
+                  window.open(sourceUrl, "_blank");
                 } else {
                   toast.info("Active coupon available - view listing for details");
                 }
               }}
-              title={listingLink ? "Click to view offer" : "Active coupon available"}
+              title={sourceUrl ? "Click to view vendor website" : "Active coupon available"}
             />
           )}
         </div>
