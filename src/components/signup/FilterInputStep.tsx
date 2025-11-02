@@ -123,11 +123,11 @@ const FilterInputStep = ({ interests, onUpdate, onNext, onBack }: FilterInputSte
           )}
 
           {/* Popular Interests - Always visible when no smart suggestions */}
-          {smartSuggestions.length === 0 && interests.length === 0 && (
+          {smartSuggestions.length === 0 && (
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground">Popular Interests:</div>
               <div className="flex flex-wrap gap-2">
-                {POPULAR_INTERESTS.map((interest) => (
+                {POPULAR_INTERESTS.filter(interest => !interests.includes(interest)).map((interest) => (
                   <Badge
                     key={interest}
                     variant="outline"
