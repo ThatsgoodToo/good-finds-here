@@ -225,7 +225,7 @@ const VideoListing = () => {
             <div className="flex flex-col items-center text-center gap-4">
               <Link to={`/vendor/${vendor?.id}`}>
                 <div className="h-16 w-32 bg-white rounded flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
-                  <span className="text-2xl font-bold text-black">{vendor?.name}</span>
+                  <span className="text-2xl font-bold text-black">{vendor?.business_name}</span>
                 </div>
               </Link>
               
@@ -256,7 +256,13 @@ const VideoListing = () => {
         {/* Back Button */}
         <div className="container mx-auto px-4 sm:px-6 py-4">
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate(`/vendor/${listing.vendor_id}`);
+              }
+            }} 
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
@@ -362,7 +368,7 @@ const VideoListing = () => {
           {/* More from Vendor */}
           {moreFromVendor.length > 0 && (
             <div className="mt-12">
-              <h2 className="text-xl font-bold mb-4">More from {vendor?.name}</h2>
+              <h2 className="text-3xl font-bold mb-4">More from {vendor?.business_name}</h2>
               <div className="flex gap-4 overflow-x-auto pb-4">
                 {moreFromVendor.map((item) => (
                   <Card 
@@ -387,7 +393,7 @@ const VideoListing = () => {
           {/* Related Listings */}
           {relatedListings.length > 0 && (
             <div className="mt-8">
-              <h2 className="text-xl font-bold mb-4">Relatable Content</h2>
+              <h2 className="text-3xl font-bold mb-4">Relatable Content</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {relatedListings.map((item) => (
                   <Card 
