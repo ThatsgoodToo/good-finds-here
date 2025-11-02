@@ -28,7 +28,14 @@ import type { CategoryType } from "@/components/ProductCard";
 const getVideoEmbedUrl = (url: string | null): string | null => {
   if (!url) return null;
 
-  // YouTube patterns
+  // YouTube Shorts pattern
+  const shortsRegex = /(?:youtube\.com\/shorts\/)([^"&?\/\s]{11})/i;
+  const shortsMatch = url.match(shortsRegex);
+  if (shortsMatch && shortsMatch[1]) {
+    return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+  }
+
+  // YouTube standard patterns
   const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
   const youtubeMatch = url.match(youtubeRegex);
   if (youtubeMatch && youtubeMatch[1]) {
