@@ -176,9 +176,19 @@ const VendorDashboard = () => {
         .select("id")
         .eq("vendor_id", user.id);
 
+      // Calculate total coupon claims across all vendor's coupons
+      let couponUsageCount = 0;
+      if (coupons && coupons.length > 0) {
+        const { data: couponUsage } = await supabase
+          .from("coupon_usage")
+          .select("id")
+          .in("coupon_id", coupons.map(c => c.id));
+        couponUsageCount = couponUsage?.length || 0;
+      }
+
       setMetrics({
         clicks: vendorProfile?.clicks_to_website || 0,
-        sales: 0,
+        sales: couponUsageCount,
         activeOffers: coupons?.length || 0,
         followers: followers?.length || 0,
       });
@@ -192,26 +202,36 @@ const VendorDashboard = () => {
     const loadFollowers = async () => {
       if (!user) return;
 
+      // Get followers first
       const { data: followers } = await supabase
         .from("followers")
-        .select(`
-          shopper_id,
-          created_at,
-          profiles!followers_shopper_id_fkey(display_name, avatar_url, profile_picture_url)
-        `)
+        .select("shopper_id, created_at")
         .eq("vendor_id", user.id)
         .order("created_at", { ascending: false })
         .limit(10);
 
-      if (followers) {
+      if (followers && followers.length > 0) {
+        // Get profile info for each follower
+        const shopperIds = followers.map(f => f.shopper_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, display_name, avatar_url, profile_picture_url")
+          .in("id", shopperIds);
+
+        // Map profiles to followers
+        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        
         setRecentVisitors(
-          followers.map((f: any) => ({
-            id: f.shopper_id,
-            name: f.profiles?.display_name || "Shopper",
-            image: f.profiles?.profile_picture_url || f.profiles?.avatar_url || "",
-            lastVisit: new Date(f.created_at).toLocaleDateString(),
-            itemsViewed: 0,
-          }))
+          followers.map((f: any) => {
+            const profile = profileMap.get(f.shopper_id);
+            return {
+              id: f.shopper_id,
+              name: profile?.display_name || "Shopper",
+              image: profile?.profile_picture_url || profile?.avatar_url || "",
+              lastVisit: new Date(f.created_at).toLocaleDateString(),
+              itemsViewed: 0,
+            };
+          })
         );
       }
     };
