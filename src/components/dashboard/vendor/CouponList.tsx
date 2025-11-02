@@ -186,16 +186,10 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
             <div className="text-center py-12">
               <Gift className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <p className="text-lg font-semibold mb-2">No Active Coupons Yet</p>
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-sm text-muted-foreground">
                 Create your first coupon to attract shoppers and increase sales.<br />
                 Coupons can be linked to specific listings or used store-wide.
               </p>
-              {onCreateClick && (
-                <Button onClick={onCreateClick}>
-                  <Gift className="h-4 w-4 mr-2" />
-                  Create Your First Coupon
-                </Button>
-              )}
             </div>
           ) : (
             activeCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)

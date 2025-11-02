@@ -85,13 +85,13 @@ const VendorDashboard = () => {
   const [listings, setListings] = useState<Array<{
     id: string;
     title: string;
-    type: "product" | "service" | "content";
+    type: "product" | "service" | "experience";
     price: string;
     inventory: string;
     activeOffer: boolean;
     offerDetails?: string;
     couponClaims?: number;
-    status: "active" | "warning";
+    status: "active" | "paused";
   }>>([]);
   const {
     sharesRemaining,
@@ -193,11 +193,11 @@ const VendorDashboard = () => {
         setListings(data.map(listing => ({
           id: listing.id,
           title: listing.title,
-          type: listing.listing_type as "product" | "service" | "content",
+          type: (listing.listing_type === "content" ? "experience" : listing.listing_type) as "product" | "service" | "experience",
           price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
           inventory: "Available",
           activeOffer: false,
-          status: listing.status === "active" ? "active" : "warning"
+          status: listing.status === "active" ? "active" : "paused"
         })));
       }
     };
@@ -293,6 +293,43 @@ const VendorDashboard = () => {
   const handleEditListing = (id: string) => {
     navigate(`/vendor/listing/edit/${id}`);
   };
+  const handleDeleteListing = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("listings")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setListings(listings.filter(listing => listing.id !== id));
+      toast.success("Listing deleted successfully");
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+      toast.error("Failed to delete listing");
+    }
+  };
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === "active" ? "paused" : "active";
+      const { error } = await supabase
+        .from("listings")
+        .update({ status: newStatus })
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setListings(listings.map(listing => 
+        listing.id === id ? { ...listing, status: newStatus as "active" | "paused" } : listing
+      ));
+      toast.success(`Listing ${newStatus === "active" ? "activated" : "paused"}`);
+    } catch (error) {
+      console.error("Error toggling listing status:", error);
+      toast.error("Failed to update listing status");
+    }
+  };
   return <div className="min-h-screen bg-background">
       <Header />
 
@@ -349,7 +386,13 @@ const VendorDashboard = () => {
 
             {/* Listings Tab */}
             <TabsContent value="listings" className="space-y-6">
-              <ManageListings listings={listings} onAddListing={handleAddListing} onEditListing={handleEditListing} />
+              <ManageListings 
+                listings={listings} 
+                onAddListing={handleAddListing} 
+                onEditListing={handleEditListing}
+                onDeleteListing={handleDeleteListing}
+                onToggleStatus={handleToggleStatus}
+              />
             </TabsContent>
 
             {/* Active Offers Tab */}
