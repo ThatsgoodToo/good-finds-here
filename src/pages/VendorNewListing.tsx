@@ -913,39 +913,6 @@ const VendorNewListing = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* LEFT - Form */}
             <div className="space-y-6">
-              {/* Media Type Selection */}
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <div>
-                    <Label className="text-base font-semibold">What are you listing? *</Label>
-                    <p className="text-sm text-muted-foreground mt-1">Choose the type of content</p>
-                    <RadioGroup value={mediaType} onValueChange={(value) => setMediaType(value as MediaType)} className="grid grid-cols-3 gap-3 mt-3">
-                      <div className="flex items-center">
-                        <RadioGroupItem value="product" id="media-product" className="peer sr-only" />
-                        <Label htmlFor="media-product" className="flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent">
-                          <Tag className="h-5 w-5" />
-                          <span className="text-sm font-medium">Product</span>
-                        </Label>
-                      </div>
-                      <div className="flex items-center">
-                        <RadioGroupItem value="video" id="media-video" className="peer sr-only" />
-                        <Label htmlFor="media-video" className="flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent">
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                          <span className="text-sm font-medium">Video</span>
-                        </Label>
-                      </div>
-                      <div className="flex items-center">
-                        <RadioGroupItem value="audio" id="media-audio" className="peer sr-only" />
-                        <Label htmlFor="media-audio" className="flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent">
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
-                          <span className="text-sm font-medium">Audio</span>
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Listing Type */}
               <Card>
                 <CardContent className="pt-6 space-y-4">
@@ -968,7 +935,37 @@ const VendorNewListing = () => {
               {/* Images Section - Now Optional */}
               {listingTypes.length > 0 && <Card>
                   <CardContent className="pt-6 space-y-4">
-                    {/* Import Button - Moved Inside */}
+                    {/* Media Type Selection - Compact */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Content Type *</Label>
+                      <RadioGroup value={mediaType} onValueChange={(value) => setMediaType(value as MediaType)} className="flex gap-2">
+                        <div className="flex items-center">
+                          <RadioGroupItem value="product" id="media-product" className="peer sr-only" />
+                          <Label htmlFor="media-product" className="flex items-center gap-2 px-3 py-2 border-2 rounded-md cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent text-sm">
+                            <Tag className="h-4 w-4" />
+                            Product
+                          </Label>
+                        </div>
+                        <div className="flex items-center">
+                          <RadioGroupItem value="video" id="media-video" className="peer sr-only" />
+                          <Label htmlFor="media-video" className="flex items-center gap-2 px-3 py-2 border-2 rounded-md cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent text-sm">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            Video
+                          </Label>
+                        </div>
+                        <div className="flex items-center">
+                          <RadioGroupItem value="audio" id="media-audio" className="peer sr-only" />
+                          <Label htmlFor="media-audio" className="flex items-center gap-2 px-3 py-2 border-2 rounded-md cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent text-sm">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                            Audio
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
+                    <div className="h-px bg-border" />
+
+                    {/* Import Button */}
                     <Button type="button" variant="outline" onClick={() => setShowImportDialog(true)} className="w-full">
                       <Link className="h-4 w-4 mr-2" />
                       Import Listing URL (product, image, video, audio)
