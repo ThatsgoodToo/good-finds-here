@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link, Info } from "lucide-react";
+import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link, Info, Tag, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -61,6 +61,8 @@ const VendorNewListing = () => {
   const [showCouponForm, setShowCouponForm] = useState(false);
   const [couponCreated, setCouponCreated] = useState(false);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
+  const [pendingCouponData, setPendingCouponData] = useState<any>(null);
+  const [noActiveCoupons, setNoActiveCoupons] = useState(false);
   
   // Unified media handling
   const [mediaItems, setMediaItems] = useState<Array<{type: 'image' | 'video' | 'audio', url: string}>>([]);
@@ -95,6 +97,23 @@ const VendorNewListing = () => {
     if (!user) {
       setShowSignupModal(true);
     }
+  }, [user]);
+
+  // Check if vendor has active coupons
+  useEffect(() => {
+    const checkActiveCoupons = async () => {
+      if (!user) return;
+
+      const { data: coupons } = await supabase
+        .from("coupons")
+        .select("id")
+        .eq("vendor_id", user.id)
+        .eq("active_status", true);
+
+      setNoActiveCoupons(!coupons || coupons.length === 0);
+    };
+
+    checkActiveCoupons();
   }, [user]);
   
   // Load existing listing data if in edit mode
@@ -579,15 +598,65 @@ const VendorNewListing = () => {
           .eq("id", listingId);
 
         if (error) throw error;
-        toast.success("Listing updated successfully!");
+
+        // If there's pending coupon data, create it now
+        if (pendingCouponData) {
+          try {
+            const response = await supabase.functions.invoke('manage-coupons', {
+              body: {
+                action: 'create',
+                coupon: {
+                  ...pendingCouponData,
+                  listing_id: listingId,
+                  start_date: pendingCouponData.start_date.toISOString(),
+                  end_date: pendingCouponData.end_date.toISOString(),
+                },
+              },
+            });
+
+            if (response.error) throw response.error;
+            toast.success("Listing updated and coupon created!");
+          } catch (couponError: any) {
+            console.error('Error creating coupon:', couponError);
+            toast.error("Listing updated but coupon creation failed: " + couponError.message);
+          }
+        } else {
+          toast.success("Listing updated successfully!");
+        }
       } else {
         // Create new listing
-        const { error } = await supabase
+        const { data: newListing, error } = await supabase
           .from("listings")
-          .insert([listingData]);
+          .insert([listingData])
+          .select()
+          .single();
 
         if (error) throw error;
-        toast.success("Listing created successfully!");
+
+        // If there's pending coupon data, create it with the new listing ID
+        if (pendingCouponData && newListing) {
+          try {
+            const response = await supabase.functions.invoke('manage-coupons', {
+              body: {
+                action: 'create',
+                coupon: {
+                  ...pendingCouponData,
+                  listing_id: newListing.id,
+                  start_date: pendingCouponData.start_date.toISOString(),
+                  end_date: pendingCouponData.end_date.toISOString(),
+                },
+              },
+            });
+
+            if (response.error) throw response.error;
+            toast.success("Listing and coupon created successfully!");
+          } catch (couponError: any) {
+            console.error('Error creating coupon:', couponError);
+            toast.error("Listing created but coupon creation failed: " + couponError.message);
+          }
+        } else {
+          toast.success("Listing created successfully!");
+        }
       }
       
       navigate("/dashboard/vendor");
@@ -1087,41 +1156,77 @@ const VendorNewListing = () => {
                       )}
                     </div>
 
-                    {!listingId && (
-                      <p className="text-sm text-muted-foreground">
-                        Save this listing first, then you can create a coupon for it.
+                {/* Encourage coupon creation if vendor has no active coupons */}
+                {noActiveCoupons && !couponCreated && !showCouponForm && (
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <Gift className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                          Boost your listing with a coupon code!
+                        </p>
+                        <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
+                          Listings with coupons get a red sale dot that attracts more shoppers. 
+                          Create one now to stand out in the marketplace.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {couponCreated && (
+                  <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="h-2 w-2 bg-green-500 rounded-full" />
+                    <span className="text-sm font-medium text-green-700 dark:text-green-400">Coupon Created</span>
+                  </div>
+                )}
+
+                {!couponCreated && (
+                  <div className="space-y-3">
+                    {!listingId && showCouponForm && (
+                      <p className="text-sm text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded flex items-center gap-2 border border-yellow-200 dark:border-yellow-800">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        Coupon will be created when you save the listing
                       </p>
                     )}
-
-                    {listingId && !couponCreated && (
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="showCoupon"
-                          checked={showCouponForm}
-                          onCheckedChange={(checked) => setShowCouponForm(checked as boolean)}
-                        />
-                        <Label htmlFor="showCoupon">Create a coupon for this listing</Label>
-                      </div>
-                    )}
-
-                    {showCouponForm && !couponCreated && listingId && (
+                    
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="showCoupon"
+                        checked={showCouponForm}
+                        onCheckedChange={(checked) => setShowCouponForm(checked as boolean)}
+                      />
+                      <Label htmlFor="showCoupon">Create a coupon for this listing</Label>
+                    </div>
+                    
+                    {showCouponForm && (
                       <div className="border rounded-lg p-4 bg-muted/50">
                         <CouponForm
                           onSuccess={() => {
-                            setCouponCreated(true);
-                            setHasActiveCoupon(true);
-                            setShowCouponForm(false);
-                            toast.success("Coupon created and linked to listing!");
+                            if (listingId) {
+                              setCouponCreated(true);
+                              setHasActiveCoupon(true);
+                              setShowCouponForm(false);
+                              toast.success("Coupon created and linked to listing!");
+                            }
                           }}
                           onCancel={() => {
                             setShowCouponForm(false);
+                            setPendingCouponData(null);
                           }}
                           listingId={listingId}
                           autoLinkListing={true}
+                          deferSubmission={!listingId}
+                          onCouponDataReady={(data) => {
+                            setPendingCouponData(data);
+                            toast.info("Coupon ready - save the listing to create it");
+                          }}
                         />
                       </div>
                     )}
-                  </CardContent>
+                  </div>
+                )}
+              </CardContent>
                 </Card>
               )}
 

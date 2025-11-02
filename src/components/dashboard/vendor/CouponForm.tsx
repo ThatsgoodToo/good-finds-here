@@ -54,9 +54,11 @@ interface CouponFormProps {
   onCancel: () => void;
   listingId?: string | null;
   autoLinkListing?: boolean;
+  deferSubmission?: boolean;
+  onCouponDataReady?: (couponData: CouponFormData) => void;
 }
 
-export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkListing }: CouponFormProps) {
+export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkListing, deferSubmission, onCouponDataReady }: CouponFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -79,6 +81,12 @@ export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkLis
   };
 
   const onSubmit = async (data: CouponFormData) => {
+    // If deferred submission, just return the data to parent
+    if (deferSubmission && onCouponDataReady) {
+      onCouponDataReady(data);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();

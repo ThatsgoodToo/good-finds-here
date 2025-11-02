@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Copy, Pencil } from "lucide-react";
+import { Trash2, Copy, Pencil, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -27,9 +27,10 @@ interface Coupon {
 interface CouponListProps {
   refresh: boolean;
   onRefreshComplete: () => void;
+  onCreateClick?: () => void;
 }
 
-export default function CouponList({ refresh, onRefreshComplete }: CouponListProps) {
+export default function CouponList({ refresh, onRefreshComplete, onCreateClick }: CouponListProps) {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
@@ -182,7 +183,20 @@ export default function CouponList({ refresh, onRefreshComplete }: CouponListPro
 
         <TabsContent value="active" className="mt-4">
           {activeCoupons.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">No active coupons</p>
+            <div className="text-center py-12">
+              <Gift className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <p className="text-lg font-semibold mb-2">No Active Coupons Yet</p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Create your first coupon to attract shoppers and increase sales.<br />
+                Coupons can be linked to specific listings or used store-wide.
+              </p>
+              {onCreateClick && (
+                <Button onClick={onCreateClick}>
+                  <Gift className="h-4 w-4 mr-2" />
+                  Create Your First Coupon
+                </Button>
+              )}
+            </div>
           ) : (
             activeCoupons.map(coupon => <CouponCard key={coupon.id} coupon={coupon} />)
           )}

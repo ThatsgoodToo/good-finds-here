@@ -7,7 +7,8 @@ import VendorApplicationRejected from "@/components/VendorApplicationRejected";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Users, BarChart3, Tag, Hand } from "lucide-react";
+import { Package, Users, BarChart3, Tag, Hand, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Header from "@/components/Header";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -369,6 +370,9 @@ const VendorDashboard = () => {
               <TabsTrigger value="coupons" className="gap-2" data-tour="vendor-offers">
                 <Tag className="h-4 w-4" />
                 <span className="hidden sm:inline">Active Offers</span>
+                {metrics.activeOffers === 0 && (
+                  <Badge variant="destructive" className="ml-1">!</Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="hifives" className="gap-2" data-tour="vendor-hi-fives">
                 <Hand className="h-4 w-4" />
@@ -378,6 +382,28 @@ const VendorDashboard = () => {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
+              {/* No Active Coupons Alert */}
+              {metrics.activeOffers === 0 && (
+                <Alert className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+                  <AlertTitle className="text-yellow-800 dark:text-yellow-300">No Active Coupons</AlertTitle>
+                  <AlertDescription className="text-yellow-700 dark:text-yellow-400 flex items-center justify-between">
+                    <span>
+                      Create coupon codes to attract more shoppers and boost your sales! 
+                      Coupons help your listings stand out with the red sale dot.
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="ml-4 shrink-0 border-yellow-300 hover:bg-yellow-100 dark:border-yellow-700 dark:hover:bg-yellow-900/30"
+                      onClick={() => setShowCouponDialog(true)}
+                    >
+                      Create Coupon
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               {/* Metrics */}
               <MetricsRow
                 clicks={metrics.clicks}
@@ -424,6 +450,7 @@ const VendorDashboard = () => {
                   <CouponList 
                     refresh={refreshCoupons}
                     onRefreshComplete={() => setRefreshCoupons(false)}
+                    onCreateClick={() => setShowCouponDialog(true)}
                   />
                 </CardContent>
               </Card>
