@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Table,
   TableBody,
@@ -40,6 +41,8 @@ interface Listing {
   offerDetails?: string;
   couponClaims?: number;
   status: "active" | "paused";
+  created_at: string;
+  updated_at: string;
 }
 
 interface ManageListingsProps {
@@ -61,28 +64,19 @@ const ManageListings = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
 
-  const getTypeBadge = (type: "product" | "service" | "experience") => {
-    const configs = {
-      product: { label: "P", colorClass: "bg-category-product", name: "Product" },
-      service: { label: "S", colorClass: "bg-category-service", name: "Service" },
-      experience: { label: "E", colorClass: "bg-category-experience", name: "Experience" },
-    };
+  const getListedDate = (createdAt: string, updatedAt: string) => {
+    const updated = new Date(updatedAt);
+    const created = new Date(createdAt);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24));
     
-    const config = configs[type];
+    const displayDate = updated > created ? updated : created;
     
-    return (
-      <Tooltip>
-        <TooltipTrigger>
-          <Badge variant="outline" className="gap-1.5 text-xs">
-            <span className={`h-2 w-2 rounded-full ${config.colorClass}`} />
-            <span>{config.label}</span>
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{config.name}</p>
-        </TooltipContent>
-      </Tooltip>
-    );
+    if (daysDiff <= 7) {
+      return formatDistanceToNow(displayDate, { addSuffix: true });
+    }
+    
+    return format(displayDate, 'MMM d, yyyy');
   };
 
   const handleDeleteClick = (id: string) => {
@@ -120,7 +114,7 @@ const ManageListings = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Listed Date</TableHead>
                   <TableHead className="hidden md:table-cell">Price</TableHead>
                   <TableHead className="hidden md:table-cell">Inventory</TableHead>
                   <TableHead>Active Offer</TableHead>
@@ -159,8 +153,8 @@ const ManageListings = ({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
-                          {getTypeBadge(listing.type)}
+                        <div className="text-sm">
+                          {getListedDate(listing.created_at, listing.updated_at)}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">{listing.price}</TableCell>

@@ -104,6 +104,8 @@ const VendorDashboard = () => {
     offerDetails?: string;
     couponClaims?: number;
     status: "active" | "paused";
+    created_at: string;
+    updated_at: string;
   }>>([]);
   
   const { sharesRemaining, maxShares } = useVendorShareLimits();
@@ -267,7 +269,8 @@ const VendorDashboard = () => {
       const { data } = await supabase
         .from("listings")
         .select("*")
-        .eq("vendor_id", user.id);
+        .eq("vendor_id", user.id)
+        .order("updated_at", { ascending: false });
 
       if (data) {
         // For each listing, check if it has an active coupon
@@ -307,6 +310,8 @@ const VendorDashboard = () => {
                 : undefined,
               couponClaims: activeCoupon?.used_count || undefined,
               status: (listing.status === "active" ? "active" : "paused") as "active" | "paused",
+              created_at: listing.created_at,
+              updated_at: listing.updated_at,
             };
           })
         );
