@@ -6,6 +6,7 @@ import SearchBar from "@/components/SearchBar";
 import SignupModal from "@/components/SignupModal";
 import ProductCard from "@/components/ProductCard";
 import { mapCategoriesToTypes } from "@/lib/categoryMapping";
+import type { CategoryType } from "@/components/ProductCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -435,6 +436,40 @@ const ProductListing = () => {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold mb-4">{listing.title}</h1>
                 
+                {/* Category Dots */}
+                <div className="flex items-center gap-2 mb-4">
+                  {listing.listing_types && listing.listing_types.length > 0 
+                    ? mapCategoriesToTypes(listing.listing_types).map((type: CategoryType, index: number) => (
+                        <div
+                          key={`category-${index}`}
+                          className={cn(
+                            "w-3 h-3 rounded-full ring-1 ring-border",
+                            type === "product" ? "bg-category-product" :
+                            type === "service" ? "bg-category-service" :
+                            type === "experience" ? "bg-category-experience" :
+                            "bg-category-sale"
+                          )}
+                          title={type}
+                        />
+                      ))
+                    : listing.listing_type && (
+                        <div
+                          className={cn(
+                            "w-3 h-3 rounded-full ring-1 ring-border",
+                            listing.listing_type === "product" ? "bg-category-product" :
+                            listing.listing_type === "service" ? "bg-category-service" :
+                            listing.listing_type === "experience" ? "bg-category-experience" :
+                            "bg-category-sale"
+                          )}
+                          title={listing.listing_type}
+                        />
+                      )
+                  }
+                  {activeCoupon && (
+                    <div className="w-3 h-3 rounded-full ring-1 ring-border bg-category-sale" title="Active coupon" />
+                  )}
+                </div>
+
                 {listing.price && (
                   <p className="text-xl font-semibold mb-4">${listing.price}</p>
                 )}
