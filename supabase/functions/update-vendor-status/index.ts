@@ -17,6 +17,43 @@ interface StatusUpdateRequest {
   admin_notes?: string;
 }
 
+interface VendorApplication {
+  id: string;
+  user_id: string;
+  website?: string;
+  social_media_links?: Record<string, string>;
+  city?: string;
+  state_region?: string;
+  country?: string;
+  phone_number?: string;
+  business_type?: string;
+  business_type_other?: string;
+  business_description?: string;
+  products_services?: string[];
+  inventory_type?: string;
+  shipping_options?: string[];
+  pickup_address?: string;
+  area_of_expertise?: string[];
+  business_duration?: string;
+  craft_development?: string;
+  certifications_awards?: string;
+  creativity_style?: string;
+  inspiration?: string;
+  brand_uniqueness?: string;
+  sustainable_methods?: string;
+  pricing_style?: string;
+  exclusive_offers?: string;
+  promotion_social_channels?: string;
+  future_website?: string;
+  subscription_type?: string;
+  promo_code?: string;
+  profiles: {
+    email: string;
+    full_name?: string;
+    display_name?: string;
+  };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -274,10 +311,12 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating vendor status:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "An unknown error occurred" 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -286,7 +325,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-function generateApprovalEmail(userName: string, application: any): string {
+function generateApprovalEmail(userName: string, application: VendorApplication): string {
   return `
 <!DOCTYPE html>
 <html>

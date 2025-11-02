@@ -16,6 +16,30 @@ interface SignupNotificationRequest {
   role: string;
 }
 
+interface Profile {
+  id: string;
+  email: string;
+  full_name?: string;
+  display_name?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+interface Subscription {
+  subscription_type?: string;
+  end_date?: string;
+  promo_code?: string;
+  [key: string]: unknown;
+}
+
+interface VendorApplication {
+  status?: string;
+  business_type?: string;
+  city?: string;
+  state_region?: string;
+  [key: string]: unknown;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -117,10 +141,13 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-signup-notification:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "An unknown error occurred" 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -129,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-function generateEmailHtml(profile: any, subscription: any, vendorApplication: any): string {
+function generateEmailHtml(profile: Profile, subscription: Subscription | null, vendorApplication: VendorApplication | null): string {
   const timestamp = new Date().toLocaleString("en-US", {
     dateStyle: "full",
     timeStyle: "long",
@@ -267,9 +294,9 @@ function generateEmailHtml(profile: any, subscription: any, vendorApplication: a
 }
 
 function generateUserConfirmationHtml(
-  profile: any,
-  subscription: any,
-  vendorApplication: any,
+  profile: Profile,
+  subscription: Subscription | null,
+  vendorApplication: VendorApplication | null,
   isVendor: boolean
 ): string {
   if (isVendor) {
@@ -279,7 +306,7 @@ function generateUserConfirmationHtml(
   }
 }
 
-function generateShopperWelcomeHtml(profile: any, subscription: any): string {
+function generateShopperWelcomeHtml(profile: Profile, subscription: Subscription | null): string {
   const userName = profile.full_name || profile.display_name || "there";
   const trialEndDate = subscription?.end_date 
     ? new Date(subscription.end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -394,7 +421,7 @@ function generateShopperWelcomeHtml(profile: any, subscription: any): string {
   `;
 }
 
-function generateVendorConfirmationHtml(profile: any, vendorApplication: any): string {
+function generateVendorConfirmationHtml(profile: Profile, vendorApplication: VendorApplication | null): string {
   const userName = profile.full_name || profile.display_name || "there";
   const businessType = vendorApplication?.business_type || "Not specified";
   const location = vendorApplication?.city 
