@@ -81,7 +81,9 @@ const Index = () => {
     title: listing.title,
     price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
     image: listing.image_url || "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=500",
-    categories: mapCategoriesToTypes(listing.categories as string[]),
+    categories: (listing.listing_types && listing.listing_types.length > 0 
+      ? listing.listing_types 
+      : [listing.listing_type]) as CategoryType[],
     vendor: "Local Vendor",
     vendorId: listing.vendor_id,
   }));
