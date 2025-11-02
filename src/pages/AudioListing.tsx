@@ -22,6 +22,20 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import LocationLink from "@/components/LocationLink";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type Listing = Database['public']['Tables']['listings']['Row'];
+type Coupon = Database['public']['Tables']['coupons']['Row'];
+
+interface VendorInfo {
+  id: string;
+  name: string;
+  logo: string;
+  website: string;
+  location: string;
+  verified: boolean;
+  clicks_to_website?: number;
+}
 
 // Audio URL parsing utilities
 const getAudioEmbedUrl = (url: string | null): { embedUrl: string; type: 'iframe' | 'audio' } | null => {
@@ -86,11 +100,11 @@ const AudioListing = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const [listing, setListing] = useState<any>(null);
-  const [vendor, setVendor] = useState<any>(null);
-  const [activeCoupon, setActiveCoupon] = useState<any>(null);
-  const [moreFromVendor, setMoreFromVendor] = useState<any[]>([]);
-  const [relatedListings, setRelatedListings] = useState<any[]>([]);
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [vendor, setVendor] = useState<VendorInfo | null>(null);
+  const [activeCoupon, setActiveCoupon] = useState<Coupon | null>(null);
+  const [moreFromVendor, setMoreFromVendor] = useState<Listing[]>([]);
+  const [relatedListings, setRelatedListings] = useState<Listing[]>([]);
   const [highFivesCount, setHighFivesCount] = useState(0);
 
   useEffect(() => {

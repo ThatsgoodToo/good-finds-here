@@ -93,7 +93,7 @@ const VendorSettings = () => {
 
       setLocationPublic(checked);
       toast.success("Privacy settings updated");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating location privacy:", error);
       toast.error("Failed to update privacy settings");
     } finally {

@@ -186,7 +186,7 @@ const HighFives = () => {
             image: listing.image_url || "",
             highFives: count || 0,
             price: listing.price ? `$${listing.price}` : "Contact for price",
-            type: listing.listing_type as any,
+            type: listing.listing_type as CategoryType,
           };
         })
       );
@@ -297,7 +297,7 @@ const HighFives = () => {
               image: listing.image_url || "",
               highFives: count || 0,
               price: listing.price ? `$${listing.price}` : "Contact for price",
-              type: listing.listing_type as any,
+              type: listing.listing_type as CategoryType,
               folder: favorite?.folder_name || "Favorites",
             };
           })
@@ -358,7 +358,7 @@ const HighFives = () => {
               image: listing.image_url || "",
               highFives: count || 0,
               price: listing.price ? `$${listing.price}` : "Contact for price",
-              type: listing.listing_type as any,
+              type: listing.listing_type as CategoryType,
               matchedFilters: matchedFilters.slice(0, 3),
             };
           })

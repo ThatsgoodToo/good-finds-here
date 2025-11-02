@@ -11,6 +11,18 @@ import ListView from "@/components/ListView";
 import { CategoryType } from "@/components/ProductCard";
 import { toast } from "sonner";
 import { mapCategoriesToTypes } from "@/lib/categoryMapping";
+import type { Database } from "@/integrations/supabase/types";
+
+type Listing = Database['public']['Tables']['listings']['Row'];
+
+interface ListingWithVendor extends Listing {
+  vendor_profiles?: {
+    business_name?: string;
+    display_name?: {
+      display_name?: string;
+    };
+  };
+}
 
 type FilterType = "all" | CategoryType;
 
@@ -20,7 +32,7 @@ const Index = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [hasSearched, setHasSearched] = useState(false);
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
-  const [dbListings, setDbListings] = useState<any[]>([]);
+  const [dbListings, setDbListings] = useState<ListingWithVendor[]>([]);
 
   useEffect(() => {
     const fetchListings = async () => {
