@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import LocationLink from "@/components/LocationLink";
 type CategoryType = "product" | "service" | "experience";
-type ListingType = CategoryType;
+type MediaType = "product" | "video" | "audio";
 const VendorNewListing = () => {
   const navigate = useNavigate();
   const {
@@ -44,6 +44,7 @@ const VendorNewListing = () => {
   // State variables
   const [loading, setLoading] = useState(false);
   const [loadingActiveCoupon, setLoadingActiveCoupon] = useState(false);
+  const [mediaType, setMediaType] = useState<MediaType>("product");
   const [listingTypes, setListingTypes] = useState<CategoryType[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -137,6 +138,11 @@ const VendorNewListing = () => {
         } = await supabase.from("listings").select("*").eq("id", listingId).single();
         if (error) throw error;
         if (data) {
+          // Load media type
+          if (data.listing_type === "video" || data.listing_type === "audio" || data.listing_type === "product") {
+            setMediaType(data.listing_type as MediaType);
+          }
+          
           const types = data.listing_types && data.listing_types.length > 0 
             ? data.listing_types 
             : (data.listing_type ? [data.listing_type] : []);
@@ -499,12 +505,14 @@ const VendorNewListing = () => {
           setIsFree(false);
         }
 
-        // Check if URL is video/audio and show info (don't add to mediaItems)
+        // Auto-detect and set media type based on URL
         const hostname = new URL(importUrl).hostname.toLowerCase();
         if (hostname.includes('youtube') || hostname.includes('youtu.be')) {
-          toast.info('Video metadata imported (video embeds not supported in image gallery)');
+          setMediaType('video');
+          toast.info('Video listing detected and set');
         } else if (hostname.includes('spotify') || hostname.includes('soundcloud')) {
-          toast.info('Audio metadata imported (audio embeds not supported in image gallery)');
+          setMediaType('audio');
+          toast.info('Audio listing detected and set');
         }
 
         // Set source URL if not already set
@@ -670,10 +678,10 @@ const VendorNewListing = () => {
         vendor_id: user.id,
         title: title.trim(),
         description: description.trim(),
-        listing_type: listingTypes[0],
-        // Primary type for backwards compatibility
+        listing_type: mediaType,
+        // Use the selected media type (product/video/audio)
         listing_types: listingTypes,
-        // All selected types
+        // All selected types for categorization
         price: isFree ? 0 : parseFloat(price) || null,
         category: category || null,
         categories: subcategories,
@@ -905,6 +913,39 @@ const VendorNewListing = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* LEFT - Form */}
             <div className="space-y-6">
+              {/* Media Type Selection */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <div>
+                    <Label className="text-base font-semibold">What are you listing? *</Label>
+                    <p className="text-sm text-muted-foreground mt-1">Choose the type of content</p>
+                    <RadioGroup value={mediaType} onValueChange={(value) => setMediaType(value as MediaType)} className="grid grid-cols-3 gap-3 mt-3">
+                      <div className="flex items-center">
+                        <RadioGroupItem value="product" id="media-product" className="peer sr-only" />
+                        <Label htmlFor="media-product" className="flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent">
+                          <Tag className="h-5 w-5" />
+                          <span className="text-sm font-medium">Product</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center">
+                        <RadioGroupItem value="video" id="media-video" className="peer sr-only" />
+                        <Label htmlFor="media-video" className="flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent">
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          <span className="text-sm font-medium">Video</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center">
+                        <RadioGroupItem value="audio" id="media-audio" className="peer sr-only" />
+                        <Label htmlFor="media-audio" className="flex flex-col items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:bg-accent transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-accent">
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                          <span className="text-sm font-medium">Audio</span>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Listing Type */}
               <Card>
                 <CardContent className="pt-6 space-y-4">
