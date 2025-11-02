@@ -7,6 +7,7 @@ import SignupModal from "@/components/SignupModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExternalLink, Hand, ChevronLeft, ChevronRight, Ticket, ArrowLeft } from "lucide-react";
+import { ExternalLink, Hand, ChevronLeft, ChevronRight, Ticket, ArrowLeft, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import LocationLink from "@/components/LocationLink";
@@ -228,10 +229,26 @@ const VideoListing = () => {
           <div className="container mx-auto px-4 sm:px-6 py-6">
             <div className="flex flex-col items-center text-center gap-4">
               <Link to={`/vendor/${vendor?.id}`}>
-                <div className="h-16 w-32 bg-white rounded flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
-                  <span className="text-2xl font-bold text-black">{vendor?.business_name}</span>
-                </div>
+                <Avatar className="h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
+                  <AvatarImage src={vendor?.logo} alt={vendor?.name} />
+                  <AvatarFallback>{vendor?.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
               </Link>
+              
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <button
+                  onClick={() => navigate(`/vendor/${vendor?.id}`)}
+                  className="text-2xl font-bold hover:text-primary transition-colors"
+                >
+                  {vendor?.name}
+                </button>
+                {vendor?.verified && (
+                  <Badge variant="default" className="gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    TGT Verified
+                  </Badge>
+                )}
+              </div>
               
               <div className="space-y-2">
                 {vendor?.location && (
@@ -249,13 +266,7 @@ const VideoListing = () => {
         {/* Back Button */}
         <div className="container mx-auto px-4 sm:px-6 py-4">
           <button 
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-              } else {
-                navigate(`/vendor/${listing.vendor_id}`);
-              }
-            }} 
+            onClick={() => navigate(-1)} 
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
@@ -434,57 +445,57 @@ const VideoListing = () => {
               )}
             </div>
           </div>
-
-          {/* More from Vendor */}
-          {moreFromVendor.length > 0 && (
-            <div className="mt-12">
-              <h2 className="text-3xl font-bold mb-4">More from {vendor?.business_name}</h2>
-              <div className="flex gap-4 overflow-x-auto pb-4">
-                {moreFromVendor.map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className="shrink-0 w-64 cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/listing/${item.id}`)}
-                  >
-                    <CardContent className="p-0">
-                      <div className="relative aspect-video">
-                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
-                      </div>
-                      <div className="p-3">
-                        <p className="text-sm font-medium">{item.title}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Related Listings */}
-          {relatedListings.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-3xl font-bold mb-4">Relatable Content</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {relatedListings.map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className="cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/listing/${item.id}`)}
-                  >
-                    <CardContent className="p-0">
-                      <div className="relative aspect-video">
-                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
-                      </div>
-                      <div className="p-3">
-                        <p className="text-sm font-medium">{item.title}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* More from Vendor */}
+        {moreFromVendor.length > 0 && (
+          <div className="container mx-auto px-4 sm:px-6 mt-12">
+            <h2 className="text-3xl font-bold mb-4">More from {vendor?.business_name}</h2>
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {moreFromVendor.map((item) => (
+                <Card 
+                  key={item.id} 
+                  className="shrink-0 w-64 cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => navigate(`/listing/${item.id}`)}
+                >
+                  <CardContent className="p-0">
+                    <div className="relative aspect-video">
+                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium">{item.title}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Related Listings */}
+        {relatedListings.length > 0 && (
+          <div className="container mx-auto px-4 sm:px-6 mt-8">
+            <h2 className="text-3xl font-bold mb-4">Relatable Content</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {relatedListings.map((item) => (
+                <Card 
+                  key={item.id} 
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => navigate(`/listing/${item.id}`)}
+                >
+                  <CardContent className="p-0">
+                    <div className="relative aspect-video">
+                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-t-lg" loading="lazy" />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium">{item.title}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         <SearchBar
           onSearch={() => {}}
