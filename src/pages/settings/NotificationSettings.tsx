@@ -51,6 +51,7 @@ const NotificationSettings = () => {
       }
     };
     loadPreferences();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
   const onSubmit = async (values: NotificationPreferences) => {
     if (!user) return;

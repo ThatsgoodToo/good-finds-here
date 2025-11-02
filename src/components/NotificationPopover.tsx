@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,25 @@ export const NotificationPopover = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
 
+  const loadNotifications = useCallback(async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error("Error loading notifications:", error);
+      return;
+    }
+
+    setNotifications(data || []);
+    setUnreadCount(data?.filter(n => !n.read).length || 0);
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
 
@@ -57,26 +76,7 @@ export const NotificationPopover = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
-
-  const loadNotifications = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    if (error) {
-      console.error("Error loading notifications:", error);
-      return;
-    }
-
-    setNotifications(data || []);
-    setUnreadCount(data?.filter(n => !n.read).length || 0);
-  };
+  }, [user, loadNotifications]);
 
   const markAsRead = async (notificationId: string) => {
     const { error } = await supabase

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
@@ -92,6 +92,7 @@ const HighFives = () => {
     };
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, userRole]);
 
   const fetchGuestData = async () => {
