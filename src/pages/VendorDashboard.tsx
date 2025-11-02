@@ -87,13 +87,14 @@ const VendorDashboard = () => {
   const [listings, setListings] = useState<Array<{
     id: string;
     title: string;
-    type: "product" | "service" | "content";
+    type: "product" | "service" | "experience";
+    categories?: string[];
     price: string;
     inventory: string;
     activeOffer: boolean;
     offerDetails?: string;
     couponClaims?: number;
-    status: "active" | "warning";
+    status: "active" | "paused";
   }>>([]);
   
   const { sharesRemaining, maxShares } = useVendorShareLimits();
@@ -248,7 +249,8 @@ const VendorDashboard = () => {
             return {
               id: listing.id,
               title: listing.title,
-              type: listing.listing_type as "product" | "service" | "content",
+              type: (listing.listing_type === "experience" ? "experience" : listing.listing_type) as "product" | "service" | "experience",
+              categories: listing.categories || [],
               price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
               inventory: "Available",
               activeOffer: !!activeCoupon,
@@ -256,7 +258,7 @@ const VendorDashboard = () => {
                 ? `${activeCoupon.code} - ${activeCoupon.discount_value}${activeCoupon.discount_type === 'percentage' ? '%' : '$'} off`
                 : undefined,
               couponClaims: activeCoupon?.used_count || undefined,
-              status: (listing.status === "active" ? "active" : "warning") as "active" | "warning",
+              status: (listing.status === "active" ? "active" : "paused") as "active" | "paused",
             };
           })
         );
@@ -377,6 +379,55 @@ const VendorDashboard = () => {
     navigate(`/vendor/listing/edit/${id}`);
   };
 
+  const handleDeleteListing = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      // First, delete any associated coupons
+      await supabase
+        .from("coupons")
+        .delete()
+        .eq("listing_id", id);
+      
+      // Then delete the listing
+      const { error } = await supabase
+        .from("listings")
+        .delete()
+        .eq("id", id)
+        .eq("vendor_id", user.id);
+      
+      if (error) throw error;
+      
+      toast.success("Listing deleted successfully");
+      setListingsRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+      toast.error("Failed to delete listing");
+    }
+  };
+
+  const handleToggleListingStatus = async (id: string, currentStatus: string) => {
+    if (!user) return;
+    
+    try {
+      const newStatus = currentStatus === "active" ? "paused" : "active";
+      
+      const { error } = await supabase
+        .from("listings")
+        .update({ status: newStatus })
+        .eq("id", id)
+        .eq("vendor_id", user.id);
+      
+      if (error) throw error;
+      
+      toast.success(`Listing ${newStatus === "active" ? "activated" : "paused"}`);
+      setListingsRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error("Error updating listing status:", error);
+      toast.error("Failed to update listing status");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -469,6 +520,8 @@ const VendorDashboard = () => {
                 listings={listings}
                 onAddListing={handleAddListing}
                 onEditListing={handleEditListing}
+                onDeleteListing={handleDeleteListing}
+                onToggleStatus={handleToggleListingStatus}
               />
             </TabsContent>
 
