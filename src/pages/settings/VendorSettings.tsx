@@ -21,7 +21,6 @@ const VendorSettings = () => {
   const [displayName, setDisplayName] = useState("");
   const [location, setLocation] = useState("");
   const [website, setWebsite] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   const hasVendorRole = roles.includes("vendor");
   const hasShopperRole = roles.includes("shopper");
@@ -102,36 +101,6 @@ const VendorSettings = () => {
     }
   };
 
-  const handleSaveVendorInfo = async () => {
-    if (!user) return;
-    
-    setIsSaving(true);
-    try {
-      // Parse location (format: "City, State, Country")
-      const locationParts = location.split(",").map(part => part.trim());
-      const [city, state_region, country] = locationParts;
-
-      const { error } = await supabase
-        .from("vendor_profiles")
-        .update({ 
-          city: city || null,
-          state_region: state_region || null,
-          country: country || null,
-          website: website || null
-        })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
-      toast.success("Vendor information updated successfully");
-    } catch (error: any) {
-      console.error("Error updating vendor info:", error);
-      toast.error("Failed to update vendor information");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <SettingsLayout>
       <div className="space-y-6">
@@ -185,47 +154,44 @@ const VendorSettings = () => {
                 className="bg-muted opacity-60"
               />
               <p className="text-sm text-muted-foreground">
-                Your business name is locked for security. Contact support to request a business name change.
+                Your business name is locked for security. Contact support to request changes.
               </p>
             </div>
 
-            {/* Location - Editable */}
+            {/* Location - Locked */}
             <div className="space-y-2">
-              <Label htmlFor="location">Business Location (Editable)</Label>
+              <Label htmlFor="location" className="flex items-center gap-2">
+                Business Location <Lock className="h-3 w-3 text-muted-foreground" />
+              </Label>
               <Input
                 id="location"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, State, Country"
+                readOnly
+                disabled
+                className="bg-muted opacity-60"
               />
               <p className="text-sm text-muted-foreground">
-                Format: City, State, Country (e.g., "San Francisco, CA, USA")
+                Your business location is locked for security. Contact support to request changes.
               </p>
             </div>
 
-            {/* Website - Editable */}
+            {/* Website - Locked */}
             <div className="space-y-2">
-              <Label htmlFor="website">Business Website (Editable)</Label>
+              <Label htmlFor="website" className="flex items-center gap-2">
+                Business Website <Lock className="h-3 w-3 text-muted-foreground" />
+              </Label>
               <Input
                 id="website"
                 value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://yourwebsite.com"
+                readOnly
+                disabled
+                className="bg-muted opacity-60"
                 type="url"
               />
               <p className="text-sm text-muted-foreground">
-                Your business website or online store URL
+                Your business website is locked for security. Contact support to request changes.
               </p>
             </div>
-
-            {/* Save Button */}
-            <Button 
-              onClick={handleSaveVendorInfo} 
-              disabled={isSaving}
-              className="w-full"
-            >
-              {isSaving ? "Saving..." : "Save Vendor Information"}
-            </Button>
           </CardContent>
         </Card>
 
