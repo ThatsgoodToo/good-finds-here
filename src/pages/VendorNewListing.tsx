@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,7 +34,8 @@ import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalL
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-type ListingType = "product" | "service" | "viewerbase";
+type CategoryType = "product" | "service" | "experience";
+type ListingType = CategoryType;
 
 const VendorNewListing = () => {
   const navigate = useNavigate();
@@ -42,7 +44,7 @@ const VendorNewListing = () => {
   const { status: vendorStatus, isLoading: checkingStatus } = useVendorAccess();
   const isEditMode = !!listingId;
   const [loading, setLoading] = useState(false);
-  const [listingType, setListingType] = useState<ListingType | "">("");
+  const [listingTypes, setListingTypes] = useState<CategoryType[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -51,9 +53,10 @@ const VendorNewListing = () => {
   const [category, setCategory] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [shippingOptions, setShippingOptions] = useState<string[]>([]);
-  const [hasActiveOffer, setHasActiveOffer] = useState(false);
-  const [offerDetails, setOfferDetails] = useState("");
-  const [offerExpiry, setOfferExpiry] = useState("");
+  const [listingLink, setListingLink] = useState("");
+  const [showCouponForm, setShowCouponForm] = useState(false);
+  const [couponCreated, setCouponCreated] = useState(false);
+  const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [videoEmbeds, setVideoEmbeds] = useState<string[]>([]);
   const [audioEmbeds, setAudioEmbeds] = useState<string[]>([]);
@@ -96,7 +99,8 @@ const VendorNewListing = () => {
         if (error) throw error;
 
         if (data) {
-          setListingType(data.listing_type as ListingType);
+          const type = data.listing_type as ListingType;
+          setListingTypes([type]);
           setTitle(data.title);
           setDescription(data.description || "");
           setPrice(data.price?.toString() || "");
@@ -104,10 +108,25 @@ const VendorNewListing = () => {
           setCategory(data.category || "");
           setSubcategories(data.categories || []);
           setSourceUrl(data.source_url || "");
+          setListingLink(data.listing_link || "");
           
           // Load media
           if (data.image_url) {
             setImages([data.image_url]);
+          }
+          
+          // Check for active coupon
+          const { data: couponData } = await supabase
+            .from("coupons")
+            .select("id")
+            .eq("listing_id", listingId)
+            .eq("active_status", true)
+            .gte("end_date", new Date().toISOString())
+            .limit(1);
+          
+          if (couponData && couponData.length > 0) {
+            setHasActiveCoupon(true);
+            setCouponCreated(true);
           }
         }
       } catch (error) {
@@ -207,7 +226,13 @@ const VendorNewListing = () => {
     "Other",
   ];
 
-  const requiresActiveOffer = (listingType === "product" || listingType === "service") && !hasExistingActiveOffers && !isFree;
+  const toggleListingType = (type: CategoryType) => {
+    if (listingTypes.includes(type)) {
+      setListingTypes(listingTypes.filter(t => t !== type));
+    } else {
+      setListingTypes([...listingTypes, type]);
+    }
+  };
 
   // Extract metadata from URL for auto-fill
   const extractUrlMetadata = async (url: string): Promise<{
@@ -605,8 +630,8 @@ const VendorNewListing = () => {
 
   const handleSubmit = async () => {
     // Validation
-    if (!listingType) {
-      toast.error("Please select a listing type");
+    if (listingTypes.length === 0) {
+      toast.error("Please select at least one listing type");
       return;
     }
     if (!title.trim()) {
@@ -617,12 +642,8 @@ const VendorNewListing = () => {
       toast.error("Please enter a description");
       return;
     }
-    if (requiresActiveOffer && !hasActiveOffer) {
-      toast.error("You must add an active offer for this listing");
-      return;
-    }
-    if (hasActiveOffer && !offerDetails.trim()) {
-      toast.error("Please provide offer details");
+    if (listingLink && !listingLink.match(/^https?:\/\/.+/)) {
+      toast.error("Listing link must be a valid URL");
       return;
     }
     // Validation - require at least one media item (image, video, or audio URL)
@@ -642,12 +663,13 @@ const VendorNewListing = () => {
         vendor_id: user.id,
         title: title.trim(),
         description: description.trim(),
-        listing_type: listingType,
+        listing_type: listingTypes[0], // Primary type
         price: isFree ? 0 : parseFloat(price) || null,
         category: category || null,
         categories: subcategories,
         image_url: images[0] || null,
         source_url: sourceUrl.trim() || null,
+        listing_link: listingLink.trim() || null,
         status: "active"
       };
 
@@ -698,18 +720,6 @@ const VendorNewListing = () => {
             {isEditMode ? "Edit Listing" : "Create New Listing"}
           </h1>
 
-          {/* Import from URL Button */}
-          <div className="mb-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowImportDialog(true)}
-              className="w-full sm:w-auto"
-            >
-              <Link className="h-4 w-4 mr-2" />
-              Import Product from URL
-            </Button>
-          </div>
 
           {/* Import Dialog */}
           <Dialog open={showImportDialog} onOpenChange={(open) => {
@@ -836,41 +846,49 @@ const VendorNewListing = () => {
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   <div>
-                    <Label htmlFor="listingType" className="text-base font-semibold">Listing Type *</Label>
-                    <Select value={listingType} onValueChange={(val) => setListingType(val as ListingType)}>
-                      <SelectTrigger id="listingType" className="mt-2">
-                        <SelectValue placeholder="Select listing type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="product">Product</SelectItem>
-                        <SelectItem value="service">Service</SelectItem>
-                        <SelectItem value="viewerbase">Viewer Base</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-base font-semibold">Listing Type *</Label>
+                    <p className="text-sm text-muted-foreground mt-1">Select one or more types</p>
+                    <div className="grid grid-cols-1 gap-3 mt-3">
+                      {(["product", "service", "experience"] as CategoryType[]).map((type) => (
+                        <div key={type} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent transition-colors">
+                          <Checkbox
+                            id={type}
+                            checked={listingTypes.includes(type)}
+                            onCheckedChange={() => toggleListingType(type)}
+                          />
+                          <Label htmlFor={type} className="flex items-center gap-2 cursor-pointer flex-1 text-base font-normal">
+                            <div className={cn(
+                              "w-3 h-3 rounded-full ring-1 ring-border",
+                              type === "product" && "bg-category-product",
+                              type === "service" && "bg-category-service",
+                              type === "experience" && "bg-category-experience"
+                            )} />
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-
-                  {listingType && (
-                    <div className="flex items-center gap-2">
-                      <Checkbox id="free" checked={isFree} onCheckedChange={(checked) => setIsFree(checked as boolean)} />
-                      <Label htmlFor="free" className="text-sm font-normal">
-                        Free/No Cost
-                      </Label>
-                    </div>
-                  )}
-
-                  {requiresActiveOffer && (
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                      <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
-                        You must add an active offer since you have no existing active offers
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
+              {/* Import from URL Button */}
+              {listingTypes.length > 0 && (
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowImportDialog(true)}
+                    className="w-full"
+                  >
+                    <Link className="h-4 w-4 mr-2" />
+                    Import Product from URL
+                  </Button>
+                </div>
+              )}
+
               {/* Media */}
-              {listingType && (
+              {listingTypes.length > 0 && (
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <Label className="text-base font-semibold">Media (Provide at least one image or URL)</Label>
@@ -1169,55 +1187,42 @@ const VendorNewListing = () => {
                 </CardContent>
               </Card>
 
-              {/* Active Offer */}
-              {listingType && (listingType !== "viewerbase" || !isFree) && (
+              {/* Create Coupon Section */}
+              {listingTypes.length > 0 && !isFree && (
                 <Card>
                   <CardContent className="pt-6 space-y-4">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-semibold">
-                          Active Offer {requiresActiveOffer && "*"}
-                        </Label>
+                        <Label className="text-base font-semibold">Create Coupon for This Listing</Label>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {requiresActiveOffer
-                            ? "Required - you must add an offer to this listing"
-                            : "Add an optional offer to this listing"}
+                          Optional: Add a coupon that will be linked to this listing
                         </p>
                       </div>
+                      {couponCreated && (
+                        <Badge variant="default" className="gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Coupon Created
+                        </Badge>
+                      )}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="hasOffer"
-                        checked={hasActiveOffer}
-                        onCheckedChange={(checked) => setHasActiveOffer(checked as boolean)}
-                      />
-                      <Label htmlFor="hasOffer">Add an active offer/coupon to this listing</Label>
-                    </div>
+                    {!couponCreated && (
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="showCoupon"
+                          checked={showCouponForm}
+                          onCheckedChange={(checked) => setShowCouponForm(checked as boolean)}
+                        />
+                        <Label htmlFor="showCoupon">Create a coupon for this listing</Label>
+                      </div>
+                    )}
 
-                    {hasActiveOffer && (
-                      <>
-                        <div>
-                          <Label htmlFor="offerDetails">Offer Details *</Label>
-                          <Input
-                            id="offerDetails"
-                            value={offerDetails}
-                            onChange={(e) => setOfferDetails(e.target.value)}
-                            placeholder="e.g., 15% off, Buy 2 Get 1 Free, Free Shipping"
-                            className="mt-2"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="offerExpiry">Expiration Date (Optional)</Label>
-                          <Input
-                            id="offerExpiry"
-                            type="date"
-                            value={offerExpiry}
-                            onChange={(e) => setOfferExpiry(e.target.value)}
-                            className="mt-2"
-                          />
-                        </div>
-                      </>
+                    {showCouponForm && !couponCreated && (
+                      <div className="border rounded-lg p-4 bg-muted/50">
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Coupon will be automatically linked to this listing once created.
+                        </p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -1287,6 +1292,30 @@ const VendorNewListing = () => {
 
                 {/* Main Content Preview */}
                 <div className="space-y-4">
+                  {/* Listing Type Dots */}
+                  {listingTypes.length > 0 && (
+                    <div className="flex gap-1.5 items-center">
+                      {listingTypes.map((type) => (
+                        <div
+                          key={type}
+                          className={cn(
+                            "w-3 h-3 rounded-full ring-1 ring-border",
+                            type === "product" && "bg-category-product",
+                            type === "service" && "bg-category-service",
+                            type === "experience" && "bg-category-experience"
+                          )}
+                        />
+                      ))}
+                      {(couponCreated || hasActiveCoupon) && listingLink && (
+                        <div
+                          className="w-3 h-3 rounded-full bg-category-sale ring-1 ring-border cursor-pointer hover:scale-110 transition-transform"
+                          onClick={() => window.open(listingLink, "_blank")}
+                          title="Active coupon - Click to view offer"
+                        />
+                      )}
+                    </div>
+                  )}
+
                   {/* Images Preview */}
                   {images.length > 0 ? (
                     <div className="flex gap-2">
@@ -1379,17 +1408,22 @@ const VendorNewListing = () => {
                       </div>
                     )}
 
-                    {hasActiveOffer && offerDetails && (
-                      <div>
-                        <h4 className="font-semibold mb-2">Active Offer</h4>
-                        <Card>
-                          <CardContent className="pt-3 pb-3">
-                            <p className="font-medium text-xs">{offerDetails}</p>
-                            {offerExpiry && (
-                              <p className="text-xs text-muted-foreground mt-1">Expires: {offerExpiry}</p>
-                            )}
-                          </CardContent>
-                        </Card>
+                    {(couponCreated || hasActiveCoupon) && (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive" className="gap-1">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                          Active Coupon
+                        </Badge>
+                        {listingLink && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => window.open(listingLink, "_blank")}
+                            className="h-auto p-0 text-xs"
+                          >
+                            View Offer <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
+                        )}
                       </div>
                     )}
 

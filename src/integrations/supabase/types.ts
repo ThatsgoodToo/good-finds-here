@@ -229,6 +229,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_featured: boolean | null
+          listing_link: string | null
           listing_type: string
           location: string | null
           price: number | null
@@ -250,6 +251,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
+          listing_link?: string | null
           listing_type?: string
           location?: string | null
           price?: number | null
@@ -271,6 +273,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
+          listing_link?: string | null
           listing_type?: string
           location?: string | null
           price?: number | null

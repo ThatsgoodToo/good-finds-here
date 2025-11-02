@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Hand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,36 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
   const [newFolderName, setNewFolderName] = useState("");
   const [folders, setFolders] = useState(["Favorites", "Wishlist", "For Later"]);
   const [saved, setSaved] = useState(isSaved);
+  const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
+  const [listingLink, setListingLink] = useState<string | null>(null);
+
+  // Check for active coupon
+  useEffect(() => {
+    const checkActiveCoupon = async () => {
+      const { data: couponData } = await supabase
+        .from("coupons")
+        .select("id")
+        .eq("listing_id", id)
+        .eq("active_status", true)
+        .gte("end_date", new Date().toISOString())
+        .limit(1);
+
+      if (couponData && couponData.length > 0) {
+        setHasActiveCoupon(true);
+        
+        // Get listing link
+        const { data: listingData } = await supabase
+          .from("listings")
+          .select("listing_link")
+          .eq("id", id)
+          .single();
+        
+        setListingLink(listingData?.listing_link || null);
+      }
+    };
+
+    checkActiveCoupon();
+  }, [id]);
 
   // Determine listing path based on categories
   const getListingPath = () => {
@@ -98,6 +129,23 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
               className={cn("w-3 h-3 rounded-full ring-1 ring-border", categoryColors[cat])} 
             />
           ))}
+          {hasActiveCoupon && (
+            <div
+              className={cn(
+                "w-3 h-3 rounded-full ring-1 ring-border bg-category-sale cursor-pointer hover:scale-110 transition-transform"
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (listingLink) {
+                  window.open(listingLink, "_blank");
+                } else {
+                  toast.info("Active coupon available - view listing for details");
+                }
+              }}
+              title={listingLink ? "Click to view offer" : "Active coupon available"}
+            />
+          )}
         </div>
 
         {/* High-Five Button */}

@@ -17,7 +17,7 @@ const categoryToTypeMap: Record<string, CategoryType> = {
   "Consulting": "service",
   "Repair & Maintenance": "service",
   
-  // Experiences
+  // Experiences (changed from viewerbase)
   "Education & Experiences": "experience",
   "Workshops & Classes": "experience",
   "Events": "experience",
