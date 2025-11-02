@@ -19,9 +19,17 @@ interface VendorFiltersProps {
   mainCategories: string[];
   subcategories: string[];
   onEditSubcategories: (newSubcategories: string[]) => void;
+  additionalInfo?: {
+    businessType?: string;
+    businessDuration?: string;
+    sustainableMethods?: string[];
+    pricingStyle?: string;
+    inventoryType?: string[];
+    shippingOptions?: string[];
+  };
 }
 
-const VendorFilters = ({ mainCategories, subcategories, onEditSubcategories }: VendorFiltersProps) => {
+const VendorFilters = ({ mainCategories, subcategories, onEditSubcategories, additionalInfo }: VendorFiltersProps) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editedSubcategories, setEditedSubcategories] = useState<string[]>(subcategories);
   const [newSubcategory, setNewSubcategory] = useState("");
@@ -116,6 +124,68 @@ const VendorFilters = ({ mainCategories, subcategories, onEditSubcategories }: V
               Subcategories can be edited instantly for specific listings.
             </p>
           </div>
+
+          {/* Additional Information from Application */}
+          {additionalInfo && (
+            <div className="border-t pt-6 mt-6">
+              <h4 className="font-semibold text-sm mb-4">Additional Information</h4>
+              <div className="space-y-4">
+                {additionalInfo.businessType && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Business Type / Ownership</p>
+                    <Badge variant="outline">{additionalInfo.businessType}</Badge>
+                  </div>
+                )}
+                
+                {additionalInfo.businessDuration && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Business Duration</p>
+                    <Badge variant="outline">{additionalInfo.businessDuration}</Badge>
+                  </div>
+                )}
+
+                {additionalInfo.pricingStyle && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Pricing Style</p>
+                    <Badge variant="outline">{additionalInfo.pricingStyle}</Badge>
+                  </div>
+                )}
+
+                {additionalInfo.inventoryType && additionalInfo.inventoryType.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Inventory Type</p>
+                    <div className="flex flex-wrap gap-2">
+                      {additionalInfo.inventoryType.map((type) => (
+                        <Badge key={type} variant="outline">{type}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {additionalInfo.shippingOptions && additionalInfo.shippingOptions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Shipping Options</p>
+                    <div className="flex flex-wrap gap-2">
+                      {additionalInfo.shippingOptions.map((option) => (
+                        <Badge key={option} variant="outline">{option}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {additionalInfo.sustainableMethods && additionalInfo.sustainableMethods.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Sustainable Methods</p>
+                    <div className="flex flex-wrap gap-2">
+                      {additionalInfo.sustainableMethods.map((method) => (
+                        <Badge key={method} variant="outline">{method}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

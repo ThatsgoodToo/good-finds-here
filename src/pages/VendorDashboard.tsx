@@ -65,6 +65,14 @@ const VendorDashboard = () => {
   const [vendorDescription, setVendorDescription] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [mainCategories, setMainCategories] = useState<string[]>([]);
+  const [additionalVendorInfo, setAdditionalVendorInfo] = useState<{
+    businessType?: string;
+    businessDuration?: string;
+    sustainableMethods?: string[];
+    pricingStyle?: string;
+    inventoryType?: string[];
+    shippingOptions?: string[];
+  }>({});
   
   // Metrics state
   const [metrics, setMetrics] = useState({
@@ -131,6 +139,14 @@ const VendorDashboard = () => {
         setVendorDescription(vendorProfile.business_description || "");
         setSubcategories(vendorProfile.area_of_expertise || []);
         setMainCategories(vendorProfile.products_services || []);
+        setAdditionalVendorInfo({
+          businessType: vendorProfile.business_type || undefined,
+          businessDuration: vendorProfile.business_duration || undefined,
+          sustainableMethods: vendorProfile.sustainable_methods || undefined,
+          pricingStyle: vendorProfile.pricing_style || undefined,
+          inventoryType: vendorProfile.inventory_type || undefined,
+          shippingOptions: vendorProfile.shipping_options || undefined,
+        });
       }
 
       if (profile) {
@@ -545,6 +561,7 @@ const VendorDashboard = () => {
                 mainCategories={mainCategories}
                 subcategories={subcategories}
                 onEditSubcategories={handleEditSubcategories}
+                additionalInfo={additionalVendorInfo}
               />
             </TabsContent>
 
