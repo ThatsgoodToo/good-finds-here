@@ -471,6 +471,10 @@ const VendorNewListing = () => {
       toast.error("Please enter a description");
       return;
     }
+    if (!category || !category.trim()) {
+      toast.error("Please select a category");
+      return;
+    }
     if (!sourceUrl.trim()) {
       toast.error("Source URL is required");
       return;
@@ -573,9 +577,20 @@ const VendorNewListing = () => {
         }
       }
       navigate("/dashboard/vendor");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving listing:", error);
-      toast.error(`Failed to ${isEditMode ? 'update' : 'create'} listing`);
+      
+      // Show detailed error message
+      const errorMessage = error?.message || error?.error_description || `Failed to ${isEditMode ? 'update' : 'create'} listing`;
+      toast.error(errorMessage);
+      
+      // Log full error for debugging
+      console.error("Full error details:", {
+        error,
+        user: user?.id,
+        isEditMode,
+        listingId
+      });
     } finally {
       setLoading(false);
     }
