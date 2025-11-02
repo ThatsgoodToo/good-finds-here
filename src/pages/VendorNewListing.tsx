@@ -137,8 +137,10 @@ const VendorNewListing = () => {
         } = await supabase.from("listings").select("*").eq("id", listingId).single();
         if (error) throw error;
         if (data) {
-          const type = data.listing_type as ListingType;
-          setListingTypes([type]);
+          const types = data.listing_types && data.listing_types.length > 0 
+            ? data.listing_types 
+            : (data.listing_type ? [data.listing_type] : []);
+          setListingTypes(types as CategoryType[]);
           setTitle(data.title);
           setDescription(data.description || "");
           setPrice(data.price?.toString() || "");
@@ -669,7 +671,9 @@ const VendorNewListing = () => {
         title: title.trim(),
         description: description.trim(),
         listing_type: listingTypes[0],
-        // Primary type
+        // Primary type for backwards compatibility
+        listing_types: listingTypes,
+        // All selected types
         price: isFree ? 0 : parseFloat(price) || null,
         category: category || null,
         categories: subcategories,
@@ -1343,7 +1347,7 @@ const VendorNewListing = () => {
                   {/* Listing Type Dots */}
                   {listingTypes.length > 0 && <div className="flex gap-1.5 items-center">
                       {listingTypes.map(type => <div key={type} className={cn("w-3 h-3 rounded-full ring-1 ring-border", type === "product" && "bg-category-product", type === "service" && "bg-category-service", type === "experience" && "bg-category-experience")} />)}
-                      {(couponCreated || hasActiveCoupon) && sourceUrl && <div className="w-3 h-3 rounded-full bg-category-sale ring-1 ring-border cursor-pointer hover:scale-110 transition-transform" onClick={() => window.open(sourceUrl, "_blank")} title="Active coupon - Click to view offer" />}
+                      {(couponCreated || hasActiveCoupon || activeCouponDetails) && <div className="w-3 h-3 rounded-full bg-category-sale ring-1 ring-border cursor-pointer hover:scale-110 transition-transform" onClick={() => sourceUrl && window.open(sourceUrl, "_blank")} title="Active coupon available" />}
                     </div>}
 
                   {/* Media Preview */}

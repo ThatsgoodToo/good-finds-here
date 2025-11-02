@@ -231,6 +231,7 @@ export type Database = {
           is_featured: boolean | null
           listing_link: string | null
           listing_type: string
+          listing_types: string[] | null
           location: string | null
           price: number | null
           source_url: string | null
@@ -253,6 +254,7 @@ export type Database = {
           is_featured?: boolean | null
           listing_link?: string | null
           listing_type?: string
+          listing_types?: string[] | null
           location?: string | null
           price?: number | null
           source_url?: string | null
@@ -275,6 +277,7 @@ export type Database = {
           is_featured?: boolean | null
           listing_link?: string | null
           listing_type?: string
+          listing_types?: string[] | null
           location?: string | null
           price?: number | null
           source_url?: string | null
