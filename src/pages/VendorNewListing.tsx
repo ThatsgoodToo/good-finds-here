@@ -899,7 +899,7 @@ const VendorNewListing = () => {
                               }}
                             >
                               <ExternalLink className="h-4 w-4" />
-                              Create Coupon in Dashboard
+                              Create Coupon in Active Offers
                             </Button>
                           </div>
                         </div>
@@ -962,11 +962,26 @@ const VendorNewListing = () => {
                         </Select>
 
                         {selectedCouponId && (
-                          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                            <div className="h-2 w-2 bg-green-500 rounded-full" />
-                            <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                              Coupon will be linked to this listing
-                            </span>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                              <div className="h-2 w-2 bg-green-500 rounded-full" />
+                              <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                                Coupon will be linked to this listing
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                              onClick={() => {
+                                setSelectedCouponId("");
+                                toast.success("Coupon removed from listing");
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Remove Coupon
+                            </Button>
                           </div>
                         )}
 
@@ -981,7 +996,7 @@ const VendorNewListing = () => {
                           }}
                         >
                           <ExternalLink className="h-4 w-4" />
-                          Create New Coupon in Dashboard
+                          Create New Coupon in Active Offers
                         </Button>
                       </div>
                     )}

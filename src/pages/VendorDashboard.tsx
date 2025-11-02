@@ -98,6 +98,15 @@ const VendorDashboard = () => {
   
   const { sharesRemaining, maxShares } = useVendorShareLimits();
 
+  // Detect URL tab parameter and switch to it
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['overview', 'listings', 'coupons', 'hifives'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, []);
+
   useEffect(() => {
     const loadVendorProfile = async () => {
       if (!user) return;
