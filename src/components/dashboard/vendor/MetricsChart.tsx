@@ -107,7 +107,7 @@ const MetricsChart = ({ metric, onClose }: MetricsChartProps) => {
             setMonthlyData(monthData);
           }
         } else {
-          // For clicks and offers, use demo data as we don't have time-series tracking yet
+          // For clicks and offers, time-series tracking not yet implemented
           setWeeklyData([
             { name: "Mon", value: 0 },
             { name: "Tue", value: 0 },
