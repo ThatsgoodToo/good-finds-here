@@ -29,8 +29,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link } from "lucide-react";
+import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link, Info } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type ListingType = "product" | "service" | "viewerbase";
 
@@ -65,6 +66,13 @@ const VendorNewListing = () => {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importUrl, setImportUrl] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [importError, setImportError] = useState<{
+    show: boolean;
+    message: string;
+    suggestedTitle: string | null;
+    sourceUrl: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -95,6 +103,7 @@ const VendorNewListing = () => {
           setIsFree(!data.price || data.price === 0);
           setCategory(data.category || "");
           setSubcategories(data.categories || []);
+          setSourceUrl(data.source_url || "");
           
           // Load media
           if (data.image_url) {
@@ -255,7 +264,7 @@ const VendorNewListing = () => {
       const metadata = await extractUrlMetadata(importUrl);
       
       if (metadata) {
-        // Always overwrite in import mode
+        // Success path - same as before
         setTitle(metadata.title);
         setDescription(metadata.description);
         
@@ -278,12 +287,58 @@ const VendorNewListing = () => {
         
         setShowImportDialog(false);
         setImportUrl("");
+        setImportError(null);
         toast.success('Product details imported successfully!', { id: loadingToast });
       } else {
-        toast.error('Could not import product details', { id: loadingToast });
+        // ENHANCED FAILURE PATH
+        toast.dismiss(loadingToast);
+        
+        // Try to extract basic info from URL
+        const urlObj = new URL(importUrl);
+        const hostname = urlObj.hostname.replace('www.', '');
+        const pathname = urlObj.pathname;
+        
+        // Extract potential title from URL slug
+        const urlParts = pathname.split('/').filter(p => p.length > 0);
+        const lastPart = urlParts[urlParts.length - 1];
+        const potentialTitle = lastPart
+          ?.replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase())
+          .replace(/\.\w+$/, ''); // Remove file extensions
+        
+        // Detect site type for better messaging
+        const isEcommerce = hostname.includes('etsy') || 
+                           hostname.includes('amazon') || 
+                           hostname.includes('ebay') ||
+                           hostname.includes('shopify');
+        
+        // Show manual entry option with pre-filled data
+        setImportError({
+          show: true,
+          message: isEcommerce 
+            ? `${hostname} blocks automatic imports. Let's create your listing manually!`
+            : `We couldn't read this page automatically. Let's create your listing manually!`,
+          suggestedTitle: potentialTitle || null,
+          sourceUrl: importUrl
+        });
       }
     } catch (error) {
-      toast.error('Failed to import product', { id: loadingToast });
+      toast.dismiss(loadingToast);
+      
+      // Parse error for better messaging
+      try {
+        const urlObj = new URL(importUrl);
+        const hostname = urlObj.hostname.replace('www.', '');
+        
+        setImportError({
+          show: true,
+          message: 'There was a problem reading this URL. Let\'s create your listing manually!',
+          suggestedTitle: null,
+          sourceUrl: importUrl
+        });
+      } catch {
+        toast.error('Invalid URL format', { id: loadingToast });
+      }
     }
   };
 
@@ -592,6 +647,7 @@ const VendorNewListing = () => {
         category: category || null,
         categories: subcategories,
         image_url: images[0] || null,
+        source_url: sourceUrl.trim() || null,
         status: "active"
       };
 
@@ -656,31 +712,119 @@ const VendorNewListing = () => {
           </div>
 
           {/* Import Dialog */}
-          <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-            <DialogContent>
+          <Dialog open={showImportDialog} onOpenChange={(open) => {
+            setShowImportDialog(open);
+            if (!open) {
+              setImportError(null);
+              setImportUrl("");
+            }
+          }}>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Import Product from URL</DialogTitle>
                 <DialogDescription>
-                  Paste a product URL from Etsy, Amazon, eBay, Shopify, or any e-commerce site.
-                  We'll automatically fill in the product details for you.
+                  {!importError?.show ? (
+                    "Paste a product URL and we'll try to automatically fill in the details."
+                  ) : (
+                    "No problem! Let's create your listing manually."
+                  )}
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  placeholder="https://www.etsy.com/listing/..."
-                  value={importUrl}
-                  onChange={(e) => setImportUrl(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleImportFromUrl()}
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleImportFromUrl}>
-                    Import Product
-                  </Button>
+              
+              {!importError?.show ? (
+                // Standard import view
+                <div className="space-y-4">
+                  <Input
+                    placeholder="https://www.etsy.com/listing/..."
+                    value={importUrl}
+                    onChange={(e) => setImportUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleImportFromUrl()}
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => {
+                      setShowImportDialog(false);
+                      setImportUrl("");
+                    }}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleImportFromUrl}>
+                      Import Product
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                // Manual entry guidance view
+                <div className="space-y-4">
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      {importError.message}
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <div className="bg-muted p-4 rounded-lg space-y-2">
+                    <p className="font-medium text-sm">📝 Quick Tips:</p>
+                    <ul className="text-sm space-y-1 ml-4">
+                      <li>• Open the product page in another tab</li>
+                      <li>• Copy the title, description, and price</li>
+                      <li>• Right-click images and copy image URLs</li>
+                    </ul>
+                  </div>
+                  
+                  {importError.suggestedTitle && (
+                    <div className="space-y-2">
+                      <Label>We found this in the URL:</Label>
+                      <Input 
+                        value={importError.suggestedTitle}
+                        readOnly
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        You can use this as your title or change it
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label>Reference URL (saved for your records)</Label>
+                    <Input 
+                      value={importError.sourceUrl}
+                      readOnly
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      We'll save this URL so you can reference it later
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setImportError(null);
+                        setImportUrl("");
+                      }}
+                    >
+                      Try Different URL
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        // Apply suggested data and close dialog
+                        if (importError.suggestedTitle) {
+                          setTitle(importError.suggestedTitle);
+                        }
+                        setSourceUrl(importError.sourceUrl);
+                        setShowImportDialog(false);
+                        setImportError(null);
+                        setImportUrl("");
+                        toast.success('Ready to fill in the details!');
+                      }}
+                    >
+                      Fill Form Manually
+                    </Button>
+                  </div>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
@@ -854,6 +998,20 @@ const VendorNewListing = () => {
                       rows={4}
                       className="mt-2"
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="sourceUrl">Source URL (Optional)</Label>
+                    <Input
+                      id="sourceUrl"
+                      type="url"
+                      placeholder="https://example.com/product"
+                      value={sourceUrl}
+                      onChange={(e) => setSourceUrl(e.target.value)}
+                      className="mt-2"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Reference link to the original product or content
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>

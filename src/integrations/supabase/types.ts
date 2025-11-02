@@ -232,6 +232,7 @@ export type Database = {
           listing_type: string
           location: string | null
           price: number | null
+          source_url: string | null
           status: string
           tags: string[] | null
           title: string
@@ -252,6 +253,7 @@ export type Database = {
           listing_type?: string
           location?: string | null
           price?: number | null
+          source_url?: string | null
           status?: string
           tags?: string[] | null
           title: string
@@ -272,6 +274,7 @@ export type Database = {
           listing_type?: string
           location?: string | null
           price?: number | null
+          source_url?: string | null
           status?: string
           tags?: string[] | null
           title?: string
