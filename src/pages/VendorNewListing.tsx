@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import SignupModal from "@/components/SignupModal";
 import Header from "@/components/Header";
 import VendorPendingApproval from "@/components/VendorPendingApproval";
@@ -27,6 +28,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import LocationLink from "@/components/LocationLink";
 type CategoryType = "product" | "service" | "experience";
 type MediaType = "product" | "video" | "audio";
+type Coupon = Database['public']['Tables']['coupons']['Row'];
+
+// Type for pending coupon data (either new coupon or existing coupon reference)
+type PendingCouponData = {
+  code?: string;
+  discount_type?: string;
+  discount_value?: number;
+  max_uses?: number;
+  start_date?: Date;
+  end_date?: Date;
+  is_recurring?: boolean;
+  recurrence_pattern?: string;
+  couponId?: string; // For attaching existing coupon
+};
 const VendorNewListing = () => {
   const navigate = useNavigate();
   const {
@@ -57,11 +72,11 @@ const VendorNewListing = () => {
   const [showCouponForm, setShowCouponForm] = useState(false);
   const [couponCreated, setCouponCreated] = useState(false);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
-  const [pendingCouponData, setPendingCouponData] = useState<any>(null);
+  const [pendingCouponData, setPendingCouponData] = useState<PendingCouponData | null>(null);
   const [noActiveCoupons, setNoActiveCoupons] = useState(false);
-  const [activeCouponDetails, setActiveCouponDetails] = useState<any>(null);
+  const [activeCouponDetails, setActiveCouponDetails] = useState<Coupon | null>(null);
   const [showEditCoupon, setShowEditCoupon] = useState(false);
-  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [selectedCouponId, setSelectedCouponId] = useState<string>("");
 
@@ -758,16 +773,17 @@ const VendorNewListing = () => {
                 coupon: {
                   ...pendingCouponData,
                   listing_id: listingId,
-                  start_date: pendingCouponData.start_date.toISOString(),
-                  end_date: pendingCouponData.end_date.toISOString()
+                  start_date: pendingCouponData.start_date?.toISOString(),
+                  end_date: pendingCouponData.end_date?.toISOString()
                 }
               }
             });
             if (response.error) throw response.error;
             toast.success("Listing updated and coupon created!");
-          } catch (couponError: any) {
+          } catch (couponError: unknown) {
             console.error('Error creating coupon:', couponError);
-            toast.error("Listing updated but coupon creation failed: " + couponError.message);
+            const errorMessage = couponError instanceof Error ? couponError.message : 'Unknown error';
+            toast.error("Listing updated but coupon creation failed: " + errorMessage);
           }
         } else {
           toast.success("Listing updated successfully!");
@@ -823,9 +839,10 @@ const VendorNewListing = () => {
             });
             
             toast.success("Listing created and coupon attached!");
-          } catch (error: any) {
+          } catch (error: unknown) {
             console.error("Error in coupon attachment:", error);
-            toast.warning(`Listing created but coupon attachment failed: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.warning(`Listing created but coupon attachment failed: ${errorMessage}`);
           }
         } else if (pendingCouponData && newListing && !pendingCouponData.couponId) {
           // Create new coupon
@@ -836,27 +853,30 @@ const VendorNewListing = () => {
                 coupon: {
                   ...pendingCouponData,
                   listing_id: newListing.id,
-                  start_date: pendingCouponData.start_date.toISOString(),
-                  end_date: pendingCouponData.end_date.toISOString()
+                  start_date: pendingCouponData.start_date?.toISOString(),
+                  end_date: pendingCouponData.end_date?.toISOString()
                 }
               }
             });
             if (response.error) throw response.error;
             toast.success("Listing and coupon created successfully!");
-          } catch (couponError: any) {
+          } catch (couponError: unknown) {
             console.error('Error creating coupon:', couponError);
-            toast.error("Listing created but coupon creation failed: " + couponError.message);
+            const errorMessage = couponError instanceof Error ? couponError.message : 'Unknown error';
+            toast.error("Listing created but coupon creation failed: " + errorMessage);
           }
         } else {
           toast.success("Listing created successfully!");
         }
       }
       navigate("/dashboard/vendor");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving listing:", error);
 
       // Show detailed error message
-      const errorMessage = error?.message || error?.error_description || `Failed to ${isEditMode ? 'update' : 'create'} listing`;
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : `Failed to ${isEditMode ? 'update' : 'create'} listing`;
       toast.error(errorMessage);
 
       // Log full error for debugging
