@@ -130,13 +130,13 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
           {categories.map((cat, index) => (
             <div 
               key={`${cat}-${index}`}
-              className={cn("w-3 h-3 rounded-full ring-1 ring-border", categoryColors[cat])} 
+              className={cn("w-2.5 h-2.5 rounded-full ring-1 ring-border", categoryColors[cat])} 
             />
           ))}
           {hasActiveCoupon && (
             <div
               className={cn(
-                "w-3 h-3 rounded-full ring-1 ring-border bg-category-sale cursor-pointer hover:scale-110 transition-transform"
+                "w-2.5 h-2.5 rounded-full ring-1 ring-border bg-category-sale cursor-pointer hover:scale-110 transition-transform"
               )}
               onClick={(e) => {
                 e.preventDefault();
