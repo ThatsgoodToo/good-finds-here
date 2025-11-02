@@ -327,17 +327,6 @@ const VideoListing = () => {
                 <p className="text-xl font-semibold">${listing.price}</p>
               )}
 
-              {/* Visit Website Button */}
-              {vendor?.website && (
-                <Button
-                  className="w-full sm:w-auto gap-2"
-                  onClick={() => window.open(vendor.website, "_blank")}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Visit Website
-                </Button>
-              )}
-
               {/* High Fives */}
               <Button
                 variant="outline"
@@ -355,6 +344,19 @@ const VideoListing = () => {
                 <div>
                   <h3 className="font-semibold mb-2">description</h3>
                   <p className="text-sm text-muted-foreground">{listing.description}</p>
+                </div>
+              )}
+
+              {/* Visit Website Button */}
+              {vendor?.website && (
+                <div>
+                  <Button
+                    className="w-full sm:w-auto gap-2"
+                    onClick={() => window.open(vendor.website, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Website
+                  </Button>
                 </div>
               )}
 
