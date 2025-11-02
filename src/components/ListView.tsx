@@ -38,7 +38,7 @@ const ListView = ({ products }: ListViewProps) => {
                 {product.categories.map((cat, index) => (
                   <div 
                     key={`${cat}-${index}`}
-                    className={`w-2.5 h-2.5 rounded-full ring-1 ring-border ${
+                    className={`w-2 h-2 rounded-full ring-1 ring-border ${
                       cat === 'product' ? 'bg-category-product' :
                       cat === 'service' ? 'bg-category-service' :
                       cat === 'experience' ? 'bg-category-experience' :
