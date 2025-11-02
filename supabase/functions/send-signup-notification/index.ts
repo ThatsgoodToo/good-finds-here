@@ -135,239 +135,135 @@ function generateEmailHtml(profile: any, subscription: any, vendorApplication: a
     timeStyle: "long",
   });
 
-  let html = `
+  const role = profile.role === "vendor" ? "Vendor" : "Shopper";
+  const applicationStatus = vendorApplication?.status || "N/A";
+  const subscriptionType = subscription?.subscription_type || "None";
+
+  return `
     <!DOCTYPE html>
     <html>
     <head>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1 { color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
-        h2 { color: #1e40af; margin-top: 30px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
-        h3 { color: #3b82f6; margin-top: 20px; }
-        .header { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
-        .section { margin-bottom: 25px; }
-        .field { margin: 10px 0; padding: 8px; background: #f9fafb; border-left: 3px solid #3b82f6; }
-        .field strong { color: #1e40af; display: inline-block; min-width: 180px; }
-        .list { margin: 5px 0; padding-left: 20px; }
-        .list li { margin: 5px 0; }
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        td { padding: 8px; border-bottom: 1px solid #e5e7eb; }
-        td:first-child { font-weight: bold; color: #1e40af; width: 200px; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
-        .badge-yes { background: #d1fae5; color: #065f46; }
-        .badge-no { background: #fee2e2; color: #991b1b; }
-        .badge-info { background: #dbeafe; color: #1e40af; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f9fafb;
+        }
+        .container {
+          background: white;
+          padding: 40px;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+          background: #eff6ff;
+          padding: 20px;
+          border-radius: 8px;
+          margin-bottom: 30px;
+          text-align: center;
+        }
+        .header h1 {
+          color: #2563eb;
+          margin: 0 0 10px 0;
+        }
+        .info-box {
+          background: #f9fafb;
+          padding: 20px;
+          border-radius: 8px;
+          border-left: 4px solid #2563eb;
+          margin: 20px 0;
+        }
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 10px 0;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+          border-bottom: none;
+        }
+        .label {
+          font-weight: 600;
+          color: #1e40af;
+        }
+        .value {
+          color: #374151;
+        }
+        .button {
+          display: inline-block;
+          background: #2563eb;
+          color: white !important;
+          padding: 14px 32px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          margin: 20px 0;
+          text-align: center;
+        }
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          color: #6b7280;
+          font-size: 14px;
+          text-align: center;
+        }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>🎉 New ${profile.role === "vendor" ? "Vendor" : "Shopper"} Signup</h1>
-        <p><strong>Timestamp:</strong> ${timestamp}</p>
-        <p><strong>User ID:</strong> ${profile.id}</p>
-      </div>
-  `;
-
-  // Personal Information Section
-  html += `
-    <div class="section">
-      <h2>👤 Personal Information</h2>
-      <table>
-        <tr><td>Full Name</td><td>${profile.full_name || "Not provided"}</td></tr>
-        <tr><td>Display Name</td><td>${profile.display_name || "Not provided"}</td></tr>
-        <tr><td>Email</td><td>${profile.email}</td></tr>
-        <tr><td>Role</td><td><span class="badge badge-info">${profile.role.toUpperCase()}</span></td></tr>
-        <tr><td>Age Verified</td><td><span class="badge ${profile.age_verified ? "badge-yes" : "badge-no"}">${profile.age_verified ? "YES" : "NO"}</span></td></tr>
-        <tr><td>Terms Accepted</td><td><span class="badge ${profile.terms_accepted ? "badge-yes" : "badge-no"}">${profile.terms_accepted ? "YES" : "NO"}</span></td></tr>
-        <tr><td>Analytics Consent</td><td><span class="badge ${profile.analytics_consent ? "badge-yes" : "badge-no"}">${profile.analytics_consent ? "YES" : "NO"}</span></td></tr>
-      </table>
-    </div>
-  `;
-
-  // Interests (for shoppers)
-  if (profile.interests && profile.interests.length > 0) {
-    html += `
-      <div class="section">
-        <h2>💡 Interests</h2>
-        <ul class="list">
-          ${profile.interests.map((interest: string) => `<li>${interest}</li>`).join("")}
-        </ul>
-      </div>
-    `;
-  }
-
-  // Subscription Information
-  if (subscription) {
-    html += `
-      <div class="section">
-        <h2>💳 Subscription Details</h2>
-        <table>
-          <tr><td>Type</td><td>${subscription.subscription_type}</td></tr>
-          <tr><td>Status</td><td><span class="badge badge-info">${subscription.status.toUpperCase()}</span></td></tr>
-          <tr><td>Start Date</td><td>${new Date(subscription.start_date).toLocaleDateString()}</td></tr>
-          <tr><td>End Date</td><td>${new Date(subscription.end_date).toLocaleDateString()}</td></tr>
-          ${subscription.promo_code ? `<tr><td>Promo Code</td><td><strong>${subscription.promo_code}</strong></td></tr>` : ""}
-        </table>
-      </div>
-    `;
-  }
-
-  // Vendor Application Details
-  if (vendorApplication) {
-    html += `
-      <div class="section">
-        <h2>🏪 Vendor Application Details</h2>
-        
-        <h3>Business Information</h3>
-        <table>
-          <tr><td>Business Type</td><td>${vendorApplication.business_type}${vendorApplication.business_type_other ? ` (${vendorApplication.business_type_other})` : ""}</td></tr>
-          <tr><td>Website</td><td>${vendorApplication.website || "Not provided"}</td></tr>
-          <tr><td>Phone Number</td><td>${vendorApplication.phone_number || "Not provided"}</td></tr>
-          <tr><td>Location</td><td>${vendorApplication.city}, ${vendorApplication.state_region}, ${vendorApplication.country}</td></tr>
-        </table>
-
-        <h3>Business Description</h3>
-        <div class="field">
-          <p>${vendorApplication.business_description || "Not provided"}</p>
+      <div class="container">
+        <div class="header">
+          <h1>🎉 New ${role} Signup</h1>
+          <p style="margin: 0; color: #6b7280;">${timestamp}</p>
         </div>
-        ${
-          vendorApplication.products_services && vendorApplication.products_services.length > 0
-            ? `
-        <div class="field">
-          <strong>Products/Services:</strong>
-          <ul class="list">
-            ${vendorApplication.products_services.map((item: string) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>`
-            : ""
-        }
-        ${
-          vendorApplication.inventory_type && vendorApplication.inventory_type.length > 0
-            ? `
-        <div class="field">
-          <strong>Inventory Type:</strong>
-          <ul class="list">
-            ${vendorApplication.inventory_type.map((item: string) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>`
-            : ""
-        }
-        ${
-          vendorApplication.shipping_options && vendorApplication.shipping_options.length > 0
-            ? `
-        <div class="field">
-          <strong>Shipping Options:</strong>
-          <ul class="list">
-            ${vendorApplication.shipping_options.map((item: string) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>`
-            : ""
-        }
-        ${
-          vendorApplication.pickup_address
-            ? `
-        <div class="field">
-          <strong>Pickup Address:</strong> ${vendorApplication.pickup_address}
-        </div>`
-            : ""
-        }
 
-        <h3>Expertise & Experience</h3>
-        ${
-          vendorApplication.area_of_expertise && vendorApplication.area_of_expertise.length > 0
-            ? `
-        <div class="field">
-          <strong>Areas of Expertise:</strong>
-          <ul class="list">
-            ${vendorApplication.area_of_expertise.map((item: string) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>`
-            : ""
-        }
-        <table>
-          <tr><td>Business Duration</td><td>${vendorApplication.business_duration || "Not provided"}</td></tr>
-          <tr><td>Craft Development</td><td>${vendorApplication.craft_development || "Not provided"}</td></tr>
-          <tr><td>Certifications/Awards</td><td>${vendorApplication.certifications_awards || "Not provided"}</td></tr>
-        </table>
+        <div class="info-box">
+          <div class="info-row">
+            <span class="label">Display Name:</span>
+            <span class="value">${profile.display_name || "Not provided"}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">User ID:</span>
+            <span class="value">${profile.id}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Role:</span>
+            <span class="value">${role}</span>
+          </div>
+          ${vendorApplication ? `
+          <div class="info-row">
+            <span class="label">Application Status:</span>
+            <span class="value">${applicationStatus.toUpperCase()}</span>
+          </div>
+          ` : ""}
+          ${subscription ? `
+          <div class="info-row">
+            <span class="label">Subscription Type:</span>
+            <span class="value">${subscriptionType}</span>
+          </div>
+          ` : ""}
+        </div>
 
-        <h3>Creativity & Style</h3>
-        <table>
-          <tr><td>Creativity Style</td><td>${vendorApplication.creativity_style || "Not provided"}</td></tr>
-          <tr><td>Inspiration</td><td>${vendorApplication.inspiration || "Not provided"}</td></tr>
-          <tr><td>Brand Uniqueness</td><td>${vendorApplication.brand_uniqueness || "Not provided"}</td></tr>
-        </table>
-        ${
-          vendorApplication.sustainable_methods && vendorApplication.sustainable_methods.length > 0
-            ? `
-        <div class="field">
-          <strong>Sustainable Methods:</strong>
-          <ul class="list">
-            ${vendorApplication.sustainable_methods.map((item: string) => `<li>${item}</li>`).join("")}
-          </ul>
-        </div>`
-            : ""
-        }
+        <p style="color: #374151;">A new user has signed up for your platform. To view complete details and manage this application, please access the admin dashboard.</p>
 
-        <h3>Pricing & Marketing</h3>
-        <table>
-          <tr><td>Pricing Style</td><td>${vendorApplication.pricing_style || "Not provided"}</td></tr>
-          <tr><td>Exclusive Offers</td><td>${vendorApplication.exclusive_offers || "Not provided"}</td></tr>
-          <tr><td>Promotion Channels</td><td>${vendorApplication.promotion_social_channels || "Not provided"}</td></tr>
-          <tr><td>Future Website Plans</td><td>${vendorApplication.future_website || "Not provided"}</td></tr>
-        </table>
+        <div style="text-align: center;">
+          <a href="https://good-finds-here.lovable.app/admin/dashboard" class="button">
+            View Full Details in Admin Dashboard →
+          </a>
+        </div>
 
-        ${
-          vendorApplication.social_media_links && vendorApplication.social_media_links.length > 0
-            ? `
-        <div class="field">
-          <strong>Social Media Links:</strong>
-          <ul class="list">
-            ${vendorApplication.social_media_links.map((link: string) => `<li><a href="${link}">${link}</a></li>`).join("")}
-          </ul>
-        </div>`
-            : ""
-        }
-
-        <h3>Subscription & Payment</h3>
-        <table>
-          <tr><td>Subscription Type</td><td>${vendorApplication.subscription_type || "Not provided"}</td></tr>
-          ${vendorApplication.promo_code ? `<tr><td>Promo Code Used</td><td><strong>${vendorApplication.promo_code}</strong></td></tr>` : ""}
-          <tr><td>Payment Method Saved</td><td><span class="badge ${vendorApplication.payment_method_saved ? "badge-yes" : "badge-no"}">${vendorApplication.payment_method_saved ? "YES" : "NO"}</span></td></tr>
-        </table>
-
-        <h3>Agreements & Confirmations</h3>
-        <table>
-          <tr><td>Info Accurate</td><td><span class="badge ${vendorApplication.info_accurate ? "badge-yes" : "badge-no"}">${vendorApplication.info_accurate ? "YES" : "NO"}</span></td></tr>
-          <tr><td>Understands Review</td><td><span class="badge ${vendorApplication.understands_review ? "badge-yes" : "badge-no"}">${vendorApplication.understands_review ? "YES" : "NO"}</span></td></tr>
-          <tr><td>Agrees to Terms</td><td><span class="badge ${vendorApplication.agrees_to_terms ? "badge-yes" : "badge-no"}">${vendorApplication.agrees_to_terms ? "YES" : "NO"}</span></td></tr>
-          <tr><td>Receive Updates</td><td><span class="badge ${vendorApplication.receive_updates ? "badge-yes" : "badge-no"}">${vendorApplication.receive_updates ? "YES" : "NO"}</span></td></tr>
-        </table>
-
-        ${
-          vendorApplication.additional_info
-            ? `
-        <h3>Additional Information</h3>
-        <div class="field">
-          <p>${vendorApplication.additional_info}</p>
-        </div>`
-            : ""
-        }
-
-        <h3>Application Status</h3>
-        <table>
-          <tr><td>Status</td><td><span class="badge badge-info">${vendorApplication.status.toUpperCase()}</span></td></tr>
-          <tr><td>Created</td><td>${new Date(vendorApplication.created_at).toLocaleString()}</td></tr>
-          <tr><td>Updated</td><td>${new Date(vendorApplication.updated_at).toLocaleString()}</td></tr>
-        </table>
+        <div class="footer">
+          <p><strong>Security Notice:</strong> This email contains minimal user information. Full details are available only through the authenticated admin dashboard with proper access controls.</p>
+          <p style="margin-top: 10px; color: #9ca3af;">That's Good Too - Admin Notification System</p>
+        </div>
       </div>
-    `;
-  }
-
-  html += `
     </body>
     </html>
   `;
-
-  return html;
 }
 
 function generateUserConfirmationHtml(
