@@ -240,7 +240,7 @@ const VendorDashboard = () => {
         const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
         
         setRecentVisitors(
-          followers.map((f: any) => {
+          followers.map((f) => {
             const profile = profileMap.get(f.shopper_id);
             return {
               id: f.shopper_id,

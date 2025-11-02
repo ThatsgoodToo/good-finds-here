@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import VendorPendingApproval from "@/components/VendorPendingApproval";
 import VendorApplicationRejected from "@/components/VendorApplicationRejected";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
+import { useListingCoupons } from "@/hooks/useListingCoupons";
 import CouponForm from "@/components/dashboard/vendor/CouponForm";
 import CouponEditForm from "@/components/dashboard/vendor/CouponEditForm";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,23 @@ const VendorNewListing = () => {
   } = useVendorAccess();
   const isEditMode = !!listingId;
 
+  // Use custom hook for coupon management
+  const {
+    availableCoupons,
+    activeCouponDetails,
+    loadingCoupons,
+    loadingActiveCoupon,
+    hasActiveCoupon,
+    noActiveCoupons,
+    fetchAvailableCoupons,
+    fetchActiveCoupon,
+    removeActiveCoupon,
+    setActiveCouponDetails,
+    setHasActiveCoupon,
+  } = useListingCoupons(user?.id, listingId);
+
   // State variables
   const [loading, setLoading] = useState(false);
-  const [loadingActiveCoupon, setLoadingActiveCoupon] = useState(false);
   const [mediaType, setMediaType] = useState<MediaType>("product");
   const [listingTypes, setListingTypes] = useState<CategoryType[]>([]);
   const [title, setTitle] = useState("");
@@ -71,13 +86,8 @@ const VendorNewListing = () => {
   const [shippingOptions, setShippingOptions] = useState<string[]>([]);
   const [showCouponForm, setShowCouponForm] = useState(false);
   const [couponCreated, setCouponCreated] = useState(false);
-  const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
   const [pendingCouponData, setPendingCouponData] = useState<PendingCouponData | null>(null);
-  const [noActiveCoupons, setNoActiveCoupons] = useState(false);
-  const [activeCouponDetails, setActiveCouponDetails] = useState<Coupon | null>(null);
   const [showEditCoupon, setShowEditCoupon] = useState(false);
-  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
-  const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [selectedCouponId, setSelectedCouponId] = useState<string>("");
 
   // Unified media handling - images only (max 5)
@@ -110,36 +120,10 @@ const VendorNewListing = () => {
     }
   }, [user]);
 
-  // Fetch all vendor's active coupons for selection
-  const fetchAvailableCoupons = async () => {
-    if (!user) return;
-    
-    setLoadingCoupons(true);
-    try {
-      const { data, error } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("vendor_id", user.id)
-        .eq("active_status", true)
-        .gte("end_date", new Date().toISOString())
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      
-      setAvailableCoupons(data || []);
-      setNoActiveCoupons(!data || data.length === 0);
-    } catch (error) {
-      console.error("Error fetching coupons:", error);
-      toast.error("Failed to load coupons");
-    } finally {
-      setLoadingCoupons(false);
-    }
-  };
-
   // Check if vendor has active coupons
   useEffect(() => {
     fetchAvailableCoupons();
-  }, [user]);
+  }, [fetchAvailableCoupons]);
 
   // Load existing listing data if in edit mode
   useEffect(() => {
@@ -200,7 +184,7 @@ const VendorNewListing = () => {
       }
     };
     loadListing();
-  }, [isEditMode, listingId, navigate]);
+  }, [isEditMode, listingId, navigate, fetchActiveCoupon, fetchAvailableCoupons]);
 
   // Load real vendor data
   const [vendorProfile, setVendorProfile] = useState<{
@@ -301,66 +285,6 @@ const VendorNewListing = () => {
       setShippingOptions(shippingOptions.filter(o => o !== option));
     } else {
       setShippingOptions([...shippingOptions, option]);
-    }
-  };
-
-  // Fetch active coupon details
-  const fetchActiveCoupon = async () => {
-    if (!listingId || !user) return;
-    
-    setLoadingActiveCoupon(true);
-    try {
-      const { data, error } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("listing_id", listingId)
-        .eq("vendor_id", user.id)
-        .eq("active_status", true)
-        .gte("end_date", new Date().toISOString())
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" errors
-      
-      if (data) {
-        setActiveCouponDetails(data);
-        setHasActiveCoupon(true);
-        setCouponCreated(true);
-      }
-    } catch (error) {
-      console.error("Error fetching active coupon:", error);
-    } finally {
-      setLoadingActiveCoupon(false);
-    }
-  };
-
-  // Remove active coupon
-  const handleRemoveCoupon = async () => {
-    if (!activeCouponDetails || !user) return;
-    
-    const confirmed = confirm(
-      "Are you sure you want to remove this coupon? This action cannot be undone."
-    );
-    
-    if (!confirmed) return;
-    
-    try {
-      const { error } = await supabase
-        .from("coupons")
-        .delete()
-        .eq("id", activeCouponDetails.id)
-        .eq("vendor_id", user.id);
-      
-      if (error) throw error;
-      
-      setActiveCouponDetails(null);
-      setHasActiveCoupon(false);
-      setCouponCreated(false);
-      setSelectedCouponId("");
-      await fetchAvailableCoupons(); // Refresh the list
-      toast.success("Coupon removed successfully");
-    } catch (error) {
-      console.error("Error removing coupon:", error);
-      toast.error("Failed to remove coupon");
     }
   };
 
@@ -1271,7 +1195,7 @@ const VendorNewListing = () => {
                       <Button 
                         variant="destructive" 
                         size="sm"
-                        onClick={handleRemoveCoupon}
+                        onClick={removeActiveCoupon}
                       >
                         Remove Coupon
                       </Button>
