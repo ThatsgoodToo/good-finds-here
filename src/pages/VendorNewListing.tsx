@@ -53,7 +53,6 @@ const VendorNewListing = () => {
   const [category, setCategory] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [shippingOptions, setShippingOptions] = useState<string[]>([]);
-  const [listingLink, setListingLink] = useState("");
   const [showCouponForm, setShowCouponForm] = useState(false);
   const [couponCreated, setCouponCreated] = useState(false);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
@@ -147,7 +146,6 @@ const VendorNewListing = () => {
           setCategory(data.category || "");
           setSubcategories(data.categories || []);
           setSourceUrl(data.source_url || "");
-          setListingLink(data.listing_link || "");
 
           // Load media - convert to unified format (images only now)
           const items: Array<{
@@ -649,14 +647,10 @@ const VendorNewListing = () => {
       toast.error("Source URL is required");
       return;
     }
-    if (!listingLink.trim()) {
-      toast.error("Listing Link is required - this is where shoppers will be directed");
-      return;
-    }
     try {
-      new URL(listingLink);
+      new URL(sourceUrl);
     } catch {
-      toast.error("Listing Link must be a valid URL");
+      toast.error("Source URL must be a valid URL");
       return;
     }
 
@@ -681,7 +675,6 @@ const VendorNewListing = () => {
         categories: subcategories,
         image_url: images[0] || null,
         source_url: sourceUrl.trim(),
-        listing_link: listingLink.trim(),
         status: "active"
       };
       if (isEditMode && listingId) {
@@ -1350,7 +1343,7 @@ const VendorNewListing = () => {
                   {/* Listing Type Dots */}
                   {listingTypes.length > 0 && <div className="flex gap-1.5 items-center">
                       {listingTypes.map(type => <div key={type} className={cn("w-3 h-3 rounded-full ring-1 ring-border", type === "product" && "bg-category-product", type === "service" && "bg-category-service", type === "experience" && "bg-category-experience")} />)}
-                      {(couponCreated || hasActiveCoupon) && listingLink && <div className="w-3 h-3 rounded-full bg-category-sale ring-1 ring-border cursor-pointer hover:scale-110 transition-transform" onClick={() => window.open(listingLink, "_blank")} title="Active coupon - Click to view offer" />}
+                      {(couponCreated || hasActiveCoupon) && sourceUrl && <div className="w-3 h-3 rounded-full bg-category-sale ring-1 ring-border cursor-pointer hover:scale-110 transition-transform" onClick={() => window.open(sourceUrl, "_blank")} title="Active coupon - Click to view offer" />}
                     </div>}
 
                   {/* Media Preview */}
@@ -1380,9 +1373,9 @@ const VendorNewListing = () => {
                         <p className="text-muted-foreground">{description}</p>
                       </div>}
 
-                    {listingLink && <Button variant="outline" size="sm" className="w-full" onClick={() => window.open(listingLink, '_blank')}>
+                    {sourceUrl && <Button variant="outline" size="sm" className="w-full" onClick={() => window.open(sourceUrl, '_blank')}>
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        View Listing
+                        View Source
                       </Button>}
 
                     {shippingOptions.length > 0 && <div>
@@ -1402,7 +1395,7 @@ const VendorNewListing = () => {
                           <div className="w-2 h-2 rounded-full bg-white" />
                           Active Coupon
                         </Badge>
-                        {listingLink && <Button variant="link" size="sm" onClick={() => window.open(listingLink, "_blank")} className="h-auto p-0 text-xs">
+                        {sourceUrl && <Button variant="link" size="sm" onClick={() => window.open(sourceUrl, "_blank")} className="h-auto p-0 text-xs">
                             View Offer <ExternalLink className="h-3 w-3 ml-1" />
                           </Button>}
                       </div>}
