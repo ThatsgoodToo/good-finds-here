@@ -437,7 +437,7 @@ const ShopperDashboard = () => {
                           className="text-2xl sm:text-3xl font-bold hover:text-primary cursor-pointer transition-colors"
                           onClick={() => navigate(`/shopper/${shopperName.toLowerCase().replace(/\s/g, '-')}`)}
                         >
-                          {shopperName} Goods
+                          {shopperName}
                         </h1>
                         <Button
                           variant="ghost"

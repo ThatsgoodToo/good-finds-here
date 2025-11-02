@@ -90,7 +90,7 @@ const VendorHeader = ({
           className="text-2xl sm:text-3xl font-bold hover:text-primary cursor-pointer transition-colors"
           onClick={() => navigate(`/vendor/${vendorUserId}`)}
         >
-          {vendorName} Goods
+          {vendorName}
         </h1>
               <div className="flex items-center gap-2 mt-1">
                 <LocationLink location={location} iconSize="sm" />
