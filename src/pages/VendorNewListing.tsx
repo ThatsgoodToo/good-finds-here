@@ -22,7 +22,14 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link } from "lucide-react";
 import { toast } from "sonner";
 
 type ListingType = "product" | "service" | "viewerbase";
@@ -56,6 +63,8 @@ const VendorNewListing = () => {
   const [customSubcategory, setCustomSubcategory] = useState("");
   const [selectedPreviewImage, setSelectedPreviewImage] = useState(0);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -196,6 +205,8 @@ const VendorNewListing = () => {
     title: string;
     description: string;
     image: string | null;
+    price?: string | null;
+    currency?: string;
   } | null> => {
     try {
       console.log('Fetching metadata for URL:', url);
@@ -220,12 +231,59 @@ const VendorNewListing = () => {
       return {
         title: data.title,
         description: data.description,
-        image: data.image
+        image: data.image,
+        price: data.price,
+        currency: data.currency
       };
     } catch (e) {
       console.error('Exception fetching URL metadata:', e);
       toast.error('Could not fetch URL details. Please enter manually.');
       return null;
+    }
+  };
+
+  // Import product from URL
+  const handleImportFromUrl = async () => {
+    if (!importUrl.trim()) {
+      toast.error('Please enter a URL');
+      return;
+    }
+
+    const loadingToast = toast.loading('Importing product details...');
+    
+    try {
+      const metadata = await extractUrlMetadata(importUrl);
+      
+      if (metadata) {
+        // Always overwrite in import mode
+        setTitle(metadata.title);
+        setDescription(metadata.description);
+        
+        if (metadata.image) {
+          setImages([metadata.image]);
+        }
+        
+        if (metadata.price) {
+          setPrice(metadata.price);
+          setIsFree(false);
+        }
+        
+        // Add URL to appropriate media type
+        const hostname = new URL(importUrl).hostname.toLowerCase();
+        if (hostname.includes('youtube') || hostname.includes('youtu.be')) {
+          setVideoEmbeds([importUrl]);
+        } else if (hostname.includes('spotify') || hostname.includes('soundcloud')) {
+          setAudioEmbeds([importUrl]);
+        }
+        
+        setShowImportDialog(false);
+        setImportUrl("");
+        toast.success('Product details imported successfully!', { id: loadingToast });
+      } else {
+        toast.error('Could not import product details', { id: loadingToast });
+      }
+    } catch (error) {
+      toast.error('Failed to import product', { id: loadingToast });
     }
   };
 
@@ -583,6 +641,48 @@ const VendorNewListing = () => {
           <h1 className="text-2xl sm:text-3xl font-bold mb-6">
             {isEditMode ? "Edit Listing" : "Create New Listing"}
           </h1>
+
+          {/* Import from URL Button */}
+          <div className="mb-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowImportDialog(true)}
+              className="w-full sm:w-auto"
+            >
+              <Link className="h-4 w-4 mr-2" />
+              Import Product from URL
+            </Button>
+          </div>
+
+          {/* Import Dialog */}
+          <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Import Product from URL</DialogTitle>
+                <DialogDescription>
+                  Paste a product URL from Etsy, Amazon, eBay, Shopify, or any e-commerce site.
+                  We'll automatically fill in the product details for you.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="https://www.etsy.com/listing/..."
+                  value={importUrl}
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleImportFromUrl()}
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleImportFromUrl}>
+                    Import Product
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Split Layout - Form & Preview */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

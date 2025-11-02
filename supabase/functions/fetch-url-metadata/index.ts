@@ -113,6 +113,22 @@ serve(async (req) => {
     const descMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["']/i);
     const imageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']/i);
     
+    // Extract e-commerce specific data
+    const priceMatch = html.match(/<meta[^>]*property=["']og:price:amount["'][^>]*content=["']([^"']*)["']/i);
+    const currencyMatch = html.match(/<meta[^>]*property=["']og:price:currency["'][^>]*content=["']([^"']*)["']/i);
+    const availabilityMatch = html.match(/<meta[^>]*property=["']og:availability["'][^>]*content=["']([^"']*)["']/i);
+    
+    // Try to parse JSON-LD structured data
+    const jsonLdMatch = html.match(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
+    let structuredData = null;
+    if (jsonLdMatch) {
+      try {
+        structuredData = JSON.parse(jsonLdMatch[1]);
+      } catch (e) {
+        console.log('Could not parse structured data');
+      }
+    }
+    
     // Fallback to HTML title tag
     const htmlTitleMatch = !titleMatch ? html.match(/<title[^>]*>([^<]*)<\/title>/i) : null;
     
@@ -123,6 +139,9 @@ serve(async (req) => {
         title: titleMatch?.[1] || htmlTitleMatch?.[1] || 'Untitled',
         description: descMatch?.[1] || `Content from ${hostname}`,
         image: imageMatch?.[1] || null,
+        price: priceMatch?.[1] || structuredData?.offers?.price || null,
+        currency: currencyMatch?.[1] || structuredData?.offers?.priceCurrency || 'USD',
+        availability: availabilityMatch?.[1] || structuredData?.offers?.availability || null,
         author: null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
