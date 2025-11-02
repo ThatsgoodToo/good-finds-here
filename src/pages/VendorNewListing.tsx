@@ -11,6 +11,8 @@ import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { useListingCoupons } from "@/hooks/useListingCoupons";
 import { validateListingForm, validateMediaTypeUrl, validatePrice } from "@/utils/listingValidation";
 import { attachExistingCoupon, createNewCoupon } from "@/utils/couponOperations";
+import { extractUrlMetadata, detectMediaTypeFromUrl, generateImportError } from "@/utils/urlImport";
+import { loadListingById } from "@/utils/listingDataLoader";
 import CouponForm from "@/components/dashboard/vendor/CouponForm";
 import CouponEditForm from "@/components/dashboard/vendor/CouponEditForm";
 import { Button } from "@/components/ui/button";
@@ -133,48 +135,22 @@ const VendorNewListing = () => {
       if (!isEditMode || !listingId) return;
       setLoading(true);
       try {
-        const {
-          data,
-          error
-        } = await supabase.from("listings").select("*").eq("id", listingId).single();
-        if (error) throw error;
-        if (data) {
-          // Load media type
-          if (data.listing_type === "video" || data.listing_type === "audio" || data.listing_type === "product") {
-            setMediaType(data.listing_type as MediaType);
-          }
-          
-          const types = data.listing_types && data.listing_types.length > 0 
-            ? data.listing_types 
-            : (data.listing_type ? [data.listing_type] : []);
-          setListingTypes(types as CategoryType[]);
-          setTitle(data.title);
-          setDescription(data.description || "");
-          setPrice(data.price?.toString() || "");
-          setIsFree(!data.price || data.price === 0);
-          setCategory(data.category || "");
-          setSubcategories(data.categories || []);
-          setSourceUrl(data.source_url || "");
+        const listingData = await loadListingById(supabase, listingId);
+        
+        if (listingData) {
+          setMediaType(listingData.mediaType);
+          setListingTypes(listingData.listingTypes as CategoryType[]);
+          setTitle(listingData.title);
+          setDescription(listingData.description);
+          setPrice(listingData.price);
+          setIsFree(listingData.isFree);
+          setCategory(listingData.category);
+          setSubcategories(listingData.subcategories);
+          setSourceUrl(listingData.sourceUrl);
+          setMediaItems(listingData.mediaItems);
 
-          // Load media - convert to unified format (images only now)
-          const items: Array<{
-            type: 'image';
-            url: string;
-          }> = [];
-          if (data.image_url) {
-            items.push({
-              type: 'image',
-              url: data.image_url
-            });
-          }
-          setMediaItems(items);
-
-          // Check for active coupon and fetch details
-          if (data.id) {
-            await fetchActiveCoupon();
-          }
-          
-          // Load available coupons for selection
+          // Load coupon data
+          await fetchActiveCoupon();
           await fetchAvailableCoupons();
         }
       } catch (error) {
@@ -374,131 +350,59 @@ const VendorNewListing = () => {
     setIsFree(checked);
   };
 
-  // Extract metadata from URL for auto-fill
-  const extractUrlMetadata = async (url: string): Promise<{
-    title: string;
-    description: string;
-    image: string | null;
-    price?: string | null;
-    currency?: string;
-  } | null> => {
-    try {
-      console.log('Fetching metadata for URL:', url);
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('fetch-url-metadata', {
-        body: {
-          url
-        }
-      });
-      if (error) {
-        console.error('Error fetching URL metadata:', error);
-        toast.error('Could not fetch URL details. Please enter manually.');
-        return null;
-      }
-      if (data.error) {
-        console.warn('Metadata fetch returned error:', data.error);
-        toast.warning(data.error);
-        return null;
-      }
-      console.log('Metadata fetched successfully:', data);
-      return {
-        title: data.title,
-        description: data.description,
-        image: data.image,
-        price: data.price,
-        currency: data.currency
-      };
-    } catch (e) {
-      console.error('Exception fetching URL metadata:', e);
-      toast.error('Could not fetch URL details. Please enter manually.');
-      return null;
-    }
-  };
-
   // Import product from URL
   const handleImportFromUrl = async () => {
     if (!importUrl.trim()) {
       toast.error('Please enter a URL');
       return;
     }
+    
     const loadingToast = toast.loading('Importing listing details...');
     try {
-      const metadata = await extractUrlMetadata(importUrl);
+      const metadata = await extractUrlMetadata(supabase, importUrl);
+      
       if (metadata) {
+        // Apply metadata to form
         setTitle(metadata.title);
         setDescription(metadata.description);
-        
-        // Auto-set source URL from import
         setSourceUrl(importUrl.trim());
 
-        // Only add image if under 5 limit
+        // Add image if available and under limit
         if (metadata.image && !mediaItems.some(m => m.url === metadata.image)) {
           if (mediaItems.length >= 5) {
             toast.warning("Image found but you already have 5 images (maximum reached)");
           } else {
-            setMediaItems([...mediaItems, {
-              type: 'image',
-              url: metadata.image
-            }]);
+            setMediaItems([...mediaItems, { type: 'image', url: metadata.image }]);
           }
         }
+        
         if (metadata.price) {
           setPrice(metadata.price);
           setIsFree(false);
         }
 
-        // Auto-detect and set media type based on URL
-        const hostname = new URL(importUrl).hostname.toLowerCase();
-        if (hostname.includes('youtube') || hostname.includes('youtu.be')) {
-          setMediaType('video');
-          toast.info('Video listing detected and set');
-        } else if (hostname.includes('spotify') || hostname.includes('soundcloud')) {
-          setMediaType('audio');
-          toast.info('Audio listing detected and set');
+        // Auto-detect media type
+        const detectedType = detectMediaTypeFromUrl(importUrl);
+        if (detectedType) {
+          setMediaType(detectedType);
+          toast.info(`${detectedType.charAt(0).toUpperCase() + detectedType.slice(1)} listing detected and set`);
         }
 
         setShowImportDialog(false);
         setImportUrl("");
         setImportError(null);
-        toast.success('Listing details imported successfully!', {
-          id: loadingToast
-        });
+        toast.success('Listing details imported successfully!', { id: loadingToast });
       } else {
+        // Handle import failure
         toast.dismiss(loadingToast);
-        const urlObj = new URL(importUrl);
-        const hostname = urlObj.hostname.replace('www.', '');
-        const pathname = urlObj.pathname;
-        const urlParts = pathname.split('/').filter(p => p.length > 0);
-        const lastPart = urlParts[urlParts.length - 1];
-        const potentialTitle = lastPart?.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/\.\w+$/, '');
-        const isEcommerce = hostname.includes('etsy') || hostname.includes('amazon') || hostname.includes('ebay') || hostname.includes('shopify');
-        setImportError({
-          show: true,
-          message: isEcommerce ? `${hostname} blocks automatic imports. Let's create your listing manually!` : `We couldn't read this page automatically. Let's create your listing manually!`,
-          suggestedTitle: potentialTitle || null,
-          sourceUrl: importUrl
-        });
-        // Preserve the URL even on error
+        const errorDetails = generateImportError(importUrl);
+        setImportError(errorDetails);
         setSourceUrl(importUrl.trim());
       }
     } catch (error) {
       toast.dismiss(loadingToast);
-      try {
-        const urlObj = new URL(importUrl);
-        const hostname = urlObj.hostname.replace('www.', '');
-        setImportError({
-          show: true,
-          message: 'There was a problem reading this URL. Let\'s create your listing manually!',
-          suggestedTitle: null,
-          sourceUrl: importUrl
-        });
-      } catch {
-        toast.error('Invalid URL format', {
-          id: loadingToast
-        });
-      }
+      const errorDetails = generateImportError(importUrl);
+      setImportError(errorDetails);
     }
   };
   const handleImageUpload = async () => {
