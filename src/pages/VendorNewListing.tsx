@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link, Info, Tag, Gift } from "lucide-react";
+import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalLink, Link, Info, Tag, Gift, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 type CategoryType = "product" | "service" | "experience";
@@ -59,6 +59,9 @@ const VendorNewListing = () => {
   const [noActiveCoupons, setNoActiveCoupons] = useState(false);
   const [activeCouponDetails, setActiveCouponDetails] = useState<any>(null);
   const [showEditCoupon, setShowEditCoupon] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
+  const [loadingCoupons, setLoadingCoupons] = useState(false);
+  const [selectedCouponId, setSelectedCouponId] = useState<string>("");
 
   // Unified media handling - images only (max 5)
   const [mediaItems, setMediaItems] = useState<Array<{
@@ -90,16 +93,35 @@ const VendorNewListing = () => {
     }
   }, [user]);
 
+  // Fetch all vendor's active coupons for selection
+  const fetchAvailableCoupons = async () => {
+    if (!user) return;
+    
+    setLoadingCoupons(true);
+    try {
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("vendor_id", user.id)
+        .eq("active_status", true)
+        .gte("end_date", new Date().toISOString())
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      
+      setAvailableCoupons(data || []);
+      setNoActiveCoupons(!data || data.length === 0);
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      toast.error("Failed to load coupons");
+    } finally {
+      setLoadingCoupons(false);
+    }
+  };
+
   // Check if vendor has active coupons
   useEffect(() => {
-    const checkActiveCoupons = async () => {
-      if (!user) return;
-      const {
-        data: coupons
-      } = await supabase.from("coupons").select("id").eq("vendor_id", user.id).eq("active_status", true);
-      setNoActiveCoupons(!coupons || coupons.length === 0);
-    };
-    checkActiveCoupons();
+    fetchAvailableCoupons();
   }, [user]);
 
   // Load existing listing data if in edit mode
@@ -142,6 +164,9 @@ const VendorNewListing = () => {
           if (data.id) {
             await fetchActiveCoupon();
           }
+          
+          // Load available coupons for selection
+          await fetchAvailableCoupons();
         }
       } catch (error) {
         console.error("Error loading listing:", error);
@@ -304,10 +329,50 @@ const VendorNewListing = () => {
       setActiveCouponDetails(null);
       setHasActiveCoupon(false);
       setCouponCreated(false);
+      setSelectedCouponId("");
+      await fetchAvailableCoupons(); // Refresh the list
       toast.success("Coupon removed successfully");
     } catch (error) {
       console.error("Error removing coupon:", error);
       toast.error("Failed to remove coupon");
+    }
+  };
+
+  // Handle attaching a selected coupon
+  const handleAttachCoupon = async () => {
+    if (!selectedCouponId) {
+      toast.error("Please select a coupon");
+      return;
+    }
+
+    // If listing exists, update coupon's listing_id in database
+    if (listingId && user) {
+      try {
+        const { error } = await supabase
+          .from("coupons")
+          .update({ listing_id: listingId })
+          .eq("id", selectedCouponId)
+          .eq("vendor_id", user.id);
+
+        if (error) throw error;
+
+        // Fetch the full coupon details
+        const selectedCoupon = availableCoupons.find(c => c.id === selectedCouponId);
+        setActiveCouponDetails(selectedCoupon);
+        setHasActiveCoupon(true);
+        toast.success("Coupon attached to listing!");
+        await fetchActiveCoupon();
+      } catch (error) {
+        console.error("Error attaching coupon:", error);
+        toast.error("Failed to attach coupon");
+      }
+    } else {
+      // For new listings, store the selected coupon ID to attach on save
+      const selectedCoupon = availableCoupons.find(c => c.id === selectedCouponId);
+      setActiveCouponDetails(selectedCoupon);
+      setHasActiveCoupon(true);
+      setPendingCouponData({ couponId: selectedCouponId });
+      toast.info("Coupon will be attached when you save the listing");
     }
   };
 
@@ -350,6 +415,7 @@ const VendorNewListing = () => {
       setCouponCreated(false);
       setHasActiveCoupon(false);
       setActiveCouponDetails(null);
+      setSelectedCouponId("");
       setPrice("");
     }
     
@@ -620,8 +686,27 @@ const VendorNewListing = () => {
         } = await supabase.from("listings").update(listingData).eq("id", listingId);
         if (error) throw error;
 
-        // If there's pending coupon data, create it now
-        if (pendingCouponData) {
+        // Handle coupon attachment for existing listings
+        if (pendingCouponData?.couponId) {
+          // Attach existing coupon
+          try {
+            const { error: couponError } = await supabase
+              .from("coupons")
+              .update({ listing_id: listingId })
+              .eq("id", pendingCouponData.couponId)
+              .eq("vendor_id", user.id);
+
+            if (couponError) {
+              console.error("Error attaching coupon:", couponError);
+              toast.error("Listing updated but failed to attach coupon");
+            } else {
+              toast.success("Listing updated and coupon attached!");
+            }
+          } catch (error) {
+            console.error("Error in coupon attachment:", error);
+          }
+        } else if (pendingCouponData && !pendingCouponData.couponId) {
+          // Create new coupon
           try {
             const response = await supabase.functions.invoke('manage-coupons', {
               body: {
@@ -651,8 +736,27 @@ const VendorNewListing = () => {
         } = await supabase.from("listings").insert([listingData]).select().single();
         if (error) throw error;
 
-        // If there's pending coupon data, create it with the new listing ID
-        if (pendingCouponData && newListing) {
+        // Handle coupon attachment for new listings
+        if (pendingCouponData?.couponId && newListing) {
+          // Attach existing coupon
+          try {
+            const { error: couponError } = await supabase
+              .from("coupons")
+              .update({ listing_id: newListing.id })
+              .eq("id", pendingCouponData.couponId)
+              .eq("vendor_id", user.id);
+
+            if (couponError) {
+              console.error("Error attaching coupon:", couponError);
+              toast.error("Listing created but failed to attach coupon");
+            } else {
+              toast.success("Listing created and coupon attached!");
+            }
+          } catch (error) {
+            console.error("Error in coupon attachment:", error);
+          }
+        } else if (pendingCouponData && newListing && !pendingCouponData.couponId) {
+          // Create new coupon
           try {
             const response = await supabase.functions.invoke('manage-coupons', {
               body: {
@@ -1026,6 +1130,18 @@ const VendorNewListing = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
+                        onClick={() => {
+                          setHasActiveCoupon(false);
+                          setActiveCouponDetails(null);
+                          setSelectedCouponId("");
+                          fetchAvailableCoupons();
+                        }}
+                      >
+                        Change Coupon
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
                         onClick={() => setShowEditCoupon(true)}
                       >
                         Edit Coupon
@@ -1042,73 +1158,138 @@ const VendorNewListing = () => {
                 </Card>
               )}
 
-              {/* Create Coupon Section */}
-              {listingTypes.length > 0 && !isFree && !hasActiveCoupon && <Card>
+              {/* Active Coupon Selection Section */}
+              {listingTypes.length > 0 && !isFree && !hasActiveCoupon && (
+                <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-base font-semibold">Create Coupon for This Listing</Label>
+                        <Label className="text-base font-semibold">Active Coupon</Label>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Optional: Add a coupon that will be linked to this listing
-                        </p>
-                      </div>
-                      {couponCreated && <Badge variant="default" className="gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          Coupon Created
-                        </Badge>}
-                    </div>
-
-                {/* Encourage coupon creation if vendor has no active coupons */}
-                {noActiveCoupons && !couponCreated && !showCouponForm && <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                    <div className="flex items-start gap-2">
-                      <Gift className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
-                          Boost your listing with a coupon code!
-                        </p>
-                        <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
-                          Listings with coupons get a red sale dot that attracts more shoppers. 
-                          Create one now to stand out in the marketplace.
+                          Select an existing coupon or create a new one
                         </p>
                       </div>
                     </div>
-                  </div>}
-                
-                {couponCreated && <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <div className="h-2 w-2 bg-green-500 rounded-full" />
-                    <span className="text-sm font-medium text-green-700 dark:text-green-400">Coupon Created</span>
-                  </div>}
 
-                {!couponCreated && <div className="space-y-3">
-                    {!listingId && showCouponForm && <p className="text-sm text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded flex items-center gap-2 border border-yellow-200 dark:border-yellow-800">
-                        <AlertCircle className="h-4 w-4 shrink-0" />
-                        Coupon will be created when you save the listing
-                      </p>}
-                    
-                    <div className="flex items-center gap-2">
-                      <Checkbox id="showCoupon" checked={showCouponForm} onCheckedChange={checked => setShowCouponForm(checked as boolean)} />
-                      <Label htmlFor="showCoupon">Create a coupon for this listing</Label>
+                    {/* Coupon selection UI */}
+                    <div className="space-y-4">
+                      {loadingCoupons ? (
+                        <div className="flex justify-center py-8">
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : availableCoupons.length === 0 ? (
+                        <div className="text-center py-6 border rounded-lg bg-muted/30">
+                          <Gift className="h-10 w-10 mx-auto mb-3 opacity-50 text-muted-foreground" />
+                          <p className="font-medium">No active coupons available</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Create a coupon first to attach to this listing
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-3"
+                            onClick={() => setShowCouponForm(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create New Coupon
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Label>Select from your active coupons:</Label>
+                          <RadioGroup value={selectedCouponId} onValueChange={setSelectedCouponId}>
+                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                              {availableCoupons.map((coupon) => (
+                                <Label
+                                  key={coupon.id}
+                                  htmlFor={coupon.id}
+                                  className={cn(
+                                    "flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors",
+                                    selectedCouponId === coupon.id && "border-primary bg-accent"
+                                  )}
+                                >
+                                  <RadioGroupItem value={coupon.id} id={coupon.id} />
+                                  <div className="flex-1 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="font-mono text-xs">
+                                        {coupon.code}
+                                      </Badge>
+                                      <span className="font-semibold text-sm">
+                                        {coupon.discount_type === 'percentage' 
+                                          ? `${coupon.discount_value}% off` 
+                                          : `$${coupon.discount_value} off`}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                      Expires: {new Date(coupon.end_date).toLocaleDateString()} • 
+                                      Uses: {coupon.used_count}/{coupon.max_uses || '∞'}
+                                    </p>
+                                  </div>
+                                </Label>
+                              ))}
+                            </div>
+                          </RadioGroup>
+
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={handleAttachCoupon}
+                              disabled={!selectedCouponId}
+                              className="flex-1"
+                            >
+                              Attach Selected Coupon
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowCouponForm(true)}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Create New
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    
-                    {showCouponForm && <div className="border rounded-lg p-4 bg-muted/50">
-                        <CouponForm onSuccess={() => {
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Create New Coupon Dialog */}
+              <Dialog open={showCouponForm} onOpenChange={setShowCouponForm}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Coupon</DialogTitle>
+                    <DialogDescription>
+                      Create a new coupon that can be attached to this listing
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CouponForm 
+                    onSuccess={() => {
                       if (listingId) {
                         setCouponCreated(true);
                         setHasActiveCoupon(true);
                         setShowCouponForm(false);
+                        fetchAvailableCoupons();
+                        fetchActiveCoupon();
                         toast.success("Coupon created and linked to listing!");
                       }
-                    }} onCancel={() => {
+                    }} 
+                    onCancel={() => {
                       setShowCouponForm(false);
                       setPendingCouponData(null);
-                    }} listingId={listingId} autoLinkListing={true} deferSubmission={!listingId} onCouponDataReady={data => {
+                    }} 
+                    listingId={listingId} 
+                    autoLinkListing={true} 
+                    deferSubmission={!listingId} 
+                    onCouponDataReady={data => {
                       setPendingCouponData(data);
                       toast.info("Coupon ready - save the listing to create it");
-                    }} />
-                      </div>}
-                  </div>}
-              </CardContent>
-                </Card>}
+                    }} 
+                  />
+                </DialogContent>
+              </Dialog>
 
               {/* Submit Buttons */}
               <div className="flex gap-4 sticky bottom-4 bg-background p-4 rounded-lg border shadow-lg">
