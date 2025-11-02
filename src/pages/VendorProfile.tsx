@@ -211,7 +211,9 @@ const VendorProfile = () => {
     // Track coupon claim
     console.log("Coupon claimed:", selectedOffer);
     // Redirect to vendor website/checkout
-    window.open("https://bandcamp.com/", "_blank");
+    if (vendor.website) {
+      window.open(vendor.website, "_blank");
+    }
     setShowCouponDialog(false);
   };
 
@@ -240,14 +242,16 @@ const VendorProfile = () => {
                   )}
                 </div>
                 
-                <Button
-                  variant="link"
-                  className="text-primary gap-1"
-                  onClick={() => window.open("https://bandcamp.com/", "_blank")}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Visit Website
-                </Button>
+                {vendor.website && (
+                  <Button
+                    variant="link"
+                    className="text-primary gap-1"
+                    onClick={() => window.open(vendor.website, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Website
+                  </Button>
+                )}
               </div>
               
               <p className="text-muted-foreground max-w-2xl">

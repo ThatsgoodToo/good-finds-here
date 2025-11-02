@@ -104,19 +104,69 @@ const VendorNewListing = () => {
     loadListing();
   }, [isEditMode, listingId, navigate]);
   
-  // Mock vendor data
-  const vendor = {
-    name: "Your Vendor Name",
-    logo: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=100",
-    website: "https://yourwebsite.com",
-    location: "Sacramento, CA",
-    verified: true,
-    ownership: "Family Owned",
-    expertise: "Traditional Craftsmanship",
-  };
+  // Load real vendor data
+  const [vendorProfile, setVendorProfile] = useState<{
+    name: string;
+    logo: string;
+    website: string;
+    location: string;
+    verified: boolean;
+    ownership: string;
+    expertise: string;
+  } | null>(null);
 
-  // Mock: Check if vendor has existing active offers
-  const hasExistingActiveOffers = false; // This would come from backend
+  const [hasExistingActiveOffers, setHasExistingActiveOffers] = useState(false);
+
+  // Load vendor profile data
+  useEffect(() => {
+    const loadVendorProfile = async () => {
+      if (!user) return;
+      
+      const { data: vendor } = await supabase
+        .from("vendor_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, profile_picture_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (vendor) {
+        setVendorProfile({
+          name: vendor.business_type || profile?.display_name || "Your Business",
+          logo: profile?.profile_picture_url || profile?.avatar_url || "",
+          website: vendor.website || "",
+          location: `${vendor.city}, ${vendor.state_region}`,
+          verified: vendor.status === "active",
+          ownership: vendor.business_type || "",
+          expertise: vendor.area_of_expertise?.[0] || vendor.business_duration || "",
+        });
+      }
+    };
+
+    loadVendorProfile();
+  }, [user]);
+
+  // Load real active offers status
+  useEffect(() => {
+    const checkActiveOffers = async () => {
+      if (!user) return;
+      
+      const { data: activeCoupons } = await supabase
+        .from("coupons")
+        .select("id")
+        .eq("vendor_id", user.id)
+        .eq("active_status", true)
+        .limit(1);
+
+      setHasExistingActiveOffers((activeCoupons?.length || 0) > 0);
+    };
+
+    checkActiveOffers();
+  }, [user]);
 
   const categories = [
     "Textiles & Apparel",
@@ -141,23 +191,61 @@ const VendorNewListing = () => {
 
   const requiresActiveOffer = (listingType === "product" || listingType === "service") && !hasExistingActiveOffers && !isFree;
 
-  // Auto-fill content from URL metadata
-  const autoFillFromUrl = async (url: string) => {
+  // Extract metadata from URL for auto-fill
+  const extractUrlMetadata = async (url: string): Promise<{
+    title: string;
+    description: string;
+    image: string | null;
+  } | null> => {
     try {
       const urlObj = new URL(url);
-      const hostname = urlObj.hostname.replace('www.', '');
+      const hostname = urlObj.hostname.replace('www.', '').toLowerCase();
       
-      if (!title) {
+      // YouTube-specific extraction
+      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+        const videoId = extractYouTubeId(url);
+        if (videoId) {
+          return {
+            title: `YouTube Video ${videoId}`,
+            description: `Watch this video on YouTube`,
+            image: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+          };
+        }
+      }
+      
+      // Spotify-specific extraction  
+      if (hostname.includes('spotify.com')) {
         const pathParts = urlObj.pathname.split('/').filter(Boolean);
-        const suggestedTitle = pathParts[pathParts.length - 1]?.replace(/[-_]/g, ' ') || hostname;
-        setTitle(suggestedTitle.charAt(0).toUpperCase() + suggestedTitle.slice(1));
+        const type = pathParts[0]; // track, album, playlist
+        return {
+          title: `${type.charAt(0).toUpperCase() + type.slice(1)} on Spotify`,
+          description: `Listen to this ${type} on Spotify`,
+          image: `https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=800`
+        };
       }
       
-      if (!description) {
-        setDescription(`Content from ${hostname}`);
+      // SoundCloud extraction
+      if (hostname.includes('soundcloud.com')) {
+        const pathParts = urlObj.pathname.split('/').filter(Boolean);
+        const trackName = pathParts[pathParts.length - 1]?.replace(/[-_]/g, ' ');
+        return {
+          title: trackName ? trackName.charAt(0).toUpperCase() + trackName.slice(1) : 'SoundCloud Track',
+          description: 'Listen on SoundCloud',
+          image: `https://images.unsplash.com/photo-1611339555312-e607c8352fd7?w=800`
+        };
       }
+      
+      // Generic URL - extract from path
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      const suggestedTitle = pathParts[pathParts.length - 1]?.replace(/[-_]/g, ' ') || hostname;
+      
+      return {
+        title: suggestedTitle.charAt(0).toUpperCase() + suggestedTitle.slice(1),
+        description: `Content from ${hostname}`,
+        image: null
+      };
     } catch (e) {
-      // Invalid URL, skip auto-fill
+      return null;
     }
   };
 
@@ -218,10 +306,23 @@ const VendorNewListing = () => {
     return null;
   };
 
-  const handleAddImage = () => {
+  const handleAddImage = async () => {
     if (newImageUrl && images.length < 5) {
       setImages([...images, newImageUrl]);
-      autoFillFromUrl(newImageUrl);
+      
+      // Extract metadata and auto-fill
+      const metadata = await extractUrlMetadata(newImageUrl);
+      if (metadata) {
+        if (!title.trim()) {
+          setTitle(metadata.title);
+          toast.info("Title auto-filled from image URL");
+        }
+        if (!description.trim()) {
+          setDescription(metadata.description);
+          toast.info("Description auto-filled from image URL");
+        }
+      }
+      
       setNewImageUrl("");
     } else if (images.length >= 5) {
       toast.error("Maximum 5 images allowed");
@@ -274,16 +375,25 @@ const VendorNewListing = () => {
     input.click();
   };
 
-  const handleAddVideo = () => {
+  const handleAddVideo = async () => {
     if (newVideoUrl && videoEmbeds.length < 5) {
       setVideoEmbeds([...videoEmbeds, newVideoUrl]);
-      autoFillFromUrl(newVideoUrl);
       
-      // Generate preview image from video URL
-      const previewImage = generateUrlPreview(newVideoUrl, 'video');
-      if (previewImage && images.length < 5) {
-        setImages([...images, previewImage]);
-        toast.success("Preview image generated from video URL");
+      // Extract metadata and auto-fill
+      const metadata = await extractUrlMetadata(newVideoUrl);
+      if (metadata) {
+        if (!title.trim()) {
+          setTitle(metadata.title);
+          toast.info("Title auto-filled from video URL");
+        }
+        if (!description.trim()) {
+          setDescription(metadata.description);
+          toast.info("Description auto-filled from video URL");
+        }
+        if (metadata.image && images.length < 5) {
+          setImages([...images, metadata.image]);
+          toast.success("Preview image generated from video URL");
+        }
       }
       
       setNewVideoUrl("");
@@ -292,16 +402,25 @@ const VendorNewListing = () => {
     }
   };
 
-  const handleAddAudio = () => {
+  const handleAddAudio = async () => {
     if (newAudioUrl && audioEmbeds.length < 5) {
       setAudioEmbeds([...audioEmbeds, newAudioUrl]);
-      autoFillFromUrl(newAudioUrl);
       
-      // Generate preview image from audio URL
-      const previewImage = generateUrlPreview(newAudioUrl, 'audio');
-      if (previewImage && images.length < 5) {
-        setImages([...images, previewImage]);
-        toast.success("Preview image generated from audio URL");
+      // Extract metadata and auto-fill
+      const metadata = await extractUrlMetadata(newAudioUrl);
+      if (metadata) {
+        if (!title.trim()) {
+          setTitle(metadata.title);
+          toast.info("Title auto-filled from audio URL");
+        }
+        if (!description.trim()) {
+          setDescription(metadata.description);
+          toast.info("Description auto-filled from audio URL");
+        }
+        if (metadata.image && images.length < 5) {
+          setImages([...images, metadata.image]);
+          toast.success("Preview image generated from audio URL");
+        }
       }
       
       setNewAudioUrl("");
@@ -383,10 +502,9 @@ const VendorNewListing = () => {
       toast.error("Please provide offer details");
       return;
     }
-    // Require at least one form of media (image, video, or audio URL)
-    const hasMedia = images.length > 0 || videoEmbeds.length > 0 || audioEmbeds.length > 0;
-    if (!hasMedia) {
-      toast.error("Please add at least one image or provide a video/audio URL");
+    // Validation - require at least one media item (image, video, or audio URL)
+    if (images.length === 0 && videoEmbeds.length === 0 && audioEmbeds.length === 0) {
+      toast.error("Please provide at least one media item: image, video URL, or audio URL");
       return;
     }
 
@@ -857,41 +975,47 @@ const VendorNewListing = () => {
                 </h2>
 
                 {/* Vendor Header Preview */}
-                <div className="border-b border-border bg-card rounded-t-lg mb-4">
-                  <div className="p-4">
-                    <div className="flex flex-col items-center text-center gap-3">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage src={vendor.logo} alt={vendor.name} />
-                        <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-center gap-2">
-                          <h3 className="text-xl font-bold">{vendor.name}</h3>
-                          {vendor.verified && (
-                            <Badge variant="default" className="gap-1 text-xs">
-                              <CheckCircle className="h-3 w-3" />
-                              TGT Verified
-                            </Badge>
+                {vendorProfile && (
+                  <div className="border-b border-border bg-card rounded-t-lg mb-4">
+                    <div className="p-4">
+                      <div className="flex flex-col items-center text-center gap-3">
+                        {vendorProfile.logo && (
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src={vendorProfile.logo} alt={vendorProfile.name} />
+                            <AvatarFallback>{vendorProfile.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        )}
+                        
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-center gap-2">
+                            <h3 className="text-xl font-bold">{vendorProfile.name}</h3>
+                            {vendorProfile.verified && (
+                              <Badge variant="default" className="gap-1 text-xs">
+                                <CheckCircle className="h-3 w-3" />
+                                TGT Verified
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {vendorProfile.website && (
+                            <Button
+                              variant="link"
+                              className="text-xs gap-1 h-auto p-0"
+                              onClick={() => window.open(vendorProfile.website, "_blank")}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              website
+                            </Button>
                           )}
+                          
+                          <p className="text-xs text-muted-foreground">
+                            location {vendorProfile.location}
+                          </p>
                         </div>
-                        
-                        <Button
-                          variant="link"
-                          className="text-xs gap-1 h-auto p-0"
-                          onClick={() => window.open("https://bandcamp.com/", "_blank")}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          website
-                        </Button>
-                        
-                        <p className="text-xs text-muted-foreground">
-                          location {vendor.location}
-                        </p>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Main Content Preview */}
                 <div className="space-y-4">
@@ -930,7 +1054,7 @@ const VendorNewListing = () => {
                       <p className="text-sm text-muted-foreground">
                         {videoEmbeds.length > 0 || audioEmbeds.length > 0 
                           ? "Preview will show URL content" 
-                          : "No media yet - add images or URLs above"}
+                          : "No media yet - add images, video URLs, or audio URLs above"}
                       </p>
                     </div>
                   )}
@@ -955,19 +1079,23 @@ const VendorNewListing = () => {
                       </div>
                     )}
 
-                    <div>
-                      <h4 className="font-semibold mb-1">shops ownership</h4>
-                      <p className="text-muted-foreground">{vendor.ownership}</p>
-                    </div>
+                    {vendorProfile && vendorProfile.ownership && (
+                      <div>
+                        <h4 className="font-semibold mb-1">Ownership</h4>
+                        <p className="text-muted-foreground">{vendorProfile.ownership}</p>
+                      </div>
+                    )}
 
-                    <div>
-                      <h4 className="font-semibold mb-1">shops expertise</h4>
-                      <p className="text-muted-foreground">{vendor.expertise}</p>
-                    </div>
+                    {vendorProfile && vendorProfile.expertise && (
+                      <div>
+                        <h4 className="font-semibold mb-1">Expertise</h4>
+                        <p className="text-muted-foreground">{vendorProfile.expertise}</p>
+                      </div>
+                    )}
 
                     {shippingOptions.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2">Shops shipping option</h4>
+                        <h4 className="font-semibold mb-2">Shipping Options</h4>
                         <div className="flex flex-wrap gap-2">
                           {shippingOptions.map((option, index) => (
                             <Badge key={index} variant="secondary">{option}</Badge>
