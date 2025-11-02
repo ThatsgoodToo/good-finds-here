@@ -83,7 +83,7 @@ interface VendorApplication {
   agrees_to_terms: boolean | null;
   receive_updates: boolean | null;
   payment_method_saved: boolean | null;
-  profiles: {
+  profiles?: {
     email: string;
     full_name: string | null;
     display_name: string | null;
@@ -165,7 +165,7 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setApplications((data as any) || []);
+      setApplications((data as unknown as VendorApplication[]) || []);
     } catch (error) {
       console.error("Error loading applications:", error);
       toast.error("Failed to load applications");
@@ -204,9 +204,9 @@ const AdminDashboard = () => {
       setSelectedApp(null);
       setActionType(null);
       setAdminNotes("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating application:", error);
-      toast.error(error.message || "Failed to update application");
+      toast.error(error instanceof Error ? error.message : "Failed to update application");
     } finally {
       setProcessing(false);
     }

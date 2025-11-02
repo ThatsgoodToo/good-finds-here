@@ -24,6 +24,23 @@ import { toast } from "sonner";
 import LocationLink from "@/components/LocationLink";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Database } from "@/integrations/supabase/types";
+
+type Listing = Database['public']['Tables']['listings']['Row'];
+type Coupon = Database['public']['Tables']['coupons']['Row'];
+
+interface VendorInfo {
+  id: string;
+  name: string;
+  logo: string;
+  website: string;
+  location: string;
+  verified: boolean;
+  ownership: string;
+  expertise: string;
+  shipping: string[];
+  clicks_to_website?: number;
+}
 
 const ProductListing = () => {
   const navigate = useNavigate();
@@ -36,11 +53,11 @@ const ProductListing = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const [vendor, setVendor] = useState<any>(null);
-  const [listing, setListing] = useState<any>(null);
-  const [activeCoupon, setActiveCoupon] = useState<any>(null);
-  const [moreFromVendor, setMoreFromVendor] = useState<any[]>([]);
-  const [relatedListings, setRelatedListings] = useState<any[]>([]);
+  const [vendor, setVendor] = useState<VendorInfo | null>(null);
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [activeCoupon, setActiveCoupon] = useState<Coupon | null>(null);
+  const [moreFromVendor, setMoreFromVendor] = useState<Listing[]>([]);
+  const [relatedListings, setRelatedListings] = useState<Listing[]>([]);
   const [highFivesCount, setHighFivesCount] = useState(0);
 
   useEffect(() => {
@@ -49,6 +66,90 @@ const ProductListing = () => {
     }
   }, [user]);
 
+  // Helper functions for data fetching
+  const fetchListingData = async (id: string) => {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      toast.error("Listing not found");
+      return null;
+    }
+    return data;
+  };
+
+  const fetchVendorData = async (vendorId: string, websiteUrl: string | null) => {
+    const { data: vendorProfile } = await supabase
+      .from("vendor_profiles")
+      .select("*")
+      .eq("user_id", vendorId)
+      .maybeSingle();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url, profile_picture_url")
+      .eq("id", vendorId)
+      .maybeSingle();
+
+    return {
+      id: vendorId,
+      name: vendorProfile?.business_name || profile?.display_name || "Vendor",
+      logo: profile?.profile_picture_url || profile?.avatar_url || "",
+      website: vendorProfile?.website || websiteUrl || "",
+      location: vendorProfile ? `${vendorProfile.city}, ${vendorProfile.state_region}` : "",
+      verified: vendorProfile?.status === "active",
+      ownership: vendorProfile?.business_type || "",
+      expertise: vendorProfile?.business_duration || "",
+      shipping: vendorProfile?.shipping_options || [],
+    };
+  };
+
+  const fetchActiveCoupon = async (id: string) => {
+    const { data } = await supabase
+      .from("coupons")
+      .select("*")
+      .eq("listing_id", id)
+      .eq("active_status", true)
+      .gte("end_date", new Date().toISOString())
+      .lte("start_date", new Date().toISOString())
+      .limit(1);
+
+    return data && data.length > 0 ? data[0] : null;
+  };
+
+  const fetchRelatedData = async (id: string, vendorId: string, categories: string[]) => {
+    const { data: vendorListings } = await supabase
+      .from("listings")
+      .select("*")
+      .eq("vendor_id", vendorId)
+      .eq("status", "active")
+      .neq("id", id)
+      .limit(6);
+
+    const { data: related } = await supabase
+      .from("listings")
+      .select("*, vendor:vendor_profiles!inner(business_name)")
+      .eq("status", "active")
+      .contains("categories", categories || [])
+      .neq("id", id)
+      .limit(8);
+
+    const { count } = await supabase
+      .from("favorites")
+      .select("*", { count: "exact", head: true })
+      .eq("item_id", id);
+
+    return {
+      vendorListings: vendorListings || [],
+      relatedListings: related || [],
+      highFivesCount: count || 0,
+    };
+  };
+
   useEffect(() => {
     const loadListingData = async () => {
       if (!listingId) return;
@@ -56,94 +157,26 @@ const ProductListing = () => {
       try {
         setLoading(true);
 
-        // Fetch listing data
-        const { data: listingData, error: listingError } = await supabase
-          .from("listings")
-          .select("*")
-          .eq("id", listingId)
-          .maybeSingle();
-
-        if (listingError) throw listingError;
-        if (!listingData) {
-          toast.error("Listing not found");
-          return;
-        }
+        const listingData = await fetchListingData(listingId);
+        if (!listingData) return;
 
         setListing(listingData);
 
-        // Fetch vendor profile
-        const { data: vendorProfile } = await supabase
-          .from("vendor_profiles")
-          .select("*")
-          .eq("user_id", listingData.vendor_id)
-          .maybeSingle();
+        const vendorData = await fetchVendorData(listingData.vendor_id, listingData.website_url);
+        setVendor(vendorData);
 
-        // Fetch vendor's public profile for avatar
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("display_name, avatar_url, profile_picture_url")
-          .eq("id", listingData.vendor_id)
-          .maybeSingle();
+        const coupon = await fetchActiveCoupon(listingId);
+        setActiveCoupon(coupon);
 
-        setVendor({
-          id: listingData.vendor_id,
-          name: vendorProfile?.business_name || profile?.display_name || "Vendor",
-          logo: profile?.profile_picture_url || profile?.avatar_url || "",
-          website: vendorProfile?.website || listingData.website_url || "",
-          location: vendorProfile ? `${vendorProfile.city}, ${vendorProfile.state_region}` : "",
-          verified: vendorProfile?.status === "active",
-          ownership: vendorProfile?.business_type || "",
-          expertise: vendorProfile?.business_duration || "",
-          shipping: vendorProfile?.shipping_options || [],
-        });
-
-        // Fetch active coupon for this listing
-        const { data: coupons } = await supabase
-          .from("coupons")
-          .select("*")
-          .eq("listing_id", listingId)
-          .eq("active_status", true)
-          .gte("end_date", new Date().toISOString())
-          .lte("start_date", new Date().toISOString())
-          .limit(1);
-
-        if (coupons && coupons.length > 0) {
-          setActiveCoupon(coupons[0]);
-        }
-
-        // Fetch more from vendor
-        const { data: vendorListings } = await supabase
-          .from("listings")
-          .select("*")
-          .eq("vendor_id", listingData.vendor_id)
-          .eq("status", "active")
-          .neq("id", listingId)
-          .limit(6);
-
-        if (vendorListings) {
-          setMoreFromVendor(vendorListings);
-        }
-
-        // Fetch related listings (same category)
-        const { data: related } = await supabase
-          .from("listings")
-          .select("*, vendor:vendor_profiles!inner(business_name)")
-          .eq("status", "active")
-          .contains("categories", listingData.categories || [])
-          .neq("id", listingId)
-          .limit(8);
-
-        if (related) {
-          setRelatedListings(related);
-        }
-
-        // Get high fives count
-        const { count } = await supabase
-          .from("favorites")
-          .select("*", { count: "exact", head: true })
-          .eq("item_id", listingId);
-
-        setHighFivesCount(count || 0);
+        const relatedData = await fetchRelatedData(
+          listingId,
+          listingData.vendor_id,
+          listingData.categories || []
+        );
+        
+        setMoreFromVendor(relatedData.vendorListings);
+        setRelatedListings(relatedData.relatedListings);
+        setHighFivesCount(relatedData.highFivesCount);
 
       } catch (error) {
         console.error("Error loading listing:", error);

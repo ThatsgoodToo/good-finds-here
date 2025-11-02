@@ -16,6 +16,38 @@ import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface VendorCard {
+  id: string;
+  name: string;
+  image: string;
+  highFives: number;
+  category: string;
+  type: "product" | "service" | "experience" | "sale";
+  savedDate?: string;
+}
+
+interface ListingCard {
+  id: string;
+  title: string;
+  vendor: string;
+  vendorId: string;
+  image: string;
+  highFives: number;
+  price: string;
+  type: CategoryType;
+  folder?: string;
+  matchedFilters?: string[];
+}
+
+interface FollowerCard {
+  id: string;
+  name: string;
+  image: string;
+  location: string;
+  followedDate: string;
+  highFivesGiven: number;
+}
+
 const HighFives = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
@@ -26,12 +58,12 @@ const HighFives = () => {
   
   // State for fetched data
   const [loading, setLoading] = useState(true);
-  const [topVendors, setTopVendors] = useState<any[]>([]);
-  const [topListings, setTopListings] = useState<any[]>([]);
-  const [overlookedItems, setOverlookedItems] = useState<any[]>([]);
-  const [shopperFavorites, setShopperFavorites] = useState<{ vendors: any[]; listings: any[] }>({ vendors: [], listings: [] });
-  const [relatableListings, setRelatableListings] = useState<any[]>([]);
-  const [vendorFollowers, setVendorFollowers] = useState<any[]>([]);
+  const [topVendors, setTopVendors] = useState<VendorCard[]>([]);
+  const [topListings, setTopListings] = useState<ListingCard[]>([]);
+  const [overlookedItems, setOverlookedItems] = useState<ListingCard[]>([]);
+  const [shopperFavorites, setShopperFavorites] = useState<{ vendors: VendorCard[]; listings: ListingCard[] }>({ vendors: [], listings: [] });
+  const [relatableListings, setRelatableListings] = useState<ListingCard[]>([]);
+  const [vendorFollowers, setVendorFollowers] = useState<FollowerCard[]>([]);
 
   useEffect(() => {
     if (!user) {
