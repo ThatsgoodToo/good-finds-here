@@ -56,6 +56,8 @@ const VendorNewListing = () => {
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
   const [pendingCouponData, setPendingCouponData] = useState<any>(null);
   const [noActiveCoupons, setNoActiveCoupons] = useState(false);
+  const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
 
   // Unified media handling - images only (max 5)
   const [mediaItems, setMediaItems] = useState<Array<{
@@ -87,16 +89,24 @@ const VendorNewListing = () => {
     }
   }, [user]);
 
-  // Check if vendor has active coupons
+  // Check if vendor has active coupons and load available coupons
   useEffect(() => {
-    const checkActiveCoupons = async () => {
+    const loadAvailableCoupons = async () => {
       if (!user) return;
       const {
         data: coupons
-      } = await supabase.from("coupons").select("id").eq("vendor_id", user.id).eq("active_status", true);
+      } = await supabase
+        .from("coupons")
+        .select("id, code, discount_type, discount_value, end_date, listing_id, active_status")
+        .eq("vendor_id", user.id)
+        .eq("active_status", true)
+        .gte("end_date", new Date().toISOString())
+        .order("end_date", { ascending: true });
+      
+      setAvailableCoupons(coupons || []);
       setNoActiveCoupons(!coupons || coupons.length === 0);
     };
-    checkActiveCoupons();
+    loadAvailableCoupons();
   }, [user]);
 
   // Load existing listing data if in edit mode
@@ -142,12 +152,13 @@ const VendorNewListing = () => {
           if (couponData && couponData.length > 0) {
             setHasActiveCoupon(true);
             setCouponCreated(true);
+            setSelectedCouponId(couponData[0].id); // Set the selected coupon
           }
         }
       } catch (error) {
         console.error("Error loading listing:", error);
         toast.error("Failed to load listing");
-        navigate("/dashboard/vendor");
+        navigate("/dashboard/vendor?tab=listings");
       } finally {
         setLoading(false);
       }
@@ -479,15 +490,15 @@ const VendorNewListing = () => {
       toast.error("Source URL is required");
       return;
     }
-    if (!listingLink.trim()) {
-      toast.error("Listing Link is required - this is where shoppers will be directed");
-      return;
-    }
-    try {
-      new URL(listingLink);
-    } catch {
-      toast.error("Listing Link must be a valid URL");
-      return;
+    
+    // Only validate listing link if it's provided
+    if (listingLink.trim()) {
+      try {
+        new URL(listingLink);
+      } catch {
+        toast.error("Listing Link must be a valid URL (if provided)");
+        return;
+      }
     }
 
     // Images are now optional - no validation needed
@@ -511,7 +522,7 @@ const VendorNewListing = () => {
         categories: subcategories,
         image_url: images[0] || null,
         source_url: sourceUrl.trim(),
-        listing_link: listingLink.trim(),
+        listing_link: listingLink.trim() || null, // Allow null if empty
         status: "active"
       };
       if (isEditMode && listingId) {
@@ -520,6 +531,21 @@ const VendorNewListing = () => {
           error
         } = await supabase.from("listings").update(listingData).eq("id", listingId);
         if (error) throw error;
+
+        // Link selected coupon to this listing if one was chosen
+        if (selectedCouponId) {
+          try {
+            const { error: couponError } = await supabase
+              .from("coupons")
+              .update({ listing_id: listingId })
+              .eq("id", selectedCouponId);
+            
+            if (couponError) throw couponError;
+          } catch (couponError) {
+            console.error('Error linking coupon:', couponError);
+            toast.error("Listing saved but coupon linking failed");
+          }
+        }
 
         // If there's pending coupon data, create it now
         if (pendingCouponData) {
@@ -552,6 +578,21 @@ const VendorNewListing = () => {
         } = await supabase.from("listings").insert([listingData]).select().single();
         if (error) throw error;
 
+        // Link selected coupon to this listing if one was chosen
+        if (selectedCouponId && newListing) {
+          try {
+            const { error: couponError } = await supabase
+              .from("coupons")
+              .update({ listing_id: newListing.id })
+              .eq("id", selectedCouponId);
+            
+            if (couponError) throw couponError;
+          } catch (couponError) {
+            console.error('Error linking coupon:', couponError);
+            toast.error("Listing saved but coupon linking failed");
+          }
+        }
+
         // If there's pending coupon data, create it with the new listing ID
         if (pendingCouponData && newListing) {
           try {
@@ -576,7 +617,7 @@ const VendorNewListing = () => {
           toast.success("Listing created successfully!");
         }
       }
-      navigate("/dashboard/vendor");
+      navigate("/dashboard/vendor?tab=listings");
     } catch (error: any) {
       console.error("Error saving listing:", error);
 
@@ -601,9 +642,9 @@ const VendorNewListing = () => {
       <main className="pt-16 sm:pt-20 pb-12">
         <div className="container mx-auto px-4 sm:px-6 py-6">
           {/* Back Button */}
-          <button onClick={() => navigate("/dashboard/vendor")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group mb-4">
+          <button onClick={() => navigate("/dashboard/vendor?tab=listings")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group mb-4">
             <ChevronLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Dashboard</span>
+            <span>Back to Listings</span>
           </button>
 
           <h1 className="text-2xl sm:text-3xl font-bold mb-6">
@@ -777,12 +818,25 @@ const VendorNewListing = () => {
                   <div>
                     <Label htmlFor="sourceUrl">Source URL *</Label>
                     <Input id="sourceUrl" type="url" placeholder="https://example.com/original-product" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} className="mt-2" />
-                    <p className="text-sm text-muted-foreground mt-1">RWhere shoppers can purchase or view this listing (required for coupon functionality)
-
-                  </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Where shoppers can purchase or view this listing (required for coupon functionality)
+                    </p>
                   </div>
 
-                  
+                  <div>
+                    <Label htmlFor="listingLink">Listing Link (Optional)</Label>
+                    <Input 
+                      id="listingLink" 
+                      type="url" 
+                      placeholder="https://example.com/buy-now-page" 
+                      value={listingLink} 
+                      onChange={e => setListingLink(e.target.value)} 
+                      className="mt-2" 
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Optional: Direct link where shoppers can purchase (e.g., Etsy listing, product page)
+                    </p>
+                  </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -880,7 +934,7 @@ const VendorNewListing = () => {
               </Card>
 
               {/* Create Coupon Section */}
-              {listingTypes.length > 0 && !isFree && <Card>
+              {listingTypes.length > 0 && <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -894,6 +948,51 @@ const VendorNewListing = () => {
                           Coupon Created
                         </Badge>}
                     </div>
+
+                {/* Select Existing Coupon */}
+                {!couponCreated && availableCoupons.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="selectCoupon">Link Existing Coupon (Optional)</Label>
+                    <Select 
+                      value={selectedCouponId || "none"} 
+                      onValueChange={(value) => {
+                        setSelectedCouponId(value === "none" ? null : value);
+                        if (value !== "none") {
+                          setShowCouponForm(false); // Hide create form if selecting existing
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="selectCoupon">
+                        <SelectValue placeholder="Select a coupon..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No coupon</SelectItem>
+                        {availableCoupons.map((coupon) => (
+                          <SelectItem key={coupon.id} value={coupon.id}>
+                            {coupon.code} - {coupon.discount_value}
+                            {coupon.discount_type === 'percentage' ? '%' : '$'} off
+                            {coupon.listing_id && coupon.listing_id !== listingId && ' (linked to another listing)'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Choose an existing active coupon to link to this listing
+                    </p>
+                  </div>
+                )}
+
+                {/* Divider */}
+                {!couponCreated && availableCoupons.length > 0 && (
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Encourage coupon creation if vendor has no active coupons */}
                 {noActiveCoupons && !couponCreated && !showCouponForm && <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
@@ -949,7 +1048,7 @@ const VendorNewListing = () => {
 
               {/* Submit Buttons */}
               <div className="flex gap-4 sticky bottom-4 bg-background p-4 rounded-lg border shadow-lg">
-                <Button variant="outline" onClick={() => navigate("/dashboard/vendor")} className="flex-1" disabled={loading}>
+                <Button variant="outline" onClick={() => navigate("/dashboard/vendor?tab=listings")} className="flex-1" disabled={loading}>
                   Cancel
                 </Button>
                 <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
