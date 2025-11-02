@@ -121,7 +121,7 @@ const VendorProfile = () => {
           .maybeSingle();
 
         setVendor({
-          name: matchedVendor.business_type || profile?.display_name || "Vendor",
+          name: matchedVendor.business_name || profile?.display_name || "Vendor",
           verified: matchedVendor.status === "active",
           website: matchedVendor.website || "",
           bio: matchedVendor.business_description || profile?.bio || "",

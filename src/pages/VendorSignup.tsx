@@ -23,6 +23,7 @@ interface VendorAuthData {
 }
 interface VendorApplication {
   // Page 1
+  business_name: string;
   website: string;
   social_media_links: string[];
   city: string;
@@ -90,6 +91,7 @@ const VendorSignup = () => {
     confirmPassword: ""
   });
   const [formData, setFormData] = useState<VendorApplication>({
+    business_name: "",
     website: "",
     social_media_links: [],
     city: "",
@@ -172,7 +174,7 @@ const VendorSignup = () => {
     switch (currentStep) {
       case 0:
         // Basic Info
-        if (!formData.website || !formData.city || !formData.state_region || !formData.country) {
+        if (!formData.business_name || !formData.website || !formData.city || !formData.state_region || !formData.country) {
           toast.error("Please fill in all required fields");
           return false;
         }
@@ -618,8 +620,21 @@ const VendorSignup = () => {
                       <p className="text-xs text-muted-foreground mt-2">
                         Verified email: <strong>{authData.email}</strong>
                       </p>
-                    </div>}
+                  </div>}
                   
+                  <div>
+                    <Label htmlFor="businessName">Business Name *</Label>
+                    <Input 
+                      id="businessName" 
+                      value={formData.business_name} 
+                      onChange={e => updateField('business_name', e.target.value)} 
+                      placeholder="Your business name as you want it displayed" 
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This is how your business will appear on your profile and listings
+                    </p>
+                  </div>
+
                   <div>
                     <Label htmlFor="website">Website / Social Media Link *</Label>
                     <Input id="website" value={formData.website} onChange={e => updateField('website', e.target.value)} placeholder="https://yourwebsite.com or @username" />

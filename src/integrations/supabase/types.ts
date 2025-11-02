@@ -538,6 +538,7 @@ export type Database = {
           brand_uniqueness: string | null
           business_description: string | null
           business_duration: string | null
+          business_name: string | null
           business_type: string | null
           business_type_other: string | null
           certifications_awards: string | null
@@ -581,6 +582,7 @@ export type Database = {
           brand_uniqueness?: string | null
           business_description?: string | null
           business_duration?: string | null
+          business_name?: string | null
           business_type?: string | null
           business_type_other?: string | null
           certifications_awards?: string | null
@@ -624,6 +626,7 @@ export type Database = {
           brand_uniqueness?: string | null
           business_description?: string | null
           business_duration?: string | null
+          business_name?: string | null
           business_type?: string | null
           business_type_other?: string | null
           certifications_awards?: string | null
@@ -721,6 +724,7 @@ export type Database = {
           brand_uniqueness: string | null
           business_description: string
           business_duration: string
+          business_name: string | null
           business_type: string
           business_type_other: string | null
           certifications_awards: string | null
@@ -761,6 +765,7 @@ export type Database = {
           brand_uniqueness?: string | null
           business_description: string
           business_duration: string
+          business_name?: string | null
           business_type: string
           business_type_other?: string | null
           certifications_awards?: string | null
@@ -801,6 +806,7 @@ export type Database = {
           brand_uniqueness?: string | null
           business_description?: string
           business_duration?: string
+          business_name?: string | null
           business_type?: string
           business_type_other?: string | null
           certifications_awards?: string | null

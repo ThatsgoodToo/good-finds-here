@@ -125,7 +125,7 @@ const VendorDashboard = () => {
         .maybeSingle();
 
       if (vendorProfile) {
-        setVendorName(vendorProfile.business_type || profile?.display_name || "Vendor");
+        setVendorName(vendorProfile.business_name || profile?.display_name || "Vendor");
         setLocation(`${vendorProfile.city}, ${vendorProfile.state_region}`);
         setExternalUrl(vendorProfile.website || "");
         setVendorDescription(vendorProfile.business_description || "");
