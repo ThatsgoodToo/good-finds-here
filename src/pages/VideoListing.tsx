@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { mapCategoriesToTypes } from "@/lib/categoryMapping";
 import type { CategoryType } from "@/components/ProductCard";
+import { useVideoListingData } from "@/hooks/useVideoListingData";
 
 type Listing = Database['public']['Tables']['listings']['Row'];
 type Coupon = Database['public']['Tables']['coupons']['Row'];
@@ -52,7 +53,7 @@ const getVideoEmbedUrl = (url: string | null): string | null => {
   }
 
   // YouTube standard patterns
-  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const youtubeRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i;
   const youtubeMatch = url.match(youtubeRegex);
   if (youtubeMatch && youtubeMatch[1]) {
     return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
@@ -72,117 +73,30 @@ const VideoListing = () => {
   const navigate = useNavigate();
   const { listingId } = useParams();
   const { user } = useAuth();
+  
+  // UI state
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [vendor, setVendor] = useState<VendorInfo | null>(null);
-  const [activeCoupon, setActiveCoupon] = useState<Coupon | null>(null);
-  const [moreFromVendor, setMoreFromVendor] = useState<Listing[]>([]);
-  const [relatedListings, setRelatedListings] = useState<Listing[]>([]);
-  const [highFivesCount, setHighFivesCount] = useState(0);
+  // Use custom hook for data loading
+  const {
+    listing,
+    vendor,
+    activeCoupon,
+    moreFromVendor,
+    relatedListings,
+    highFivesCount,
+    loading,
+  } = useVideoListingData(listingId);
 
   useEffect(() => {
     if (!user) {
       setShowSignupModal(true);
     }
   }, [user]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!listingId) return;
-      setLoading(true);
-
-      // Load listing with all fields including categories
-      const { data: listingData } = await supabase
-        .from("listings")
-        .select("*")
-        .eq("id", listingId)
-        .maybeSingle();
-
-      if (listingData) {
-        setListing(listingData);
-
-        // Load vendor profile
-        const { data: vendorProfile } = await supabase
-          .from("vendor_profiles")
-          .select("*")
-          .eq("user_id", listingData.vendor_id)
-          .maybeSingle();
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("display_name, avatar_url")
-          .eq("id", listingData.vendor_id)
-          .maybeSingle();
-
-        if (vendorProfile || profile) {
-          setVendor({
-            id: listingData.vendor_id,
-            name: vendorProfile?.business_name || profile?.display_name || "Vendor",
-            business_name: vendorProfile?.business_name || profile?.display_name || "Vendor",
-            logo: profile?.avatar_url || "",
-            website: vendorProfile?.website || listingData.website_url || "",
-            location: vendorProfile ? `${vendorProfile.city}, ${vendorProfile.state_region}` : listingData.location || "",
-            verified: vendorProfile?.status === "active",
-            shipping_options: vendorProfile?.shipping_options || [],
-          });
-        }
-
-        // Load active coupon
-        const { data: couponData } = await supabase
-          .from("coupons")
-          .select("*")
-          .eq("listing_id", listingId)
-          .eq("active_status", true)
-          .gte("end_date", new Date().toISOString())
-          .lte("start_date", new Date().toISOString())
-          .maybeSingle();
-
-        setActiveCoupon(couponData);
-
-        // Load more from vendor
-        const { data: moreListings } = await supabase
-          .from("listings")
-          .select("*")
-          .eq("vendor_id", listingData.vendor_id)
-          .eq("status", "active")
-          .neq("id", listingId)
-          .limit(3);
-
-        setMoreFromVendor(moreListings || []);
-
-        // Load related listings based on categories
-        if (listingData.categories && listingData.categories.length > 0) {
-          const { data: related } = await supabase
-            .from("listings")
-            .select("*")
-            .neq("id", listingId)
-            .eq("status", "active")
-            .overlaps("categories", listingData.categories)
-            .limit(6);
-
-          setRelatedListings(related || []);
-        }
-
-        // Load high fives count
-        const { count } = await supabase
-          .from("favorites")
-          .select("*", { count: "exact", head: true })
-          .eq("item_id", listingId);
-
-        setHighFivesCount(count || 0);
-      }
-
-      setLoading(false);
-    };
-
-    loadData();
-  }, [listingId]);
 
   const images = listing?.image_url ? [listing.image_url] : [];
 

@@ -9,6 +9,8 @@ import VendorPendingApproval from "@/components/VendorPendingApproval";
 import VendorApplicationRejected from "@/components/VendorApplicationRejected";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { useListingCoupons } from "@/hooks/useListingCoupons";
+import { validateListingForm, validateMediaTypeUrl, validatePrice } from "@/utils/listingValidation";
+import { attachExistingCoupon, createNewCoupon } from "@/utils/couponOperations";
 import CouponForm from "@/components/dashboard/vendor/CouponForm";
 import CouponEditForm from "@/components/dashboard/vendor/CouponEditForm";
 import { Button } from "@/components/ui/button";
@@ -578,57 +580,35 @@ const VendorNewListing = () => {
     return null;
   }
   const handleSubmit = async () => {
-    // Validation
-    if (listingTypes.length === 0) {
-      toast.error("Please select at least one listing type");
-      return;
-    }
-    if (!title.trim()) {
-      toast.error("Please enter a title");
-      return;
-    }
-    if (!description.trim()) {
-      toast.error("Please enter a description");
-      return;
-    }
-    if (!category || !category.trim()) {
-      toast.error("Please select a category");
-      return;
-    }
-    if (!sourceUrl.trim()) {
-      toast.error("Source URL is required");
-      return;
-    }
-    try {
-      new URL(sourceUrl);
-    } catch {
-      toast.error("Source URL must be a valid URL");
+    // Validation using utility functions
+    const validationResult = validateListingForm({
+      listingTypes,
+      title,
+      description,
+      category,
+      sourceUrl,
+      mediaType,
+      isFree,
+      price,
+      user,
+    });
+
+    if (!validationResult.isValid) {
+      toast.error(validationResult.error);
       return;
     }
 
-    // Validate mediaType matches content for video/audio
-    if (mediaType === 'video' || mediaType === 'audio') {
-      const url = sourceUrl.toLowerCase();
-      if (!url.includes('youtube') && !url.includes('youtu.be') && 
-          !url.includes('spotify') && !url.includes('soundcloud')) {
-        const confirmed = confirm(
-          `You selected ${mediaType} but the URL doesn't appear to be from a media platform. Continue anyway?`
-        );
-        if (!confirmed) return;
-      }
+    // Validate media type URL
+    const mediaValidation = validateMediaTypeUrl(mediaType, sourceUrl);
+    if (mediaValidation.needsConfirmation) {
+      const confirmed = confirm(mediaValidation.message);
+      if (!confirmed) return;
     }
 
-    // Validate price format if not free
-    if (!isFree && price) {
-      const priceNum = parseFloat(price);
-      if (isNaN(priceNum) || priceNum < 0) {
-        toast.error("Price must be a valid positive number");
-        return;
-      }
-    }
-
-    if (!user) {
-      toast.error("You must be logged in to save a listing");
+    // Validate price
+    const priceValidation = validatePrice(isFree, price);
+    if (!priceValidation.isValid) {
+      toast.error(priceValidation.error);
       return;
     }
     
@@ -671,43 +651,32 @@ const VendorNewListing = () => {
 
         // Handle coupon attachment for existing listings
         if (pendingCouponData?.couponId) {
-          // Attach existing coupon
-          try {
-            const { error: couponError } = await supabase
-              .from("coupons")
-              .update({ listing_id: listingId })
-              .eq("id", pendingCouponData.couponId)
-              .eq("vendor_id", user.id);
-
-            if (couponError) {
-              console.error("Error attaching coupon:", couponError);
-              toast.error("Listing updated but failed to attach coupon");
-            } else {
-              toast.success("Listing updated and coupon attached!");
-            }
-          } catch (error) {
-            console.error("Error in coupon attachment:", error);
+          // Attach existing coupon using utility
+          const result = await attachExistingCoupon(
+            supabase,
+            pendingCouponData.couponId,
+            listingId,
+            user.id
+          );
+          
+          if (result.success) {
+            toast.success("Listing updated and coupon attached!");
+          } else {
+            toast.error(`Listing updated but failed to attach coupon: ${result.error}`);
           }
         } else if (pendingCouponData && !pendingCouponData.couponId) {
-          // Create new coupon
-          try {
-            const response = await supabase.functions.invoke('manage-coupons', {
-              body: {
-                action: 'create',
-                coupon: {
-                  ...pendingCouponData,
-                  listing_id: listingId,
-                  start_date: pendingCouponData.start_date?.toISOString(),
-                  end_date: pendingCouponData.end_date?.toISOString()
-                }
-              }
-            });
-            if (response.error) throw response.error;
+          // Create new coupon using utility
+          const result = await createNewCoupon(
+            supabase,
+            pendingCouponData,
+            listingId,
+            user.id
+          );
+          
+          if (result.success) {
             toast.success("Listing updated and coupon created!");
-          } catch (couponError: unknown) {
-            console.error('Error creating coupon:', couponError);
-            const errorMessage = couponError instanceof Error ? couponError.message : 'Unknown error';
-            toast.error("Listing updated but coupon creation failed: " + errorMessage);
+          } else {
+            toast.error(`Listing updated but coupon creation failed: ${result.error}`);
           }
         } else {
           toast.success("Listing updated successfully!");
@@ -722,72 +691,32 @@ const VendorNewListing = () => {
 
         // Handle coupon attachment for new listings
         if (pendingCouponData?.couponId && newListing) {
-          // Attach existing coupon with verification
-          try {
-            // First verify the coupon still exists and is valid
-            const { data: couponCheck, error: checkError } = await supabase
-              .from("coupons")
-              .select("id, active_status")
-              .eq("id", pendingCouponData.couponId)
-              .eq("vendor_id", user.id)
-              .maybeSingle();
-            
-            if (checkError) {
-              console.error("Error checking coupon:", checkError);
-              throw new Error("Failed to verify coupon");
-            }
-
-            if (!couponCheck) {
-              throw new Error("Selected coupon no longer exists");
-            }
-
-            if (!couponCheck.active_status) {
-              throw new Error("Selected coupon is no longer active");
-            }
-
-            // Now attach the coupon
-            const { error: couponError } = await supabase
-              .from("coupons")
-              .update({ listing_id: newListing.id })
-              .eq("id", pendingCouponData.couponId)
-              .eq("vendor_id", user.id);
-
-            if (couponError) {
-              console.error("Error attaching coupon:", couponError);
-              throw couponError;
-            }
-            
-            console.log('[COUPON ATTACHED] Successfully attached coupon to listing:', {
-              couponId: pendingCouponData.couponId,
-              listingId: newListing.id
-            });
-            
+          // Attach existing coupon using utility
+          const result = await attachExistingCoupon(
+            supabase,
+            pendingCouponData.couponId,
+            newListing.id,
+            user.id
+          );
+          
+          if (result.success) {
             toast.success("Listing created and coupon attached!");
-          } catch (error: unknown) {
-            console.error("Error in coupon attachment:", error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            toast.warning(`Listing created but coupon attachment failed: ${errorMessage}`);
+          } else {
+            toast.warning(`Listing created but coupon attachment failed: ${result.error}`);
           }
         } else if (pendingCouponData && newListing && !pendingCouponData.couponId) {
-          // Create new coupon
-          try {
-            const response = await supabase.functions.invoke('manage-coupons', {
-              body: {
-                action: 'create',
-                coupon: {
-                  ...pendingCouponData,
-                  listing_id: newListing.id,
-                  start_date: pendingCouponData.start_date?.toISOString(),
-                  end_date: pendingCouponData.end_date?.toISOString()
-                }
-              }
-            });
-            if (response.error) throw response.error;
+          // Create new coupon using utility
+          const result = await createNewCoupon(
+            supabase,
+            pendingCouponData,
+            newListing.id,
+            user.id
+          );
+          
+          if (result.success) {
             toast.success("Listing and coupon created successfully!");
-          } catch (couponError: unknown) {
-            console.error('Error creating coupon:', couponError);
-            const errorMessage = couponError instanceof Error ? couponError.message : 'Unknown error';
-            toast.error("Listing created but coupon creation failed: " + errorMessage);
+          } else {
+            toast.error(`Listing created but coupon creation failed: ${result.error}`);
           }
         } else {
           toast.success("Listing created successfully!");
