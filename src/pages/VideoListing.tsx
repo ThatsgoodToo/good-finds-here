@@ -51,7 +51,7 @@ const VideoListing = () => {
       if (!listingId) return;
       setLoading(true);
 
-      // Load listing
+      // Load listing with all fields including categories
       const { data: listingData } = await supabase
         .from("listings")
         .select("*")
@@ -347,16 +347,30 @@ const VideoListing = () => {
                 </div>
               )}
 
-              {/* Connect Button */}
-              {vendor?.website && (
+              {/* Categories */}
+              {listing.categories && listing.categories.length > 0 && (
                 <div>
-                  <Button
-                    className="w-full sm:w-auto gap-2"
-                    onClick={() => window.open(vendor.website, "_blank")}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Visit Vendor Website
-                  </Button>
+                  <h3 className="font-semibold mb-2">Categories</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.categories.map((category: string, index: number) => (
+                      <Badge key={index} variant="outline">{category}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Generic Category and Subcategory */}
+              {(listing.generic_category || listing.generic_subcategory) && (
+                <div>
+                  <h3 className="font-semibold mb-2">Classification</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.generic_category && (
+                      <Badge variant="secondary">{listing.generic_category.replace(/_/g, ' ')}</Badge>
+                    )}
+                    {listing.generic_subcategory && (
+                      <Badge variant="secondary">{listing.generic_subcategory.replace(/_/g, ' ')}</Badge>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -397,12 +411,26 @@ const VideoListing = () => {
 
               {listing.tags && listing.tags.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Filters</h3>
+                  <h3 className="font-semibold mb-2">Tags</h3>
                   <div className="flex flex-wrap gap-2">
                     {listing.tags.map((tag: string, index: number) => (
                       <Badge key={index} variant="secondary">{tag}</Badge>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Visit Site Button at Bottom */}
+              {vendor?.website && (
+                <div className="pt-4">
+                  <Button
+                    className="w-full gap-2"
+                    size="lg"
+                    onClick={() => window.open(vendor.website, "_blank")}
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                    Visit Site
+                  </Button>
                 </div>
               )}
             </div>
