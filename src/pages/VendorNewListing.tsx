@@ -859,7 +859,7 @@ const VendorNewListing = () => {
               </Card>
 
               {/* Add Active Coupon Section */}
-              {listingTypes.length > 0 && !isFree && <Card>
+              {listingTypes.length > 0 && <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
