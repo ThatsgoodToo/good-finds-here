@@ -144,22 +144,25 @@ export const NotificationPopover = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-foreground hover:text-primary h-8 w-8 sm:h-10 sm:w-10"
-          title="Notifications"
-        >
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </Badge>
-          )}
-        </Button>
+        {unreadCount > 0 ? (
+          <button
+            className="flex items-center justify-center min-w-[2rem] h-8 sm:h-10 px-2 rounded-md hover:opacity-80 transition-opacity"
+            title={`${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`}
+          >
+            <span className="text-sm sm:text-base font-semibold" style={{ color: 'hsl(226 41% 27%)' }}>
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          </button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 sm:h-10 sm:w-10 opacity-0 pointer-events-none"
+            title="No notifications"
+          >
+            <span className="sr-only">Notifications</span>
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-80 sm:w-96 p-0" align="end">
         <div className="flex items-center justify-between p-4 border-b">
