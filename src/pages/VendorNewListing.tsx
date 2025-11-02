@@ -464,15 +464,14 @@ const VendorNewListing = () => {
       toast.error("Source URL is required");
       return;
     }
-    if (!listingLink.trim()) {
-      toast.error("Listing Link is required - this is where shoppers will be directed");
-      return;
-    }
-    try {
-      new URL(listingLink);
-    } catch {
-      toast.error("Listing Link must be a valid URL");
-      return;
+    // Only validate listing link if it's provided
+    if (listingLink.trim()) {
+      try {
+        new URL(listingLink);
+      } catch {
+        toast.error("Listing Link must be a valid URL (if provided)");
+        return;
+      }
     }
 
     // Images are now optional - no validation needed
@@ -496,7 +495,7 @@ const VendorNewListing = () => {
         categories: subcategories,
         image_url: images[0] || null,
         source_url: sourceUrl.trim(),
-        listing_link: listingLink.trim(),
+        listing_link: listingLink.trim() || null,
         status: "active"
       };
       if (isEditMode && listingId) {
@@ -555,7 +554,7 @@ const VendorNewListing = () => {
           toast.success("Listing created successfully!");
         }
       }
-      navigate("/dashboard/vendor");
+      navigate("/dashboard/vendor?tab=listings");
     } catch (error: any) {
       console.error("Error saving listing:", error);
       
