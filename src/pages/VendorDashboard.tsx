@@ -61,6 +61,7 @@ const VendorDashboard = () => {
   const [vendorName, setVendorName] = useState("");
   const [vendorImage, setVendorImage] = useState("");
   const [location, setLocation] = useState("");
+  const [locationPublic, setLocationPublic] = useState(true);
   const [externalUrl, setExternalUrl] = useState("");
   const [vendorDescription, setVendorDescription] = useState("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
@@ -135,6 +136,7 @@ const VendorDashboard = () => {
       if (vendorProfile) {
         setVendorName(vendorProfile.business_name || profile?.display_name || "Vendor");
         setLocation(`${vendorProfile.city}, ${vendorProfile.state_region}`);
+        setLocationPublic(vendorProfile.location_public ?? true);
         setExternalUrl(vendorProfile.website || "");
         setVendorDescription(vendorProfile.business_description || "");
         setSubcategories(vendorProfile.area_of_expertise || []);
@@ -427,6 +429,27 @@ const VendorDashboard = () => {
     }
   };
 
+  const handleToggleLocationVisibility = async () => {
+    if (!user) return;
+
+    const newLocationPublic = !locationPublic;
+
+    try {
+      const { error } = await supabase
+        .from("vendor_profiles")
+        .update({ location_public: newLocationPublic })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setLocationPublic(newLocationPublic);
+      toast.success(newLocationPublic ? "Location is now public" : "Location is now private");
+    } catch (error) {
+      console.error("Error updating location visibility:", error);
+      toast.error("Failed to update location visibility");
+    }
+  };
+
   const handleEditSubcategories = (newSubcategories: string[]) => {
     setSubcategories(newSubcategories);
   };
@@ -502,10 +525,12 @@ const VendorDashboard = () => {
           externalUrl={externalUrl}
           description={vendorDescription}
           vendorUserId={user?.id || ""}
+          locationPublic={locationPublic}
           onUploadImage={handleUploadImage}
           onUpdateLocation={handleUpdateLocation}
           onUpdateExternalUrl={handleUpdateExternalUrl}
           onUpdateDescription={handleUpdateDescription}
+          onToggleLocationVisibility={handleToggleLocationVisibility}
         />
 
         <div className="container mx-auto px-4 sm:px-6 py-8">

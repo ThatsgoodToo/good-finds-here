@@ -30,9 +30,7 @@ import {
   MapPin,
   ArrowLeft,
   Sparkles,
-  Leaf,
-  Eye,
-  EyeOff
+  Leaf
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -296,27 +294,6 @@ const VendorProfile = () => {
     setShowCouponDialog(false);
   };
 
-  const toggleLocationVisibility = async () => {
-    if (!user || !vendorId) return;
-
-    const newLocationPublic = !vendor.locationPublic;
-
-    try {
-      const { error } = await supabase
-        .from("vendor_profiles")
-        .update({ location_public: newLocationPublic })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
-      setVendor(prev => ({ ...prev, locationPublic: newLocationPublic }));
-      toast.success(newLocationPublic ? "Location is now public" : "Location is now private");
-    } catch (error) {
-      console.error("Error updating location visibility:", error);
-      toast.error("Failed to update location visibility");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -487,24 +464,7 @@ const VendorProfile = () => {
                     <div className="flex items-start gap-3">
                       <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-semibold">Location</h3>
-                          {isOwnProfile && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={toggleLocationVisibility}
-                              className="h-8 w-8"
-                              title={vendor.locationPublic ? "Make location private" : "Make location public"}
-                            >
-                              {vendor.locationPublic ? (
-                                <Eye className="h-4 w-4" />
-                              ) : (
-                                <EyeOff className="h-4 w-4" />
-                              )}
-                            </Button>
-                          )}
-                        </div>
+                        <h3 className="font-semibold mb-1">Location</h3>
                         <LocationLink 
                           location={vendor.location}
                           showIcon={false}

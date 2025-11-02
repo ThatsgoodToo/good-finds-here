@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Upload, ExternalLink, Edit2, RefreshCw, HelpCircle, MapPin, Check, X } from "lucide-react";
+import { Settings, Upload, ExternalLink, Edit2, RefreshCw, HelpCircle, MapPin, Check, X, Eye, EyeOff } from "lucide-react";
 import LocationLink from "@/components/LocationLink";
 import { useAuth } from "@/contexts/AuthContext";
 import ShopperSignupPrompt from "@/components/ShopperSignupPrompt";
@@ -24,10 +24,12 @@ interface VendorHeaderProps {
   externalUrl: string;
   description: string;
   vendorUserId: string;
+  locationPublic: boolean;
   onUploadImage: () => void;
   onUpdateLocation: (location: string) => void;
   onUpdateExternalUrl: (url: string) => void;
   onUpdateDescription: (desc: string) => void;
+  onToggleLocationVisibility: () => void;
 }
 
 const VendorHeader = ({
@@ -37,10 +39,12 @@ const VendorHeader = ({
   externalUrl,
   description,
   vendorUserId,
+  locationPublic,
   onUploadImage,
   onUpdateLocation,
   onUpdateExternalUrl,
   onUpdateDescription,
+  onToggleLocationVisibility,
 }: VendorHeaderProps) => {
   const navigate = useNavigate();
   const { roles, activeRole, setActiveRole } = useAuth();
@@ -97,6 +101,19 @@ const VendorHeader = ({
         </h1>
               <div className="flex items-center gap-2 mt-1">
                 <LocationLink location={location} iconSize="sm" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleLocationVisibility}
+                  className="h-6 w-6"
+                  title={locationPublic ? "Make location private" : "Make location public"}
+                >
+                  {locationPublic ? (
+                    <Eye className="h-3 w-3" />
+                  ) : (
+                    <EyeOff className="h-3 w-3" />
+                  )}
+                </Button>
               </div>
               {externalUrl && (
                 <a
