@@ -83,6 +83,7 @@ const VendorProfile = () => {
       type: CategoryType;
       types: CategoryType[];
       hasOffer: boolean;
+      categories: string[];
     }>,
     videos: [] as any[],
     audio: [] as any[],
@@ -90,9 +91,11 @@ const VendorProfile = () => {
 
   const [offers, setOffers] = useState<Array<{
     id: string;
+    code: string;
     title: string;
     type: string;
     thumbnail: string;
+    listingId: string | null;
   }>>([]);
 
   const [relatedVendors, setRelatedVendors] = useState<Array<{
@@ -145,6 +148,19 @@ const VendorProfile = () => {
           highFives: 0,
         });
 
+        // Load active offers first
+        const { data: couponsData } = await supabase
+          .from("coupons")
+          .select("*")
+          .eq("vendor_id", matchedVendor.user_id)
+          .eq("active_status", true)
+          .gte("end_date", new Date().toISOString())
+          .lte("start_date", new Date().toISOString());
+
+        const activeCouponListingIds = new Set(
+          couponsData?.filter((c: any) => c.listing_id).map((c: any) => c.listing_id) || []
+        );
+
         // Load listings
         const { data: listingsData } = await supabase
           .from("listings")
@@ -153,34 +169,45 @@ const VendorProfile = () => {
           .eq("status", "active");
 
         if (listingsData) {
-          setListings({
-            images: listingsData.map((listing: any) => ({
+          const listingsWithOffers = listingsData.map((listing: any) => {
+            const hasActiveCoupon = activeCouponListingIds.has(listing.id);
+            const types: CategoryType[] = [listing.listing_type as CategoryType];
+            
+            // Add sale category if listing has active coupon
+            if (hasActiveCoupon) {
+              types.push("sale" as CategoryType);
+            }
+            
+            return {
               id: listing.id,
               url: listing.image_url || "",
               title: listing.title,
               type: listing.listing_type as CategoryType,
-              types: [listing.listing_type] as CategoryType[],
-              hasOffer: false,
-            })),
+              types,
+              hasOffer: hasActiveCoupon,
+              categories: listing.categories || [],
+            };
+          });
+
+          setListings({
+            images: listingsWithOffers,
             videos: [],
             audio: [],
           });
         }
 
-        // Load active offers
-        const { data: couponsData } = await supabase
-          .from("coupons")
-          .select("*")
-          .eq("vendor_id", matchedVendor.user_id)
-          .eq("active_status", true);
-
         if (couponsData) {
+          // Update active offers count
+          setVendor(prev => ({ ...prev, activeOffers: couponsData.length }));
+          
           setOffers(
             couponsData.map((coupon: any) => ({
               id: coupon.id,
-              title: `${coupon.discount_value}${coupon.discount_type === 'percentage' ? '%' : ''} off`,
-              type: "product",
+              code: coupon.code,
+              title: `${coupon.discount_value}${coupon.discount_type === 'percentage' ? '%' : '$'} off`,
+              type: "sale",
               thumbnail: "",
+              listingId: coupon.listing_id,
             }))
           );
         }
@@ -215,13 +242,42 @@ const VendorProfile = () => {
     setShowCouponDialog(true);
   };
 
-  const handleConfirmClaim = () => {
-    // Track coupon claim
-    console.log("Coupon claimed:", selectedOffer);
-    // Redirect to vendor website/checkout
-    if (vendor.website) {
-      window.open(vendor.website, "_blank");
+  const handleConfirmClaim = async () => {
+    if (!selectedOffer || !user) return;
+
+    try {
+      // Record coupon usage
+      await supabase.from("coupon_usage").insert({
+        coupon_id: selectedOffer.id,
+        user_id: user.id,
+        listing_id: selectedOffer.listingId,
+      });
+
+      // Increment used_count by updating the coupon
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("used_count")
+        .eq("id", selectedOffer.id)
+        .single();
+
+      if (coupon) {
+        await supabase
+          .from("coupons")
+          .update({ used_count: coupon.used_count + 1 })
+          .eq("id", selectedOffer.id);
+      }
+
+      toast.success(`Coupon code: ${selectedOffer.code}`);
+      
+      // Redirect to vendor website
+      if (vendor.website) {
+        window.open(vendor.website, "_blank");
+      }
+    } catch (error) {
+      console.error("Error claiming coupon:", error);
+      toast.error("Failed to claim coupon");
     }
+    
     setShowCouponDialog(false);
   };
 
@@ -310,6 +366,19 @@ const VendorProfile = () => {
                       <div
                         key={listing.id}
                         className="relative group cursor-pointer rounded-lg overflow-hidden aspect-square"
+                        onClick={() => {
+                          // Determine listing path based on categories
+                          const isVideo = listing.categories?.includes("video");
+                          const isAudio = listing.categories?.includes("audio");
+                          
+                          if (isVideo) {
+                            navigate(`/listing/video/${listing.id}`);
+                          } else if (isAudio) {
+                            navigate(`/listing/audio/${listing.id}`);
+                          } else {
+                            navigate(`/listing/product/${listing.id}`);
+                          }
+                        }}
                       >
                         <img
                           src={listing.url}
@@ -328,7 +397,6 @@ const VendorProfile = () => {
                           ))}
                         </div>
                         
-                        {/* High-Five Button */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -341,13 +409,6 @@ const VendorProfile = () => {
                         >
                           <Hand className="h-5 w-5" />
                         </Button>
-                        
-                        {/* Exclusive offer badge */}
-                        {listing.hasOffer && (
-                          <Badge className="absolute top-12 right-2 bg-red-500">
-                            Exclusive Offer
-                          </Badge>
-                        )}
                         
                         {/* Title overlay - always visible on all screen sizes */}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
@@ -473,35 +534,40 @@ const VendorProfile = () => {
               </Card>
 
               {/* Active Offers */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Package className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2">Active Offers ({vendor.activeOffers})</h3>
-                      <div className="space-y-2">
-                        {offers.map((offer) => (
-                          <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className={cn("h-2 w-2 rounded-full ring-1 ring-border shrink-0", getCategoryColor(offer.type))} />
-                              <span className="text-muted-foreground truncate">{offer.title}</span>
+              {offers.length > 0 && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-3">
+                      <Ticket className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-3">Active Offers ({offers.length})</h3>
+                        <div className="space-y-3">
+                          {offers.map((offer) => (
+                            <div key={offer.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                              <div className="flex items-start gap-2 flex-1 min-w-0">
+                                <div className={cn("h-2 w-2 rounded-full ring-1 ring-border shrink-0 mt-1.5", getCategoryColor(offer.type))} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium">{offer.title}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">Code: {offer.code}</p>
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="default"
+                                className="shrink-0 gap-1"
+                                onClick={() => handleClaimCoupon(offer)}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Claim
+                              </Button>
                             </div>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="shrink-0 gap-1"
-                              onClick={() => handleClaimCoupon(offer)}
-                            >
-                              <Ticket className="h-3 w-3" />
-                              Claim
-                            </Button>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
             </div>
           </div>
@@ -600,20 +666,24 @@ const VendorProfile = () => {
           <DialogHeader>
             <DialogTitle>Claim Exclusive Offer</DialogTitle>
             <DialogDescription>
-              You're about to claim: {selectedOffer?.title}
+              Use code <span className="font-mono font-semibold text-foreground">{selectedOffer?.code}</span> for {selectedOffer?.title}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Your coupon code:</p>
+              <p className="text-lg font-mono font-bold">{selectedOffer?.code}</p>
+            </div>
             <p className="text-sm text-muted-foreground">
-              This will redirect you to {vendor.name}'s website where you can use this exclusive offer.
+              Click below to visit {vendor.name}'s website and apply this code at checkout.
             </p>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setShowCouponDialog(false)}>
                 Cancel
               </Button>
               <Button className="flex-1 gap-2" onClick={handleConfirmClaim}>
-                <Ticket className="h-4 w-4" />
-                Claim & Visit Site
+                <ExternalLink className="h-4 w-4" />
+                Visit Site
               </Button>
             </div>
           </div>
