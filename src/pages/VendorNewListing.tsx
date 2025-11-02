@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import VendorPendingApproval from "@/components/VendorPendingApproval";
 import VendorApplicationRejected from "@/components/VendorApplicationRejected";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
+import CouponForm from "@/components/dashboard/vendor/CouponForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +45,8 @@ const VendorNewListing = () => {
   const { user } = useAuth();
   const { status: vendorStatus, isLoading: checkingStatus } = useVendorAccess();
   const isEditMode = !!listingId;
+  
+  // State variables
   const [loading, setLoading] = useState(false);
   const [listingTypes, setListingTypes] = useState<CategoryType[]>([]);
   const [title, setTitle] = useState("");
@@ -57,14 +61,18 @@ const VendorNewListing = () => {
   const [showCouponForm, setShowCouponForm] = useState(false);
   const [couponCreated, setCouponCreated] = useState(false);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
-  const [videoEmbeds, setVideoEmbeds] = useState<string[]>([]);
-  const [audioEmbeds, setAudioEmbeds] = useState<string[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState("");
-  const [newVideoUrl, setNewVideoUrl] = useState("");
-  const [newAudioUrl, setNewAudioUrl] = useState("");
+  
+  // Unified media handling
+  const [mediaItems, setMediaItems] = useState<Array<{type: 'image' | 'video' | 'audio', url: string}>>([]);
+  const [mediaType, setMediaType] = useState<'image' | 'video' | 'audio'>('image');
+  const [mediaUrl, setMediaUrl] = useState("");
+  
+  // Autocomplete subcategories
+  const [subcategoryInput, setSubcategoryInput] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  
   const [customCategory, setCustomCategory] = useState("");
-  const [customSubcategory, setCustomSubcategory] = useState("");
   const [selectedPreviewImage, setSelectedPreviewImage] = useState(0);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -76,6 +84,12 @@ const VendorNewListing = () => {
     suggestedTitle: string | null;
     sourceUrl: string;
   } | null>(null);
+
+  const predefinedSubcategories = [
+    "Handcrafted", "Sustainable", "Local", "Custom",
+    "Limited Edition", "Organic", "Eco-Friendly",
+    "Vintage", "Artisan", "Fair Trade"
+  ];
 
   useEffect(() => {
     if (!user) {
@@ -110,10 +124,12 @@ const VendorNewListing = () => {
           setSourceUrl(data.source_url || "");
           setListingLink(data.listing_link || "");
           
-          // Load media
+          // Load media - convert to unified format
+          const items: Array<{type: 'image' | 'video' | 'audio', url: string}> = [];
           if (data.image_url) {
-            setImages([data.image_url]);
+            items.push({type: 'image', url: data.image_url});
           }
+          setMediaItems(items);
           
           // Check for active coupon
           const { data: couponData } = await supabase
@@ -234,6 +250,60 @@ const VendorNewListing = () => {
     }
   };
 
+  const addMediaItem = () => {
+    if (mediaUrl.trim()) {
+      // Auto-detect type if URL pattern matches
+      let detectedType = mediaType;
+      if (mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')) {
+        detectedType = 'video';
+      } else if (mediaUrl.includes('spotify.com') || mediaUrl.includes('soundcloud')) {
+        detectedType = 'audio';
+      }
+      
+      setMediaItems([...mediaItems, {type: detectedType, url: mediaUrl}]);
+      setMediaUrl("");
+    }
+  };
+
+  const removeMediaItem = (index: number) => {
+    setMediaItems(mediaItems.filter((_, i) => i !== index));
+  };
+
+  const handleSubcategoryAutocomplete = (input: string) => {
+    setSubcategoryInput(input);
+    
+    if (input.length > 0) {
+      const filtered = predefinedSubcategories.filter(sub => 
+        sub.toLowerCase().startsWith(input.toLowerCase()) &&
+        !subcategories.includes(sub)
+      );
+      setSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const addSubcategory = (sub: string) => {
+    if (!subcategories.includes(sub)) {
+      setSubcategories([...subcategories, sub]);
+    }
+    setSubcategoryInput("");
+    setShowSuggestions(false);
+  };
+
+  const removeSubcategory = (sub: string) => {
+    setSubcategories(subcategories.filter(s => s !== sub));
+  };
+
+  const toggleShipping = (option: string) => {
+    if (shippingOptions.includes(option)) {
+      setShippingOptions(shippingOptions.filter((o) => o !== option));
+    } else {
+      setShippingOptions([...shippingOptions, option]);
+    }
+  };
+
   // Extract metadata from URL for auto-fill
   const extractUrlMetadata = async (url: string): Promise<{
     title: string;
@@ -289,12 +359,11 @@ const VendorNewListing = () => {
       const metadata = await extractUrlMetadata(importUrl);
       
       if (metadata) {
-        // Success path - same as before
         setTitle(metadata.title);
         setDescription(metadata.description);
         
-        if (metadata.image) {
-          setImages([metadata.image]);
+        if (metadata.image && !mediaItems.some(m => m.url === metadata.image)) {
+          setMediaItems([...mediaItems, {type: 'image', url: metadata.image}]);
         }
         
         if (metadata.price) {
@@ -305,9 +374,9 @@ const VendorNewListing = () => {
         // Add URL to appropriate media type
         const hostname = new URL(importUrl).hostname.toLowerCase();
         if (hostname.includes('youtube') || hostname.includes('youtu.be')) {
-          setVideoEmbeds([importUrl]);
+          setMediaItems(prev => [...prev, {type: 'video', url: importUrl}]);
         } else if (hostname.includes('spotify') || hostname.includes('soundcloud')) {
-          setAudioEmbeds([importUrl]);
+          setMediaItems(prev => [...prev, {type: 'audio', url: importUrl}]);
         }
         
         setShowImportDialog(false);
@@ -315,29 +384,24 @@ const VendorNewListing = () => {
         setImportError(null);
         toast.success('Product details imported successfully!', { id: loadingToast });
       } else {
-        // ENHANCED FAILURE PATH
         toast.dismiss(loadingToast);
         
-        // Try to extract basic info from URL
         const urlObj = new URL(importUrl);
         const hostname = urlObj.hostname.replace('www.', '');
         const pathname = urlObj.pathname;
         
-        // Extract potential title from URL slug
         const urlParts = pathname.split('/').filter(p => p.length > 0);
         const lastPart = urlParts[urlParts.length - 1];
         const potentialTitle = lastPart
           ?.replace(/[-_]/g, ' ')
           .replace(/\b\w/g, l => l.toUpperCase())
-          .replace(/\.\w+$/, ''); // Remove file extensions
+          .replace(/\.\w+$/, '');
         
-        // Detect site type for better messaging
         const isEcommerce = hostname.includes('etsy') || 
-                           hostname.includes('amazon') || 
-                           hostname.includes('ebay') ||
-                           hostname.includes('shopify');
+                             hostname.includes('amazon') || 
+                             hostname.includes('ebay') ||
+                             hostname.includes('shopify');
         
-        // Show manual entry option with pre-filled data
         setImportError({
           show: true,
           message: isEcommerce 
@@ -350,7 +414,6 @@ const VendorNewListing = () => {
     } catch (error) {
       toast.dismiss(loadingToast);
       
-      // Parse error for better messaging
       try {
         const urlObj = new URL(importUrl);
         const hostname = urlObj.hostname.replace('www.', '');
@@ -367,86 +430,6 @@ const VendorNewListing = () => {
     }
   };
 
-  // Generate preview image from URL
-  const generateUrlPreview = (url: string, type: 'video' | 'audio'): string | null => {
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname.replace('www.', '').toLowerCase();
-      
-      // Check for YouTube
-      if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
-        const videoId = extractYouTubeId(url);
-        if (videoId) {
-          return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-        }
-      }
-      
-      // Check for Vimeo
-      if (hostname.includes('vimeo.com')) {
-        // Vimeo thumbnails require API call, so we'll use a placeholder for now
-        return `https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=450&fit=crop`;
-      }
-      
-      // Check for Spotify
-      if (hostname.includes('spotify.com')) {
-        return `https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=800&h=800&fit=crop`;
-      }
-      
-      // Check for SoundCloud
-      if (hostname.includes('soundcloud.com')) {
-        return `https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&h=800&fit=crop`;
-      }
-      
-      // Generic placeholder based on type
-      if (type === 'video') {
-        return `https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=450&fit=crop`;
-      } else {
-        return `https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&h=800&fit=crop`;
-      }
-    } catch (e) {
-      return null;
-    }
-  };
-
-  // Extract YouTube video ID from various URL formats
-  const extractYouTubeId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
-      /youtube\.com\/embed\/([^&\n?#]+)/,
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-    return null;
-  };
-
-  const handleAddImage = async () => {
-    if (newImageUrl && images.length < 5) {
-      setImages([...images, newImageUrl]);
-      
-      // Extract metadata and auto-fill
-      const metadata = await extractUrlMetadata(newImageUrl);
-      if (metadata) {
-        if (!title.trim()) {
-          setTitle(metadata.title);
-          toast.info("Title auto-filled from image URL");
-        }
-        if (!description.trim()) {
-          setDescription(metadata.description);
-          toast.info("Description auto-filled from image URL");
-        }
-      }
-      
-      setNewImageUrl("");
-    } else if (images.length >= 5) {
-      toast.error("Maximum 5 images allowed");
-    }
-  };
-
   const handleImageUpload = async () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -456,7 +439,7 @@ const VendorNewListing = () => {
     input.onchange = async (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || []);
       
-      if (files.length + images.length > 5) {
+      if (files.length + mediaItems.filter(m => m.type === 'image').length > 5) {
         toast.error("Maximum 5 images allowed");
         return;
       }
@@ -485,112 +468,13 @@ const VendorNewListing = () => {
 
       const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
       if (uploadedUrls.length > 0) {
-        setImages(prev => [...prev, ...uploadedUrls]);
+        const newItems = uploadedUrls.map(url => ({type: 'image' as const, url}));
+        setMediaItems(prev => [...prev, ...newItems]);
         toast.success(`Uploaded ${uploadedUrls.length} image(s)`);
       }
     };
 
     input.click();
-  };
-
-  const handleAddVideo = async () => {
-    if (newVideoUrl && videoEmbeds.length < 5) {
-      const loadingToast = toast.loading('Fetching video details...');
-      
-      try {
-        setVideoEmbeds([...videoEmbeds, newVideoUrl]);
-        
-        // Extract metadata and auto-fill
-        const metadata = await extractUrlMetadata(newVideoUrl);
-        
-        if (metadata) {
-          // Auto-fill title if empty
-          if (!title.trim()) {
-            setTitle(metadata.title);
-            toast.success('Title auto-filled from video', { id: loadingToast });
-          } else {
-            toast.dismiss(loadingToast);
-          }
-          
-          // Auto-fill description if empty
-          if (!description.trim()) {
-            setDescription(metadata.description);
-          }
-          
-          // Add preview image if available
-          if (metadata.image && images.length < 5) {
-            setImages([...images, metadata.image]);
-            toast.success('Preview image added from video');
-          }
-        } else {
-          toast.dismiss(loadingToast);
-        }
-        
-        setNewVideoUrl("");
-      } catch (error) {
-        toast.error('Failed to process video URL', { id: loadingToast });
-      }
-    } else if (videoEmbeds.length >= 5) {
-      toast.error("Maximum 5 videos allowed");
-    }
-  };
-
-  const handleAddAudio = async () => {
-    if (newAudioUrl && audioEmbeds.length < 5) {
-      const loadingToast = toast.loading('Fetching audio details...');
-      
-      try {
-        setAudioEmbeds([...audioEmbeds, newAudioUrl]);
-        
-        // Extract metadata and auto-fill
-        const metadata = await extractUrlMetadata(newAudioUrl);
-        
-        if (metadata) {
-          // Auto-fill title if empty
-          if (!title.trim()) {
-            setTitle(metadata.title);
-            toast.success('Title auto-filled from audio', { id: loadingToast });
-          } else {
-            toast.dismiss(loadingToast);
-          }
-          
-          // Auto-fill description if empty
-          if (!description.trim()) {
-            setDescription(metadata.description);
-          }
-          
-          // Add preview image if available
-          if (metadata.image && images.length < 5) {
-            setImages([...images, metadata.image]);
-            toast.success('Preview image added from audio');
-          }
-        } else {
-          toast.dismiss(loadingToast);
-        }
-        
-        setNewAudioUrl("");
-      } catch (error) {
-        toast.error('Failed to process audio URL', { id: loadingToast });
-      }
-    } else if (audioEmbeds.length >= 5) {
-      toast.error("Maximum 5 audio embeds allowed (including 1 playlist)");
-    }
-  };
-
-  const toggleSubcategory = (sub: string) => {
-    if (subcategories.includes(sub)) {
-      setSubcategories(subcategories.filter((s) => s !== sub));
-    } else {
-      setSubcategories([...subcategories, sub]);
-    }
-  };
-
-  const toggleShipping = (option: string) => {
-    if (shippingOptions.includes(option)) {
-      setShippingOptions(shippingOptions.filter((o) => o !== option));
-    } else {
-      setShippingOptions([...shippingOptions, option]);
-    }
   };
 
   // Check vendor access status
@@ -642,13 +526,24 @@ const VendorNewListing = () => {
       toast.error("Please enter a description");
       return;
     }
-    if (listingLink && !listingLink.match(/^https?:\/\/.+/)) {
-      toast.error("Listing link must be a valid URL");
+    if (!sourceUrl.trim()) {
+      toast.error("Source URL is required");
       return;
     }
-    // Validation - require at least one media item (image, video, or audio URL)
-    if (images.length === 0 && videoEmbeds.length === 0 && audioEmbeds.length === 0) {
-      toast.error("Please provide at least one media item: image, video URL, or audio URL");
+    if (!listingLink.trim()) {
+      toast.error("Listing Link is required - this is where shoppers will be directed");
+      return;
+    }
+    
+    try {
+      new URL(listingLink);
+    } catch {
+      toast.error("Listing Link must be a valid URL");
+      return;
+    }
+    
+    if (mediaItems.length === 0) {
+      toast.error("Please add at least one media item (image, video, or audio)");
       return;
     }
 
@@ -659,6 +554,9 @@ const VendorNewListing = () => {
 
     setLoading(true);
     try {
+      // Separate media items by type for database
+      const images = mediaItems.filter(m => m.type === 'image').map(m => m.url);
+      
       const listingData = {
         vendor_id: user.id,
         title: title.trim(),
@@ -668,8 +566,8 @@ const VendorNewListing = () => {
         category: category || null,
         categories: subcategories,
         image_url: images[0] || null,
-        source_url: sourceUrl.trim() || null,
-        listing_link: listingLink.trim() || null,
+        source_url: sourceUrl.trim(),
+        listing_link: listingLink.trim(),
         status: "active"
       };
 
@@ -720,7 +618,6 @@ const VendorNewListing = () => {
             {isEditMode ? "Edit Listing" : "Create New Listing"}
           </h1>
 
-
           {/* Import Dialog */}
           <Dialog open={showImportDialog} onOpenChange={(open) => {
             setShowImportDialog(open);
@@ -742,7 +639,6 @@ const VendorNewListing = () => {
               </DialogHeader>
               
               {!importError?.show ? (
-                // Standard import view
                 <div className="space-y-4">
                   <Input
                     placeholder="https://www.etsy.com/listing/..."
@@ -763,7 +659,6 @@ const VendorNewListing = () => {
                   </div>
                 </div>
               ) : (
-                // Manual entry guidance view
                 <div className="space-y-4">
                   <Alert>
                     <Info className="h-4 w-4" />
@@ -819,7 +714,6 @@ const VendorNewListing = () => {
                     </Button>
                     <Button 
                       onClick={() => {
-                        // Apply suggested data and close dialog
                         if (importError.suggestedTitle) {
                           setTitle(importError.suggestedTitle);
                         }
@@ -887,108 +781,82 @@ const VendorNewListing = () => {
                 </div>
               )}
 
-              {/* Media */}
+              {/* Unified Media Section */}
               {listingTypes.length > 0 && (
                 <Card>
                   <CardContent className="pt-6 space-y-4">
-                    <Label className="text-base font-semibold">Media (Provide at least one image or URL)</Label>
-                    <p className="text-sm text-muted-foreground">Images are optional if you provide video or audio URLs</p>
+                    <Label className="text-base font-semibold">Media (Images, Video, or Audio) *</Label>
+                    <p className="text-sm text-muted-foreground">Add at least one: image URLs, video embeds, or audio embeds</p>
                     
-                    {/* Images */}
-                    <div>
-                      <Label className="text-sm">Images (Max 5) - Upload or URL</Label>
-                      <div className="flex gap-2 mt-2">
+                    <div className="space-y-4">
+                      <RadioGroup value={mediaType} onValueChange={(value: any) => setMediaType(value)}>
+                        <div className="flex gap-4">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="image" id="image" />
+                            <Label htmlFor="image">Image</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="video" id="video" />
+                            <Label htmlFor="video">Video</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="audio" id="audio" />
+                            <Label htmlFor="audio">Audio</Label>
+                          </div>
+                        </div>
+                      </RadioGroup>
+                      
+                      <div className="flex gap-2">
                         <Input
-                          placeholder="Image URL"
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleAddImage()}
+                          type="url"
+                          placeholder={`Paste ${mediaType} URL...`}
+                          value={mediaUrl}
+                          onChange={(e) => setMediaUrl(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && addMediaItem()}
                         />
-                        <Button type="button" onClick={handleAddImage} size="icon" variant="secondary">
+                        <Button 
+                          type="button" 
+                          onClick={addMediaItem}
+                          className="shrink-0"
+                        >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button type="button" size="icon" variant="secondary" onClick={handleImageUpload}>
-                          <Upload className="h-4 w-4" />
-                        </Button>
+                        {mediaType === 'image' && (
+                          <Button type="button" variant="outline" onClick={handleImageUpload}>
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                      <div className="grid grid-cols-5 gap-2 mt-3">
-                        {images.map((img, idx) => (
-                          <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border">
-                            <img src={img} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
-                            <button
-                              onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                              className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    </div>
+                    
+                    {mediaItems.length > 0 && (
+                      <div className="grid grid-cols-3 gap-4">
+                        {mediaItems.map((item, idx) => (
+                          <div key={idx} className="relative group">
+                            {item.type === 'image' ? (
+                              <img src={item.url} alt={`Media ${idx + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                            ) : item.type === 'video' ? (
+                              <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
+                                <span className="text-2xl">🎥</span>
+                              </div>
+                            ) : (
+                              <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
+                                <span className="text-2xl">🎵</span>
+                              </div>
+                            )}
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => removeMediaItem(idx)}
                             >
-                              <X className="h-3 w-3" />
-                            </button>
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
                         ))}
                       </div>
-                    </div>
-
-                    {/* Video Embeds */}
-                    <div>
-                      <Label className="text-sm">Video Embeds (Max 5, YouTube/Vimeo)</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          placeholder="YouTube or Vimeo URL"
-                          value={newVideoUrl}
-                          onChange={(e) => setNewVideoUrl(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
-                        />
-                        <Button type="button" onClick={handleAddVideo} size="icon" variant="secondary">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {videoEmbeds.length > 0 && (
-                        <div className="space-y-2 mt-3">
-                          {videoEmbeds.map((url, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 border rounded-lg text-sm">
-                              <span className="truncate flex-1">{url}</span>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setVideoEmbeds(videoEmbeds.filter((_, i) => i !== idx))}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Audio Embeds */}
-                    <div>
-                      <Label className="text-sm">Audio Embeds (Max 5, Spotify/SoundCloud/Apple Music/Bandcamp)</Label>
-                      <div className="flex gap-2 mt-2">
-                        <Input
-                          placeholder="Audio platform URL"
-                          value={newAudioUrl}
-                          onChange={(e) => setNewAudioUrl(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleAddAudio()}
-                        />
-                        <Button type="button" onClick={handleAddAudio} size="icon" variant="secondary">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {audioEmbeds.length > 0 && (
-                        <div className="space-y-2 mt-3">
-                          {audioEmbeds.map((url, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 border rounded-lg text-sm">
-                              <span className="truncate flex-1">{url}</span>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setAudioEmbeds(audioEmbeds.filter((_, i) => i !== idx))}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -1018,19 +886,35 @@ const VendorNewListing = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="sourceUrl">Source URL (Optional)</Label>
+                    <Label htmlFor="sourceUrl">Source URL *</Label>
                     <Input
                       id="sourceUrl"
                       type="url"
-                      placeholder="https://example.com/product"
+                      placeholder="https://example.com/original-product"
                       value={sourceUrl}
                       onChange={(e) => setSourceUrl(e.target.value)}
                       className="mt-2"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
-                      Reference link to the original product or content
+                      Reference link to where you originally found this product or content
                     </p>
                   </div>
+
+                  <div>
+                    <Label htmlFor="listingLink">Listing Link (External URL) *</Label>
+                    <Input
+                      id="listingLink"
+                      type="url"
+                      placeholder="https://etsy.com/shop/yourstore/item"
+                      value={listingLink}
+                      onChange={(e) => setListingLink(e.target.value)}
+                      className="mt-2"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Where shoppers can purchase or view this listing (required for coupon functionality)
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="price">Price {!isFree && "*"}</Label>
@@ -1053,6 +937,20 @@ const VendorNewListing = () => {
                         className="mt-2"
                       />
                     </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="isFree"
+                      checked={isFree}
+                      onCheckedChange={(checked) => {
+                        setIsFree(checked as boolean);
+                        if (checked) setPrice("");
+                      }}
+                    />
+                    <Label htmlFor="isFree" className="text-sm font-normal cursor-pointer">
+                      Free / No Cost
+                    </Label>
                   </div>
                 </CardContent>
               </Card>
@@ -1104,63 +1002,46 @@ const VendorNewListing = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Subcategories</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {["Handcrafted", "Sustainable", "Local", "Custom", "Limited Edition", "Organic"].map(
-                        (sub) => (
-                          <div key={sub} className="flex items-center gap-2">
-                            <Checkbox
-                              id={sub}
-                              checked={subcategories.includes(sub)}
-                              onCheckedChange={() => toggleSubcategory(sub)}
-                            />
-                            <Label htmlFor={sub} className="text-sm font-normal">
-                              {sub}
-                            </Label>
-                          </div>
-                        )
-                      )}
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <Input
-                        placeholder="Or add custom subcategory..."
-                        value={customSubcategory}
-                        onChange={(e) => setCustomSubcategory(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && customSubcategory.trim() && !subcategories.includes(customSubcategory.trim())) {
-                            setSubcategories([...subcategories, customSubcategory.trim()]);
-                            setCustomSubcategory("");
-                            toast.success("Custom subcategory added");
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          if (customSubcategory.trim() && !subcategories.includes(customSubcategory.trim())) {
-                            setSubcategories([...subcategories, customSubcategory.trim()]);
-                            setCustomSubcategory("");
-                            toast.success("Custom subcategory added");
-                          }
-                        }}
-                      >
-                        Add
-                      </Button>
-                    </div>
+                  <div className="relative">
+                    <Label htmlFor="subcategories">Subcategories</Label>
+                    <Input
+                      id="subcategories"
+                      value={subcategoryInput}
+                      onChange={(e) => handleSubcategoryAutocomplete(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && subcategoryInput.trim()) {
+                          e.preventDefault();
+                          addSubcategory(subcategoryInput.trim());
+                        }
+                      }}
+                      placeholder="Type subcategories (e.g., 'Handcrafted', 'Organic')..."
+                      className="mt-2"
+                    />
+                    
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="absolute z-10 w-full border rounded-lg mt-1 bg-card shadow-lg">
+                        {suggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => addSubcategory(suggestion)}
+                            className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     {subcategories.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {subcategories.map((sub) => (
                           <Badge key={sub} variant="secondary" className="gap-1">
                             {sub}
-                            <button
-                              onClick={() => setSubcategories(subcategories.filter(s => s !== sub))}
-                              className="ml-1 hover:text-destructive"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
+                            <X
+                              className="h-3 w-3 cursor-pointer"
+                              onClick={() => removeSubcategory(sub)}
+                            />
                           </Badge>
                         ))}
                       </div>
@@ -1206,7 +1087,13 @@ const VendorNewListing = () => {
                       )}
                     </div>
 
-                    {!couponCreated && (
+                    {!listingId && (
+                      <p className="text-sm text-muted-foreground">
+                        Save this listing first, then you can create a coupon for it.
+                      </p>
+                    )}
+
+                    {listingId && !couponCreated && (
                       <div className="flex items-center gap-2">
                         <Checkbox
                           id="showCoupon"
@@ -1217,11 +1104,21 @@ const VendorNewListing = () => {
                       </div>
                     )}
 
-                    {showCouponForm && !couponCreated && (
+                    {showCouponForm && !couponCreated && listingId && (
                       <div className="border rounded-lg p-4 bg-muted/50">
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Coupon will be automatically linked to this listing once created.
-                        </p>
+                        <CouponForm
+                          onSuccess={() => {
+                            setCouponCreated(true);
+                            setHasActiveCoupon(true);
+                            setShowCouponForm(false);
+                            toast.success("Coupon created and linked to listing!");
+                          }}
+                          onCancel={() => {
+                            setShowCouponForm(false);
+                          }}
+                          listingId={listingId}
+                          autoLinkListing={true}
+                        />
                       </div>
                     )}
                   </CardContent>
@@ -1316,40 +1213,19 @@ const VendorNewListing = () => {
                     </div>
                   )}
 
-                  {/* Images Preview */}
-                  {images.length > 0 ? (
-                    <div className="flex gap-2">
-                      <div className="flex flex-col gap-2 w-12">
-                        {images.slice(0, 5).map((img, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setSelectedPreviewImage(index)}
-                            className={`border-2 rounded overflow-hidden transition-all ${
-                              selectedPreviewImage === index
-                                ? "border-primary"
-                                : "border-border"
-                            }`}
-                          >
-                            <img
-                              src={img}
-                              alt={`Thumbnail ${index + 1}`}
-                              className="w-full h-12 object-cover"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex-1">
-                        <img
-                          src={images[selectedPreviewImage]}
-                          alt={title || "Preview"}
-                          className="w-full rounded-lg"
-                        />
-                      </div>
+                  {/* Media Preview */}
+                  {mediaItems.find(m => m.type === 'image') ? (
+                    <div className="w-full">
+                      <img
+                        src={mediaItems.find(m => m.type === 'image')?.url}
+                        alt={title || "Preview"}
+                        className="w-full rounded-lg"
+                      />
                     </div>
                   ) : (
                     <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
                       <p className="text-sm text-muted-foreground">
-                        {videoEmbeds.length > 0 || audioEmbeds.length > 0 
+                        {mediaItems.length > 0 
                           ? "Preview will show URL content" 
                           : "No media yet - add images, video URLs, or audio URLs above"}
                       </p>
@@ -1376,18 +1252,16 @@ const VendorNewListing = () => {
                       </div>
                     )}
 
-                    {vendorProfile && vendorProfile.ownership && (
-                      <div>
-                        <h4 className="font-semibold mb-1">Ownership</h4>
-                        <p className="text-muted-foreground">{vendorProfile.ownership}</p>
-                      </div>
-                    )}
-
-                    {vendorProfile && vendorProfile.expertise && (
-                      <div>
-                        <h4 className="font-semibold mb-1">Expertise</h4>
-                        <p className="text-muted-foreground">{vendorProfile.expertise}</p>
-                      </div>
+                    {listingLink && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => window.open(listingLink, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Listing
+                      </Button>
                     )}
 
                     {shippingOptions.length > 0 && (

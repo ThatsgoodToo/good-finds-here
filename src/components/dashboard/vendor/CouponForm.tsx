@@ -52,9 +52,11 @@ type CouponFormData = z.infer<typeof couponSchema>;
 interface CouponFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  listingId?: string | null;
+  autoLinkListing?: boolean;
 }
 
-export default function CouponForm({ onSuccess, onCancel }: CouponFormProps) {
+export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkListing }: CouponFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -90,6 +92,11 @@ export default function CouponForm({ onSuccess, onCancel }: CouponFormProps) {
         return;
       }
 
+      // If autoLinkListing is true and we have a listingId, use it
+      const finalListingId = autoLinkListing && listingId 
+        ? listingId 
+        : data.listing_id || null;
+
       const response = await supabase.functions.invoke('manage-coupons', {
         body: {
           action: 'create',
@@ -102,7 +109,7 @@ export default function CouponForm({ onSuccess, onCancel }: CouponFormProps) {
             end_date: data.end_date.toISOString(),
             is_recurring: data.is_recurring,
             recurrence_pattern: data.recurrence_pattern || null,
-            listing_id: data.listing_id || null,
+            listing_id: finalListingId,
           },
         },
       });
