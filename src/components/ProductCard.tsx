@@ -73,13 +73,8 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
     checkActiveCoupon();
   }, [id]);
 
-  // Determine listing path based on categories
   const getListingPath = () => {
-    // For demo purposes, map categories to listing types
-    if (categories.includes("service") || categories.includes("experience")) {
-      return `/listing/video/${id}`;
-    }
-    return `/listing/product/${id}`;
+    return `/listing/${id}`;
   };
 
   const categoryColors: Record<CategoryType, string> = {

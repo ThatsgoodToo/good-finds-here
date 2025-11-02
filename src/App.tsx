@@ -15,9 +15,7 @@ import VendorDashboard from "./pages/VendorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import VendorProfile from "./pages/VendorProfile";
 import VendorNewListing from "./pages/VendorNewListing";
-import ProductListing from "./pages/ProductListing";
-import AudioListing from "./pages/AudioListing";
-import VideoListing from "./pages/VideoListing";
+import ListingRouter from "./pages/ListingRouter";
 import HighFives from "./pages/HighFives";
 import ShopperProfile from "./pages/ShopperProfile";
 import NotFound from "./pages/NotFound";
@@ -57,9 +55,7 @@ const App = () => {
               <Route path="/vendor/:vendorId" element={<VendorProfile />} />
               <Route path="/vendor/listing/new" element={<VendorNewListing />} />
               <Route path="/vendor/listing/edit/:listingId" element={<VendorNewListing />} />
-              <Route path="/listing/product/:listingId" element={<ProductListing />} />
-              <Route path="/listing/audio/:listingId" element={<AudioListing />} />
-              <Route path="/listing/video/:listingId" element={<VideoListing />} />
+              <Route path="/listing/:listingId" element={<ListingRouter />} />
               <Route path="/high-fives" element={<HighFives />} />
               <Route path="/shopper/:shopperId" element={<ShopperProfile />} />
               

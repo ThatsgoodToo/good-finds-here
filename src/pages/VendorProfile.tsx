@@ -388,19 +388,7 @@ const VendorProfile = () => {
                       <div
                         key={listing.id}
                         className="relative group cursor-pointer rounded-lg overflow-hidden aspect-square"
-                        onClick={() => {
-                          // Determine listing path based on categories
-                          const isVideo = listing.categories?.includes("video");
-                          const isAudio = listing.categories?.includes("audio");
-                          
-                          if (isVideo) {
-                            navigate(`/listing/video/${listing.id}`);
-                          } else if (isAudio) {
-                            navigate(`/listing/audio/${listing.id}`);
-                          } else {
-                            navigate(`/listing/product/${listing.id}`);
-                          }
-                        }}
+                        onClick={() => navigate(`/listing/${listing.id}`)}
                       >
                         <img
                           src={listing.url}
