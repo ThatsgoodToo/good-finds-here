@@ -382,9 +382,23 @@ const VendorDashboard = () => {
     toast.info("URL changes require TGT approval");
   };
 
-  const handleUpdateDescription = (desc: string) => {
-    setVendorDescription(desc);
-    toast.success("Description updated!");
+  const handleUpdateDescription = async (desc: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from("vendor_profiles")
+        .update({ business_description: desc })
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      
+      setVendorDescription(desc);
+      toast.success("Description updated!");
+    } catch (error) {
+      console.error("Error updating description:", error);
+      toast.error("Failed to update description");
+    }
   };
 
   const handleEditSubcategories = (newSubcategories: string[]) => {

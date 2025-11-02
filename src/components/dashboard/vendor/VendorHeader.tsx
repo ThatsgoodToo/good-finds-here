@@ -9,12 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Upload, ExternalLink, Edit2, RefreshCw, HelpCircle, MapPin } from "lucide-react";
+import { Settings, Upload, ExternalLink, Edit2, RefreshCw, HelpCircle, MapPin, Check, X } from "lucide-react";
 import LocationLink from "@/components/LocationLink";
 import { useAuth } from "@/contexts/AuthContext";
 import ShopperSignupPrompt from "@/components/ShopperSignupPrompt";
 import DashboardInfoDialog from "@/components/DashboardInfoDialog";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 
 interface VendorHeaderProps {
   vendorName: string;
@@ -46,6 +47,8 @@ const VendorHeader = ({
   const [showShopperSignupPrompt, setShowShopperSignupPrompt] = React.useState(false);
   const [showInfoAnimation, setShowInfoAnimation] = React.useState(false);
   const [infoDialogOpen, setInfoDialogOpen] = React.useState(false);
+  const [isEditingDescription, setIsEditingDescription] = React.useState(false);
+  const [tempDescription, setTempDescription] = React.useState(description);
 
   React.useEffect(() => {
     const key = "tgt_dashboard_info_seen_vendor";
@@ -188,21 +191,58 @@ const VendorHeader = ({
         </div>
 
         {description && (
-          <div className="max-w-2xl group relative">
-            <p className="text-sm text-muted-foreground pr-8">{description}</p>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => {
-                const newDesc = prompt("Edit description:", description);
-                if (newDesc !== null && newDesc.trim()) {
-                  onUpdateDescription(newDesc);
-                }
-              }}
-            >
-              <Edit2 className="h-3 w-3" />
-            </Button>
+          <div className="max-w-2xl">
+            {!isEditingDescription ? (
+              <div className="group relative">
+                <p className="text-sm text-muted-foreground pr-8">{description}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => {
+                    setTempDescription(description);
+                    setIsEditingDescription(true);
+                  }}
+                >
+                  <Edit2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Textarea
+                  value={tempDescription}
+                  onChange={(e) => setTempDescription(e.target.value)}
+                  className="text-sm resize-none"
+                  rows={3}
+                  placeholder="Enter vendor description..."
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (tempDescription.trim()) {
+                        onUpdateDescription(tempDescription);
+                        setIsEditingDescription(false);
+                      }
+                    }}
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setTempDescription(description);
+                      setIsEditingDescription(false);
+                    }}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
