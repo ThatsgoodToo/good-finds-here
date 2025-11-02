@@ -26,7 +26,10 @@ const Index = () => {
     const fetchListings = async () => {
       const { data, error } = await supabase
         .from("listings")
-        .select("*")
+        .select(`
+          *,
+          vendor_profiles!inner(business_name, display_name:profiles(display_name))
+        `)
         .eq("status", "active");
       
       if (data) {
@@ -84,7 +87,7 @@ const Index = () => {
     categories: (listing.listing_types && listing.listing_types.length > 0 
       ? listing.listing_types 
       : [listing.listing_type]) as CategoryType[],
-    vendor: "Local Vendor",
+    vendor: listing.vendor_profiles?.business_name || listing.vendor_profiles?.display_name?.display_name || "Local Vendor",
     vendorId: listing.vendor_id,
   }));
 
