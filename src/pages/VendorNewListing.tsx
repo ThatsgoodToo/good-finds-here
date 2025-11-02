@@ -524,7 +524,7 @@ const VendorNewListing = () => {
       listing_link: listingLink.trim() || null,
       status: "active",
       tags: subcategories,
-      generic_category: category,
+      generic_category: mapCategoryToGeneric(category),
       generic_subcategory: subcategories[0] || null,
     };
       if (isEditMode && listingId) {

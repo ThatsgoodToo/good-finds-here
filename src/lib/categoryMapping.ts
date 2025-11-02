@@ -1,5 +1,29 @@
 import { CategoryType } from "@/components/ProductCard";
 
+// Mapping from UI category names to backend generic categories
+const categoryToGenericMapping: Record<string, 'necessary_goods' | 'personal_goods' | 'experiences'> = {
+  "Culinary & Food": "necessary_goods",
+  "Wellness & Beauty": "necessary_goods",
+  "Home & Decor": "necessary_goods",
+  "Textiles & Apparel": "personal_goods",
+  "Ceramics & Pottery": "personal_goods",
+  "Music & Audio": "personal_goods",
+  "Art & Visual": "personal_goods",
+  "Crafts & Handmade": "personal_goods",
+  "Other": "personal_goods",
+  "Experiences & Workshops": "experiences",
+};
+
+/**
+ * Maps UI category names to backend generic category values
+ * @param category - Category name from the UI
+ * @returns Generic category value for the database
+ */
+export function mapCategoryToGeneric(category: string | null | undefined): 'necessary_goods' | 'personal_goods' | 'experiences' | null {
+  if (!category) return null;
+  return categoryToGenericMapping[category] || 'personal_goods'; // Default to personal_goods if unknown
+}
+
 // Mapping from database category names to frontend category types
 const categoryToTypeMap: Record<string, CategoryType> = {
   // Products
