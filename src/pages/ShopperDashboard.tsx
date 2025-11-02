@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
 import SignupModal from "@/components/SignupModal";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
@@ -178,6 +178,7 @@ const ShopperDashboard = () => {
   // Load user profile data
   const [shopperName, setShopperName] = useState("");
   const [shopperImage, setShopperImage] = useState("");
+  const location = useLocation();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -201,12 +202,16 @@ const ShopperDashboard = () => {
             category: "Custom"
           }));
           setPreferences(loadedPreferences);
+        } else {
+          // If no interests yet, keep preferences empty
+          setPreferences([]);
         }
       }
     };
 
+    // Load profile when user is available or when returning to this route
     loadProfile();
-  }, [user]);
+  }, [user, location.pathname]);
 
   // Standard filter categories with options
   const standardFilters = {

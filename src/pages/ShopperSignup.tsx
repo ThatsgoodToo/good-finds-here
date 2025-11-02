@@ -151,6 +151,9 @@ const ShopperSignup = () => {
         throw new Error(`Failed to update profile: ${updateError.message}`);
       }
 
+      // Wait a moment to ensure database update completes
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Show success message
       if (isExistingUser && isDualRole) {
         toast.success("You can now shop and discover as well!");
