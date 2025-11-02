@@ -64,6 +64,7 @@ const VendorProfile = () => {
     bio: "",
     profileImage: "",
     location: "",
+    locationPublic: true,
     priceRange: "",
     category: "",
     expertise: "",
@@ -133,6 +134,7 @@ const VendorProfile = () => {
           bio: matchedVendor.business_description || profile?.bio || "",
           profileImage: profile?.profile_picture_url || profile?.avatar_url || "",
           location: `${matchedVendor.city}, ${matchedVendor.state_region}`,
+          locationPublic: matchedVendor.location_public ?? true,
           priceRange: matchedVendor.pricing_style || "",
           category: matchedVendor.business_type || "",
           expertise: matchedVendor.business_duration || "",
@@ -394,21 +396,23 @@ const VendorProfile = () => {
               </Card>
 
               {/* Location */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">Location</h3>
-                      <LocationLink 
-                        location={vendor.location}
-                        showIcon={false}
-                        className="text-sm"
-                      />
+              {(vendor.locationPublic || isOwnProfile) && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-1">Location</h3>
+                        <LocationLink 
+                          location={vendor.location}
+                          showIcon={false}
+                          className="text-sm"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Price Range */}
               <Card>

@@ -740,6 +740,7 @@ export type Database = {
           id: string
           inspiration: string | null
           inventory_type: string[] | null
+          location_public: boolean | null
           pending_changes: Json | null
           phone_number: string | null
           pickup_address: string | null
@@ -781,6 +782,7 @@ export type Database = {
           id?: string
           inspiration?: string | null
           inventory_type?: string[] | null
+          location_public?: boolean | null
           pending_changes?: Json | null
           phone_number?: string | null
           pickup_address?: string | null
@@ -822,6 +824,7 @@ export type Database = {
           id?: string
           inspiration?: string | null
           inventory_type?: string[] | null
+          location_public?: boolean | null
           pending_changes?: Json | null
           phone_number?: string | null
           pickup_address?: string | null

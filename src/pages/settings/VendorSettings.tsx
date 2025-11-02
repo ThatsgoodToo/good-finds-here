@@ -1,15 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Store, ShoppingBag } from "lucide-react";
+import { Store, ShoppingBag, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const VendorSettings = () => {
   const navigate = useNavigate();
-  const { roles, activeRole, setActiveRole } = useAuth();
+  const { roles, activeRole, setActiveRole, user } = useAuth();
+  const [locationPublic, setLocationPublic] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const hasVendorRole = roles.includes("vendor");
   const hasShopperRole = roles.includes("shopper");
@@ -20,12 +26,57 @@ const VendorSettings = () => {
     }
   }, [hasVendorRole, navigate]);
 
+  useEffect(() => {
+    const loadVendorSettings = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from("vendor_profiles")
+        .select("location_public")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error loading vendor settings:", error);
+        return;
+      }
+
+      if (data) {
+        setLocationPublic(data.location_public ?? true);
+      }
+    };
+
+    loadVendorSettings();
+  }, [user]);
+
   const handleRoleSwitch = (newRole: "vendor" | "shopper") => {
     setActiveRole(newRole);
     if (newRole === "shopper") {
       navigate("/dashboard/shopper");
     } else {
       navigate("/dashboard/vendor");
+    }
+  };
+
+  const handleLocationPublicToggle = async (checked: boolean) => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("vendor_profiles")
+        .update({ location_public: checked })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setLocationPublic(checked);
+      toast.success("Privacy settings updated");
+    } catch (error: any) {
+      console.error("Error updating location privacy:", error);
+      toast.error("Failed to update privacy settings");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,6 +125,31 @@ const VendorSettings = () => {
             </CardContent>
           </Card>
         )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Privacy Settings
+            </CardTitle>
+            <CardDescription>Control what information is visible on your public profile</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label className="text-base">Public Location</Label>
+                <p className="text-sm text-muted-foreground">
+                  Allow shoppers to see your business location
+                </p>
+              </div>
+              <Switch
+                checked={locationPublic}
+                onCheckedChange={handleLocationPublicToggle}
+                disabled={loading}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
