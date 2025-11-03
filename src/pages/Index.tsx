@@ -197,6 +197,18 @@ const Index = () => {
         {/* What's Good Today Section - Shows on scroll when not searched */}
         {!hasSearched && (
           <div className="container mx-auto px-4 py-16 mt-[40vh] space-y-16">
+            {/* About That's Good Too */}
+            <div className="max-w-2xl mx-auto text-center space-y-4 mb-16">
+              <ul className="text-lg text-muted-foreground space-y-3">
+                <li>• Your one-stop destination for local goods</li>
+                <li>• Support small-scale makers in your community</li>
+                <li>• Access exclusive offers from local vendors</li>
+                <li>• Distraction-free shopping experience</li>
+                <li>• Affordable, subscription-based platform</li>
+                <li>• Save time discovering quality products</li>
+              </ul>
+            </div>
+
             <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in">
               What's Good Today
             </h2>
