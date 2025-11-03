@@ -179,7 +179,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending contact form email for subject: ${sanitizedSubject}`);
     
     const emailResponse = await resend.emails.send({
-      from: "That's Good Too <noreply@thatsgoodtoo.shop>",
+      from: "That's Good Too <onboarding@resend.dev>",
       to: ["connect@thatsgoodtoo.shop"],
       replyTo: sanitizedEmail,
       subject: `Contact Form: ${sanitizedSubject}`,
@@ -226,7 +226,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       await resend.emails.send({
-        from: "That's Good Too <noreply@thatsgoodtoo.shop>",
+        from: "That's Good Too <onboarding@resend.dev>",
         to: [sanitizedEmail],
         subject: "We received your message - That's Good Too",
         html: confirmationHtml,
