@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      contacts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+        }
+        Relationships: []
+      }
       coupon_shares: {
         Row: {
           coupon_id: string
@@ -224,6 +248,7 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          expires_at: string | null
           generic_category: string | null
           generic_subcategory: string | null
           id: string
@@ -234,12 +259,15 @@ export type Database = {
           listing_types: string[] | null
           location: string | null
           price: number | null
+          reset_cycle: string | null
+          resets_at: string | null
           source_url: string | null
           status: string
           tags: string[] | null
           title: string
           updated_at: string
           vendor_id: string
+          views: number | null
           website_url: string | null
         }
         Insert: {
@@ -247,6 +275,7 @@ export type Database = {
           category: string
           created_at?: string
           description: string
+          expires_at?: string | null
           generic_category?: string | null
           generic_subcategory?: string | null
           id?: string
@@ -257,12 +286,15 @@ export type Database = {
           listing_types?: string[] | null
           location?: string | null
           price?: number | null
+          reset_cycle?: string | null
+          resets_at?: string | null
           source_url?: string | null
           status?: string
           tags?: string[] | null
           title: string
           updated_at?: string
           vendor_id: string
+          views?: number | null
           website_url?: string | null
         }
         Update: {
@@ -270,6 +302,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          expires_at?: string | null
           generic_category?: string | null
           generic_subcategory?: string | null
           id?: string
@@ -280,12 +313,15 @@ export type Database = {
           listing_types?: string[] | null
           location?: string | null
           price?: number | null
+          reset_cycle?: string | null
+          resets_at?: string | null
           source_url?: string | null
           status?: string
           tags?: string[] | null
           title?: string
           updated_at?: string
           vendor_id?: string
+          views?: number | null
           website_url?: string | null
         }
         Relationships: [
@@ -354,6 +390,7 @@ export type Database = {
           high_fives_public: boolean | null
           id: string
           interests: string[] | null
+          last_activity_at: string | null
           location: string | null
           location_public: boolean | null
           onboarding_completed: boolean | null
@@ -375,6 +412,7 @@ export type Database = {
           high_fives_public?: boolean | null
           id: string
           interests?: string[] | null
+          last_activity_at?: string | null
           location?: string | null
           location_public?: boolean | null
           onboarding_completed?: boolean | null
@@ -396,6 +434,7 @@ export type Database = {
           high_fives_public?: boolean | null
           id?: string
           interests?: string[] | null
+          last_activity_at?: string | null
           location?: string | null
           location_public?: boolean | null
           onboarding_completed?: boolean | null
@@ -435,6 +474,62 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_email: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_email: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_email?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      shares: {
+        Row: {
+          id: string
+          listing_id: string
+          shared_at: string
+          shared_to_email: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          shared_at?: string
+          shared_to_email: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          shared_at?: string
+          shared_to_email?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shares_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
             referencedColumns: ["id"]
           },
         ]
@@ -531,6 +626,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_saves: {
+        Row: {
+          email_on_save: boolean
+          id: string
+          listing_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          email_on_save?: boolean
+          id?: string
+          listing_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          email_on_save?: boolean
+          id?: string
+          listing_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saves_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendor_applications: {
         Row: {
@@ -856,6 +983,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
       }
       website_clicks: {
         Row: {
