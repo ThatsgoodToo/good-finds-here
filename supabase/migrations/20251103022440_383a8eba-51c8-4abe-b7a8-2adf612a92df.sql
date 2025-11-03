@@ -1,0 +1,314 @@
+-- Phase 1: Email Automation Tables & Columns Migration (Idempotent)
+
+-- ============================================================
+-- 1. CREATE CONTACTS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.contacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL CHECK (char_length(name) >= 2 AND char_length(name) <= 100),
+  email TEXT NOT NULL CHECK (email ~* '^[^\s@]+@[^\s@]+\.[^\s@]+$'),
+  message TEXT NOT NULL CHECK (char_length(message) >= 10 AND char_length(message) <= 2000),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can submit contact form" ON public.contacts;
+CREATE POLICY "Anyone can submit contact form"
+  ON public.contacts FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admins can view all contacts" ON public.contacts;
+CREATE POLICY "Admins can view all contacts"
+  ON public.contacts FOR SELECT
+  TO authenticated
+  USING (is_admin(auth.uid()));
+
+CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON public.contacts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_contacts_email ON public.contacts(email);
+
+-- ============================================================
+-- 2. CREATE WAITLIST TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.waitlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE CHECK (email ~* '^[^\s@]+@[^\s@]+\.[^\s@]+$'),
+  name TEXT CHECK (char_length(name) >= 2 AND char_length(name) <= 100),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can join waitlist" ON public.waitlist;
+CREATE POLICY "Anyone can join waitlist"
+  ON public.waitlist FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admins can view waitlist" ON public.waitlist;
+CREATE POLICY "Admins can view waitlist"
+  ON public.waitlist FOR SELECT
+  TO authenticated
+  USING (is_admin(auth.uid()));
+
+CREATE INDEX IF NOT EXISTS idx_waitlist_created_at ON public.waitlist(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_waitlist_email ON public.waitlist(email);
+
+-- ============================================================
+-- 3. CREATE USER_SAVES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.user_saves (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  listing_id UUID NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
+  saved_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  email_on_save BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE(user_id, listing_id)
+);
+
+ALTER TABLE public.user_saves ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can manage own saves" ON public.user_saves;
+CREATE POLICY "Users can manage own saves"
+  ON public.user_saves FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_saves_user_id ON public.user_saves(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_saves_listing_id ON public.user_saves(listing_id);
+CREATE INDEX IF NOT EXISTS idx_user_saves_saved_at ON public.user_saves(saved_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_saves_email_notifications ON public.user_saves(listing_id, email_on_save) WHERE email_on_save = true;
+
+-- ============================================================
+-- 4. CREATE SHARES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.shares (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  listing_id UUID NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
+  shared_to_email TEXT NOT NULL CHECK (shared_to_email ~* '^[^\s@]+@[^\s@]+\.[^\s@]+$'),
+  shared_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.shares ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users can create shares" ON public.shares;
+CREATE POLICY "Authenticated users can create shares"
+  ON public.shares FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can view own shares" ON public.shares;
+CREATE POLICY "Users can view own shares"
+  ON public.shares FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Vendors can view shares of their listings" ON public.shares;
+CREATE POLICY "Vendors can view shares of their listings"
+  ON public.shares FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.listings
+      WHERE listings.id = shares.listing_id
+      AND listings.vendor_id = auth.uid()
+    )
+  );
+
+CREATE INDEX IF NOT EXISTS idx_shares_user_id ON public.shares(user_id);
+CREATE INDEX IF NOT EXISTS idx_shares_listing_id ON public.shares(listing_id);
+CREATE INDEX IF NOT EXISTS idx_shares_shared_at ON public.shares(shared_at DESC);
+
+-- ============================================================
+-- 5. CREATE REFERRALS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.referrals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  referrer_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  referred_email TEXT NOT NULL CHECK (referred_email ~* '^[^\s@]+@[^\s@]+\.[^\s@]+$'),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'success', 'failed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users can create referrals" ON public.referrals;
+CREATE POLICY "Authenticated users can create referrals"
+  ON public.referrals FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = referrer_id);
+
+DROP POLICY IF EXISTS "Users can view own referrals" ON public.referrals;
+CREATE POLICY "Users can view own referrals"
+  ON public.referrals FOR SELECT
+  TO authenticated
+  USING (auth.uid() = referrer_id);
+
+DROP POLICY IF EXISTS "Users can update own referral status" ON public.referrals;
+CREATE POLICY "Users can update own referral status"
+  ON public.referrals FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = referrer_id)
+  WITH CHECK (auth.uid() = referrer_id);
+
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer_id ON public.referrals(referrer_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_referred_email ON public.referrals(referred_email);
+CREATE INDEX IF NOT EXISTS idx_referrals_status ON public.referrals(status);
+CREATE INDEX IF NOT EXISTS idx_referrals_created_at ON public.referrals(created_at DESC);
+
+-- ============================================================
+-- 6. EXTEND LISTINGS TABLE (Coupon Reset Fields)
+-- ============================================================
+ALTER TABLE public.listings
+ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS resets_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS reset_cycle TEXT DEFAULT 'none',
+ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0;
+
+-- Add constraint only if it doesn't exist
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'listings_reset_cycle_check'
+  ) THEN
+    ALTER TABLE public.listings
+    ADD CONSTRAINT listings_reset_cycle_check 
+    CHECK (reset_cycle IN ('none', 'daily', 'weekly', 'monthly'));
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_listings_expires_at ON public.listings(expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_listings_resets_at ON public.listings(resets_at) WHERE resets_at IS NOT NULL AND reset_cycle != 'none';
+CREATE INDEX IF NOT EXISTS idx_listings_views ON public.listings(views DESC);
+
+-- ============================================================
+-- 7. EXTEND PROFILES TABLE (Activity Tracking)
+-- ============================================================
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMPTZ DEFAULT now();
+
+CREATE INDEX IF NOT EXISTS idx_profiles_last_activity_at ON public.profiles(last_activity_at);
+
+-- ============================================================
+-- 8. CREATE TRIGGER FUNCTION FOR ACTIVITY TRACKING
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.update_last_activity()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.profiles
+  SET last_activity_at = now()
+  WHERE id = NEW.user_id;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS update_activity_on_save ON public.user_saves;
+CREATE TRIGGER update_activity_on_save
+  AFTER INSERT ON public.user_saves
+  FOR EACH ROW EXECUTE FUNCTION public.update_last_activity();
+
+DROP TRIGGER IF EXISTS update_activity_on_share ON public.shares;
+CREATE TRIGGER update_activity_on_share
+  AFTER INSERT ON public.shares
+  FOR EACH ROW EXECUTE FUNCTION public.update_last_activity();
+
+-- ============================================================
+-- 9. INSERT TEST DATA
+-- ============================================================
+
+-- Test contacts
+INSERT INTO public.contacts (name, email, message) VALUES
+  ('Alice Johnson', 'alice@example.com', 'I love your platform! Do you have plans for a mobile app?'),
+  ('Bob Smith', 'bob@example.com', 'Can I schedule a demo for my business? I have a local bakery.')
+ON CONFLICT DO NOTHING;
+
+-- Test waitlist
+INSERT INTO public.waitlist (email, name) VALUES
+  ('waitlist1@example.com', 'Charlie Brown'),
+  ('waitlist2@example.com', 'Diana Prince')
+ON CONFLICT (email) DO NOTHING;
+
+-- Test user_saves (only if users and listings exist)
+INSERT INTO public.user_saves (user_id, listing_id, email_on_save)
+SELECT 
+  u.id,
+  l.id,
+  CASE WHEN random() > 0.5 THEN true ELSE false END
+FROM (SELECT id FROM auth.users LIMIT 2) u
+CROSS JOIN (SELECT id FROM public.listings WHERE status = 'active' LIMIT 2) l
+WHERE EXISTS (SELECT 1 FROM auth.users LIMIT 1)
+  AND EXISTS (SELECT 1 FROM public.listings WHERE status = 'active' LIMIT 1)
+ON CONFLICT (user_id, listing_id) DO NOTHING;
+
+-- Test shares (only if users and listings exist)
+INSERT INTO public.shares (user_id, listing_id, shared_to_email)
+SELECT 
+  u.id,
+  l.id,
+  'friend' || floor(random() * 100)::text || '@example.com'
+FROM (SELECT id FROM auth.users LIMIT 2) u
+CROSS JOIN (SELECT id FROM public.listings WHERE status = 'active' LIMIT 1) l
+WHERE EXISTS (SELECT 1 FROM auth.users LIMIT 1)
+  AND EXISTS (SELECT 1 FROM public.listings WHERE status = 'active' LIMIT 1);
+
+-- Test referrals (only if users exist)
+INSERT INTO public.referrals (referrer_id, referred_email, status)
+SELECT 
+  id,
+  'newuser' || floor(random() * 100)::text || '@example.com',
+  CASE WHEN random() > 0.5 THEN 'success' ELSE 'pending' END
+FROM auth.users
+WHERE EXISTS (SELECT 1 FROM auth.users LIMIT 1)
+LIMIT 2;
+
+-- Update test listings with coupon reset data (only if listings exist)
+DO $$
+DECLARE
+  listing_1 UUID;
+  listing_2 UUID;
+  listing_3 UUID;
+BEGIN
+  -- Get first listing
+  SELECT id INTO listing_1 FROM public.listings WHERE status = 'active' ORDER BY created_at DESC LIMIT 1 OFFSET 0;
+  IF listing_1 IS NOT NULL THEN
+    UPDATE public.listings
+    SET 
+      expires_at = now() + interval '5 days',
+      resets_at = now() - interval '1 day',
+      reset_cycle = 'daily',
+      views = 42
+    WHERE id = listing_1;
+  END IF;
+
+  -- Get second listing
+  SELECT id INTO listing_2 FROM public.listings WHERE status = 'active' ORDER BY created_at DESC LIMIT 1 OFFSET 1;
+  IF listing_2 IS NOT NULL THEN
+    UPDATE public.listings
+    SET 
+      expires_at = now() + interval '3 days',
+      resets_at = NULL,
+      reset_cycle = 'none',
+      views = 120
+    WHERE id = listing_2;
+  END IF;
+
+  -- Get third listing
+  SELECT id INTO listing_3 FROM public.listings WHERE status = 'active' ORDER BY created_at DESC LIMIT 1 OFFSET 2;
+  IF listing_3 IS NOT NULL THEN
+    UPDATE public.listings
+    SET 
+      expires_at = now() + interval '30 days',
+      resets_at = now() + interval '6 days',
+      reset_cycle = 'weekly',
+      views = 89
+    WHERE id = listing_3;
+  END IF;
+END $$;
