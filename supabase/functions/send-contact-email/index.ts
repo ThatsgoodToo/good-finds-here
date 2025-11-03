@@ -30,7 +30,7 @@ function checkRateLimit(ip: string): boolean {
   );
   
   if (recentRequests.length >= MAX_REQUESTS) {
-    console.log(`Rate limit exceeded for IP: ${ip}`);
+    console.log(`Rate limit exceeded for IP: ${sanitizeForLog(ip)}`);
     return false;
   }
   
@@ -48,6 +48,11 @@ function sanitizeInput(input: string): string {
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+}
+
+// Sanitize user input before logging to prevent log injection
+function sanitizeForLog(value: string): string {
+  return value.replace(/[\r\n\t\u0000-\u001f\u007f-\u009f]/g, '');
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -73,7 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
                      req.headers.get("x-real-ip") || 
                      "unknown";
 
-    console.log(`Contact form submission from IP: ${clientIP}`);
+    console.log(`Contact form submission from IP: ${sanitizeForLog(clientIP)}`);
 
     // Check rate limit
     if (!checkRateLimit(clientIP)) {
