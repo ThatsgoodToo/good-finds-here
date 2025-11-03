@@ -1087,7 +1087,7 @@ const ShopperDashboard = () => {
                         {/* Listing Thumbnail */}
                         <div 
                           className="relative w-full sm:w-32 h-32 rounded-lg overflow-hidden cursor-pointer group shrink-0"
-                          onClick={() => navigate(`/listing/product/${coupon.id}`)}
+                          onClick={() => navigate(`/listing/${coupon.id}`)}
                         >
                           <img 
                             src={coupon.thumbnail} 
@@ -1115,7 +1115,7 @@ const ShopperDashboard = () => {
                             </div>
                             <p 
                               className="text-sm text-muted-foreground hover:text-foreground cursor-pointer mb-2"
-                              onClick={() => navigate(`/listing/product/${coupon.id}`)}
+                              onClick={() => navigate(`/listing/${coupon.id}`)}
                             >
                               {coupon.listingTitle}
                             </p>
@@ -1303,7 +1303,7 @@ const ShopperDashboard = () => {
                     className="relative h-40 cursor-pointer" 
                     onClick={() => {
                       if (isListing && listingId) {
-                        navigate(`/listing/product/${listingId}`);
+                        navigate(`/listing/${listingId}`);
                       } else if (vendorId) {
                         navigate(`/vendor/${vendorId}`);
                       }
