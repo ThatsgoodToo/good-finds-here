@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Hand } from "lucide-react";
+import { Hand, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import ShareListingDialog from "@/components/ShareListingDialog";
 
 export type CategoryType = "product" | "service" | "experience" | "sale";
 
@@ -30,10 +31,12 @@ interface ProductCardProps {
 
 const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, isSaved = false, onSaveToggle }: ProductCardProps) => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [folders, setFolders] = useState(["Favorites", "Wishlist", "For Later"]);
   const [saved, setSaved] = useState(isSaved);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
 
   // Check for active coupon
@@ -54,6 +57,7 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
       if (couponData && couponData.length > 0) {
       console.log('[ProductCard] Active coupon found:', couponData[0]);
       setHasActiveCoupon(true);
+      setCouponCode(couponData[0].code);
       
       // Get source URL
       const { data: listingData } = await supabase
@@ -67,6 +71,7 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
       } else {
         console.log('[ProductCard] No active coupon found for this listing');
         setHasActiveCoupon(false);
+        setCouponCode(null);
       }
     };
 
@@ -152,21 +157,36 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
           )}
         </div>
 
-        {/* High-Five Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleHighFive}
-          className={cn(
-            "absolute top-2 right-2 z-10 shadow-md transition-all",
-            saved
-              ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-              : "bg-background/90 hover:bg-background text-foreground"
-          )}
-          data-tour="hi-five-icon"
-        >
-          <Hand className={cn("h-5 w-5", saved && "fill-current")} />
-        </Button>
+        {/* High-Five and Share Buttons */}
+        <div className="absolute top-2 right-2 z-10 flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowShareDialog(true);
+            }}
+            className="bg-background/90 hover:bg-background text-foreground shadow-md transition-all"
+            title="Share this deal"
+          >
+            <Share2 className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleHighFive}
+            className={cn(
+              "shadow-md transition-all",
+              saved
+                ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                : "bg-background/90 hover:bg-background text-foreground"
+            )}
+            data-tour="hi-five-icon"
+          >
+            <Hand className={cn("h-5 w-5", saved && "fill-current")} />
+          </Button>
+        </div>
 
         {/* Image with max width constraint */}
         <Link to={getListingPath()} className="block relative w-full max-w-[400px] overflow-hidden rounded-lg">
@@ -238,6 +258,15 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Share Dialog */}
+      <ShareListingDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        listingId={id}
+        listingTitle={title}
+        couponCode={couponCode || undefined}
+      />
     </>
   );
 };

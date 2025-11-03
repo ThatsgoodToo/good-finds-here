@@ -8,10 +8,13 @@ import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import MasonryGallery from "@/components/MasonryGallery";
 import ListView from "@/components/ListView";
+import WaitlistForm from "@/components/WaitlistForm";
+import ContactForm from "@/components/ContactForm";
 import { CategoryType } from "@/components/ProductCard";
 import { toast } from "sonner";
 import { mapCategoriesToTypes } from "@/lib/categoryMapping";
 import type { Database } from "@/integrations/supabase/types";
+import { useSaveFeedback } from "@/hooks/useSaveFeedback";
 
 type Listing = Database['public']['Tables']['listings']['Row'];
 
@@ -33,6 +36,9 @@ const Index = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
   const [dbListings, setDbListings] = useState<ListingWithVendor[]>([]);
+  
+  // Track saves for feedback email
+  useSaveFeedback();
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -190,11 +196,21 @@ const Index = () => {
 
         {/* What's Good Today Section - Shows on scroll when not searched */}
         {!hasSearched && (
-          <div className="container mx-auto px-4 py-16 mt-[40vh]">
+          <div className="container mx-auto px-4 py-16 mt-[40vh] space-y-16">
             <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in">
               What's Good Today
             </h2>
             <MasonryGallery products={filteredProducts} />
+            
+            {/* Waitlist Form */}
+            <div className="py-16">
+              <WaitlistForm />
+            </div>
+
+            {/* Contact Form */}
+            <div className="py-16">
+              <ContactForm />
+            </div>
           </div>
         )}
       </main>

@@ -22,6 +22,7 @@ import { ExternalLink, Hand, ChevronLeft, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import ShareCouponDialog from "@/components/dashboard/vendor/ShareCouponDialog";
+import { toast } from "sonner";
 
 const ShopperProfile = () => {
   const navigate = useNavigate();
@@ -256,6 +257,41 @@ const ShopperProfile = () => {
                     <p className="text-sm">
                       This shopper has chosen to keep their activity private
                     </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Referral Link - Show on own profile */}
+            {isOwnProfile && (
+              <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-1 flex items-center gap-2">
+                        <Gift className="h-5 w-5 text-primary" />
+                        Share ThatsGoodToo & Earn Rewards
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Invite friends using your referral link. When they sign up, you'll get exclusive bonus coupons!
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        readOnly
+                        value={`${window.location.origin}/signup?ref=${user?.id}`}
+                        className="flex-1 font-mono text-sm bg-background"
+                      />
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${user?.id}`);
+                          toast.success("Referral link copied!");
+                        }}
+                        variant="outline"
+                      >
+                        Copy Link
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
