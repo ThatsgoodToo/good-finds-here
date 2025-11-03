@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import SignupModal from "@/components/SignupModal";
 import ProductCard from "@/components/ProductCard";
+import { SaveButton } from "@/components/SaveButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ExternalLink, Hand, ChevronLeft, ChevronRight, Ticket, ArrowLeft, CheckCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import LocationLink from "@/components/LocationLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,11 +75,9 @@ const VideoListing = () => {
   const { user } = useAuth();
   
   // UI state
-  const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
 
   // Use custom hook for data loading
   const {
@@ -99,12 +97,6 @@ const VideoListing = () => {
   }, [user]);
 
   const images = listing?.image_url ? [listing.image_url] : [];
-
-  const folders = [
-    { id: "1", name: "Videos" },
-    { id: "2", name: "Inspiration" },
-    { id: "3", name: "Favorites" },
-  ];
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -320,16 +312,10 @@ const VideoListing = () => {
                 <p className="text-xl font-semibold">${listing.price}</p>
               )}
 
-              {/* High Fives */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 w-full sm:w-auto"
-                onClick={() => setShowFolderDialog(true)}
-              >
-                <Hand className="h-4 w-4" />
-                High Five ({highFivesCount.toLocaleString()})
-              </Button>
+              {/* High Fives - This is now handled by SaveButton which has its own dialog */}
+              <p className="text-sm text-muted-foreground">
+                {highFivesCount} High Five{highFivesCount !== 1 ? 's' : ''}
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -493,51 +479,6 @@ const VideoListing = () => {
           onWhatsgoodClick={() => navigate("/")}
         />
       </main>
-
-      {/* Folder Dialog */}
-      <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add to Folder</DialogTitle>
-            <DialogDescription>
-              Choose a folder to save this video or create a new one.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            {folders.map((folder) => (
-              <Button
-                key={folder.id}
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setShowFolderDialog(false)}
-              >
-                {folder.name}
-              </Button>
-            ))}
-            {newFolderName ? (
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder="Folder name"
-                />
-                <Button onClick={() => {
-                  toast.success(`Folder "${newFolderName}" created!`);
-                  setShowFolderDialog(false);
-                  setNewFolderName("");
-                }}>
-                  Save
-                </Button>
-              </div>
-            ) : (
-              <Button variant="default" className="w-full" onClick={() => setNewFolderName("New Folder")}>
-                + Create New Folder
-              </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Coupon Claim Dialog */}
       <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>

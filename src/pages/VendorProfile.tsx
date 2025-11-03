@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import SignupModal from "@/components/SignupModal";
+import { SaveButton } from "@/components/SaveButton";
 import { CategoryType } from "@/components/ProductCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,11 +55,9 @@ const VendorProfile = () => {
   const navigate = useNavigate();
   const { vendorId } = useParams();
   const { user } = useAuth();
-  const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-  const [newFolderName, setNewFolderName] = useState("");
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "product" | "service" | "experience" | "sale">("all");
@@ -223,12 +222,6 @@ const VendorProfile = () => {
     loadVendorProfile();
   }, [vendorId, user]);
 
-  const folders = [
-    { id: "1", name: "Travel" },
-    { id: "2", name: "Kid Snacks" },
-    { id: "3", name: "Favorites" },
-  ];
-
   const getCategoryColor = (type: string): string => {
     const colors: Record<string, string> = {
       sale: "bg-category-sale",
@@ -251,10 +244,6 @@ const VendorProfile = () => {
     if (activeFilter === "all") return true;
     return listing.types.includes(activeFilter as CategoryType);
   });
-
-  const handleHighFive = () => {
-    setShowFolderDialog(true);
-  };
 
   const handleClaimCoupon = (offer: Offer) => {
     setSelectedOffer(offer);
@@ -413,18 +402,16 @@ const VendorProfile = () => {
                           ))}
                         </div>
                         
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedListing(listing.id);
-                            setShowFolderDialog(true);
-                          }}
-                          className="absolute top-2 right-2 z-10 bg-background/90 hover:bg-background text-foreground shadow-md"
-                        >
-                          <Hand className="h-5 w-5" />
-                        </Button>
+                        <div className="absolute top-2 right-2 z-10">
+                          <SaveButton
+                            itemType="listing"
+                            itemId={listing.id}
+                            itemTitle={listing.title}
+                            size="icon"
+                            variant="ghost"
+                            className="shadow-md"
+                          />
+                        </div>
                         
                         {/* Title overlay - always visible on all screen sizes */}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
@@ -453,12 +440,15 @@ const VendorProfile = () => {
                         <p className="text-sm text-muted-foreground">{vendor.highFives.toLocaleString()}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={handleHighFive}
-                      className="text-sm text-primary hover:underline"
-                    >
-                      add
-                    </button>
+                    <SaveButton
+                      itemType="vendor"
+                      itemId={vendorId || ""}
+                      itemTitle={vendor.name}
+                      size="sm"
+                      variant="ghost"
+                      className="text-sm text-primary"
+                      showLabel
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -617,55 +607,6 @@ const VendorProfile = () => {
           onWhatsgoodClick={() => navigate("/")}
         />
       </main>
-
-      {/* Folder Selection Dialog */}
-      <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add to Folder</DialogTitle>
-            <DialogDescription>
-              Choose a folder to save this item or create a new one.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            {folders.map((folder) => (
-              <Button
-                key={folder.id}
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => {
-                  toast.success(`Added to ${folder.name}!`);
-                  setShowFolderDialog(false);
-                }}
-              >
-                {folder.name}
-              </Button>
-            ))}
-            {newFolderName ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder="Folder name"
-                  className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-foreground"
-                />
-                <Button onClick={() => {
-                  toast.success(`Folder "${newFolderName}" created!`);
-                  setShowFolderDialog(false);
-                  setNewFolderName("");
-                }}>
-                  Save
-                </Button>
-              </div>
-            ) : (
-              <Button variant="default" className="w-full" onClick={() => setNewFolderName("New Folder")}>
-                + Create New Folder
-              </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Coupon Claim Dialog */}
       <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
