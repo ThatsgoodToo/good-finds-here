@@ -30,6 +30,7 @@ import AboutPage from "./pages/AboutPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import VendorPendingApproval from "./components/VendorPendingApproval";
+import EmailTestPage from "./pages/EmailTestPage";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,9 @@ const App = () => {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              
+              {/* Admin Tools */}
+              <Route path="/admin/email-test" element={<EmailTestPage />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

@@ -68,18 +68,17 @@ const ShareListingDialog = ({
 
       if (insertError) throw insertError;
 
-      // Send email via send-email function
+      // Send email via send-email function using template
       const listingUrl = `${window.location.origin}/listing/${listingId}`;
-      const couponText = couponCode ? `Use coupon code: <strong>${couponCode}</strong>` : "";
       
       const { error: emailError } = await supabase.functions.invoke("send-email", {
         body: {
           to: data.email,
-          subject: `Check out this deal: ${listingTitle}`,
-          html: `<p>Hey there!</p><p>A friend thought you'd love this deal from ThatsGoodToo:</p><h3>${listingTitle}</h3>${couponText}<p><a href="${listingUrl}" style="background: #FF4500; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 16px;">View Deal</a></p>`,
+          template: "shareInvite",
           templateVars: {
             listing_title: listingTitle,
             coupon_code: couponCode || "",
+            listing_id: listingId,
           },
         },
       });

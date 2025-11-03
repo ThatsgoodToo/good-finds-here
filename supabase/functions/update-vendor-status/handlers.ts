@@ -234,11 +234,20 @@ async function sendApprovalEmail(
   application: VendorApplication
 ): Promise<void> {
   try {
-    await resend.emails.send({
-      from: "That's Good Too <welcome@resend.dev>",
-      to: [userEmail],
-      subject: "🎉 Your Vendor Application Has Been Approved!",
-      html: generateApprovalEmailHtml(userName, application),
+    // Use send-email edge function with template
+    const response = await fetch('https://fksjvollrvzokhpptdoi.supabase.co/functions/v1/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc2p2b2xscnZ6b2tocHB0ZG9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MDE5OTQsImV4cCI6MjA3NjM3Nzk5NH0.5C-dRTTNcR8FC2oeNHAdLICy588BSyOhrF8qYYNDHzE'
+      },
+      body: JSON.stringify({
+        to: userEmail,
+        template: 'vendorApproved',
+        templateVars: {
+          business_name: userName,
+        }
+      })
     });
     console.log("Approval email sent to:", userEmail);
   } catch (emailError) {
@@ -253,11 +262,21 @@ async function sendRejectionEmail(
   adminNotes?: string
 ): Promise<void> {
   try {
-    await resend.emails.send({
-      from: "That's Good Too <welcome@resend.dev>",
-      to: [userEmail],
-      subject: "Update on Your Vendor Application",
-      html: generateRejectionEmailHtml(userName, adminNotes),
+    // Use send-email edge function with template
+    const response = await fetch('https://fksjvollrvzokhpptdoi.supabase.co/functions/v1/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc2p2b2xscnZ6b2tocHB0ZG9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MDE5OTQsImV4cCI6MjA3NjM3Nzk5NH0.5C-dRTTNcR8FC2oeNHAdLICy588BSyOhrF8qYYNDHzE'
+      },
+      body: JSON.stringify({
+        to: userEmail,
+        template: 'vendorRejected',
+        templateVars: {
+          business_name: userName,
+          rejection_reason: adminNotes || "Application did not meet current criteria",
+        }
+      })
     });
     console.log("Rejection email sent to:", userEmail);
   } catch (emailError) {

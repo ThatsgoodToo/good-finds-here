@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getTemplate } from "./templates.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -10,11 +11,12 @@ const corsHeaders = {
 
 interface EmailRequest {
   to: string;
-  subject: string;
-  html: string;
+  subject?: string;  // Optional if template is provided
+  html?: string;     // Optional if template is provided
   text?: string;
   from?: string;
   templateVars?: Record<string, string>;
+  template?: string; // NEW: Template name from templates.ts
 }
 
 // Generate unsubscribe URL with token
@@ -67,13 +69,36 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Parse and validate request
     const emailRequest: EmailRequest = await req.json();
-    const { to, subject, html, text, from, templateVars = {} } = emailRequest;
+    const { to, subject, html, text, from, templateVars = {}, template } = emailRequest;
+
+    // Determine subject and HTML based on template or direct content
+    let finalSubject = subject;
+    let finalHtml = html;
+
+    if (template) {
+      // Use template system
+      try {
+        const templateData = getTemplate(template as any, templateVars);
+        finalSubject = templateData.subject;
+        finalHtml = templateData.html;
+        console.log(`Using template: ${template}`);
+      } catch (error) {
+        console.error(`Template error for '${template}':`, error);
+        return new Response(
+          JSON.stringify({ error: `Template '${template}' not found or invalid` }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+    }
 
     // Validation
-    if (!to || !subject || !html) {
-      console.error("Missing required fields:", { to: !!to, subject: !!subject, html: !!html });
+    if (!to || !finalSubject || !finalHtml) {
+      console.error("Missing required fields:", { to: !!to, subject: !!finalSubject, html: !!finalHtml });
       return new Response(
-        JSON.stringify({ error: "Missing required fields: to, subject, html" }),
+        JSON.stringify({ error: "Missing required fields: to, and either (subject + html) or template" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -95,8 +120,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Subject length validation
-    if (subject.length > 200) {
-      console.error("Subject too long:", subject.length);
+    if (finalSubject.length > 200) {
+      console.error("Subject too long:", finalSubject.length);
       return new Response(
         JSON.stringify({ error: "Subject must be less than 200 characters" }),
         {
@@ -106,35 +131,42 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Generate unsubscribe URL
-    const unsubscribeUrl = generateUnsubscribeUrl(to);
-    
-    // Add unsubscribe URL to template vars
-    const allVars = {
-      ...templateVars,
-      unsubscribe_url: unsubscribeUrl,
-      UNSUBSCRIBE_URL: unsubscribeUrl,
-    };
+    // If using template, HTML is already wrapped - otherwise wrap it
+    let emailHtml: string;
+    if (template) {
+      // Template already includes wrapper
+      emailHtml = finalHtml;
+    } else {
+      // Generate unsubscribe URL
+      const unsubscribeUrl = generateUnsubscribeUrl(to);
+      
+      // Add unsubscribe URL to template vars
+      const allVars = {
+        ...templateVars,
+        unsubscribe_url: unsubscribeUrl,
+        UNSUBSCRIBE_URL: unsubscribeUrl,
+      };
 
-    // Replace placeholders in HTML content
-    let processedHtml = replacePlaceholders(html, allVars);
-    
-    // Wrap in branded template
-    const finalHtml = wrapInBrandedTemplate(processedHtml, unsubscribeUrl);
+      // Replace placeholders in HTML content
+      let processedHtml = replacePlaceholders(finalHtml, allVars);
+      
+      // Wrap in branded template
+      emailHtml = wrapInBrandedTemplate(processedHtml, unsubscribeUrl);
+    }
 
-    // Process plain text if provided
-    let processedText = text ? replacePlaceholders(text, allVars) : undefined;
+    // Process plain text if provided (templates don't use plain text)
+    let processedText = text && !template ? replacePlaceholders(text, templateVars) : undefined;
 
     // Send email via Resend
     const emailFrom = from || "That's Good Too <noreply@thatsgoodtoo.shop>";
     
-    console.log(`Sending email to ${to} with subject: ${subject}`);
+    console.log(`Sending email to ${to} with subject: ${finalSubject}`);
     
     const emailResponse = await resend.emails.send({
       from: emailFrom,
       to: [to],
-      subject: subject,
-      html: finalHtml,
+      subject: finalSubject,
+      html: emailHtml,
       text: processedText,
     });
 

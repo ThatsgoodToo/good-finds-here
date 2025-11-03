@@ -32,8 +32,7 @@ export const useSaveFeedback = () => {
             await supabase.functions.invoke("send-email", {
               body: {
                 to: profile.email,
-                subject: "How are we doing? Quick feedback requested 📝",
-                html: `<p>Hi ${profile.display_name || "there"},</p><p>We noticed you've saved 5 items on ThatsGoodToo! 🎉</p><p>We'd love to hear your thoughts. How would you rate your experience so far?</p><p>Rate us 1-5 stars by replying to this email with a number!</p><ul><li>⭐ = Needs improvement</li><li>⭐⭐⭐⭐⭐ = Amazing!</li></ul><p>Your feedback helps us improve.</p><p>Thanks!<br>ThatsGoodToo Team</p>`,
+                template: "feedbackSurvey",
                 templateVars: {
                   user_name: profile.display_name || "there",
                 },

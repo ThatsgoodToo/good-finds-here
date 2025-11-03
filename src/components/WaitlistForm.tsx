@@ -41,12 +41,11 @@ const WaitlistForm = () => {
 
       if (insertError) throw insertError;
 
-      // Send welcome email via send-email function
+      // Send welcome email via template
       const { error: emailError } = await supabase.functions.invoke("send-email", {
         body: {
           to: data.email,
-          subject: "You're on the Waitlist! 🎉",
-          html: `<p>Thank you for joining, ${data.name}!</p><p>You'll be the first to know about new exclusive coupons and deals from ThatsGoodToo.</p><p>Stay tuned!</p>`,
+          template: "waitlistConfirm",
           templateVars: {
             user_name: data.name,
           },

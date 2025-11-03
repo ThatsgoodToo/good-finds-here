@@ -44,14 +44,14 @@ const ContactForm = () => {
 
       if (insertError) throw insertError;
 
-      // Send thank you email to user
+      // Send thank you email to user using template
       const { error: userEmailError } = await supabase.functions.invoke("send-email", {
         body: {
           to: data.email,
-          subject: "Thanks for reaching out! 💬",
-          html: `<p>Hi ${data.name},</p><p>Thank you for contacting us! We've received your message and will get back to you as soon as possible.</p><p>In the meantime, feel free to explore our latest deals!</p><p>Best regards,<br>ThatsGoodToo Team</p>`,
+          template: "contactThankYou",
           templateVars: {
             user_name: data.name,
+            message: data.message,
           },
         },
       });
@@ -60,12 +60,16 @@ const ContactForm = () => {
         console.error("User email error:", userEmailError);
       }
 
-      // Notify admin
+      // Notify admin using template
       const { error: adminEmailError } = await supabase.functions.invoke("send-email", {
         body: {
           to: "connect@thatsgoodtoo.shop",
-          subject: `New Contact Form Submission from ${data.name}`,
-          html: `<h3>New Contact Form Submission</h3><p><strong>From:</strong> ${data.name} (${data.email})</p><p><strong>Message:</strong></p><p>${data.message.replace(/\n/g, '<br>')}</p>`,
+          template: "adminContactNotification",
+          templateVars: {
+            user_name: data.name,
+            user_email: data.email,
+            message: data.message,
+          },
         },
       });
 
