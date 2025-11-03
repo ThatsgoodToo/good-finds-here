@@ -14,6 +14,7 @@ import { Loader2, Gift, Calendar, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { handleSupabaseError } from "@/utils/errorHandler";
 import { cn } from "@/lib/utils";
 
 interface Coupon {
@@ -67,9 +68,8 @@ const ShareCouponDialog = ({ open, onOpenChange, shopperId, shopperName }: Share
         (c: Coupon) => c.active_status && new Date(c.end_date) > new Date()
       );
       setCoupons(activeCoupons);
-    } catch (error: any) {
-      console.error("Error loading coupons:", error);
-      toast.error("Failed to load coupons");
+    } catch (error) {
+      handleSupabaseError(error, "Loading coupons", "Failed to load coupons");
     } finally {
       setLoading(false);
     }
@@ -143,9 +143,8 @@ const ShareCouponDialog = ({ open, onOpenChange, shopperId, shopperName }: Share
 
       onOpenChange(false);
       setSelectedCouponId("");
-    } catch (error: any) {
-      console.error("Error sharing coupon:", error);
-      toast.error(error.message || "Failed to share coupon");
+    } catch (error) {
+      handleSupabaseError(error, "Sharing coupon", "Failed to share coupon");
     } finally {
       setSharing(false);
     }

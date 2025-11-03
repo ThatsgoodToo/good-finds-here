@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import CouponEditForm from "./CouponEditForm";
+import { handleSupabaseError, logError } from "@/utils/errorHandler";
 
 interface Coupon {
   id: string;
@@ -49,8 +50,8 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
 
       if (response.error) throw response.error;
       setCoupons(response.data.coupons || []);
-    } catch (error: any) {
-      console.error('Error loading coupons:', error);
+    } catch (error) {
+      logError("Loading coupons", error);
       toast({
         title: "Error",
         description: "Failed to load coupons",
@@ -89,8 +90,8 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
       });
 
       loadCoupons();
-    } catch (error: any) {
-      console.error('Error deleting coupon:', error);
+    } catch (error) {
+      logError("Deleting coupon", error);
       toast({
         title: "Error",
         description: "Failed to delete coupon",
@@ -131,11 +132,11 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
 
       loadCoupons();
       setTestingCoupon(null);
-    } catch (error: any) {
-      console.error("Error testing reset:", error);
+    } catch (error) {
+      logError("Testing coupon reset", error);
       toast({
         title: "Test Reset Failed",
-        description: error.message || "Failed to reset coupon",
+        description: "Failed to reset coupon",
         variant: "destructive",
       });
     } finally {

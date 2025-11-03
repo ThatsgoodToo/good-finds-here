@@ -68,9 +68,9 @@ const ShopperProfile = () => {
         ].filter(Boolean) as string[];
         setIsOwnProfile(candidateSlugs.includes((shopperId as string).toLowerCase()));
         if (data) {
-          setPrivacySettings((prev) => ({
-            highFivesPublic: (data as any).high_fives_public ?? prev.highFivesPublic,
-            locationPublic: (data as any).location_public ?? prev.locationPublic,
+        setPrivacySettings((prev) => ({
+            highFivesPublic: data.high_fives_public ?? prev.highFivesPublic,
+            locationPublic: data.location_public ?? prev.locationPublic,
           }));
         }
       } catch (e) {
@@ -117,15 +117,21 @@ const ShopperProfile = () => {
       });
 
       if (matchedProfile) {
+        // Get high fives count from user_saves
+        const { count: highFivesCount } = await supabase
+          .from("user_saves")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", matchedProfile.id);
+
         setShopper({
           id: matchedProfile.id,
           name: matchedProfile.display_name || "Shopper",
           image: matchedProfile.avatar_url || "",
-          location: "", // TODO: Add location to profiles table
+          location: "", // Location not available in public_profiles view
           locationPublic: matchedProfile.location_public ?? true,
           bio: matchedProfile.bio || "",
           website: "",
-          highFives: 0, // TODO: Count favorites
+          highFives: highFivesCount || 0,
           highFivesPublic: matchedProfile.high_fives_public ?? true,
         });
 

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Mail, Loader2 } from "lucide-react";
+import { handleSupabaseError } from "@/utils/errorHandler";
 
 const waitlistSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
@@ -61,11 +62,8 @@ const WaitlistForm = () => {
         description: "You'll receive alerts for new coupons.",
       });
       reset();
-    } catch (error: any) {
-      console.error("Waitlist error:", error);
-      toast.error("Failed to join waitlist", {
-        description: error.message || "Please try again later.",
-      });
+    } catch (error) {
+      handleSupabaseError(error, "Waitlist signup", "Failed to join waitlist");
     } finally {
       setIsSubmitting(false);
     }

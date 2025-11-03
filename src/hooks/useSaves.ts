@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export interface UserSave {
   id: string;
@@ -75,8 +76,8 @@ export function useSaves(saveType?: 'listing' | 'vendor', folderId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_saves', user?.id] });
     },
-    onError: (error: any) => {
-      if (error.code === '23505') {
+    onError: (error: PostgrestError | Error) => {
+      if ('code' in error && error.code === '23505') {
         toast.error("Item already saved");
       } else {
         toast.error("Failed to save item");
@@ -115,7 +116,7 @@ export function useSaves(saveType?: 'listing' | 'vendor', folderId?: string) {
       folderId?: string | null;
       emailOnSave?: boolean;
     }) => {
-      const updates: any = {};
+      const updates: Partial<Pick<UserSave, 'folder_id' | 'email_on_save'>> = {};
       if (folderId !== undefined) updates.folder_id = folderId;
       if (emailOnSave !== undefined) updates.email_on_save = emailOnSave;
       

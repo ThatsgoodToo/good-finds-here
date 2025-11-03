@@ -19,6 +19,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { handleSupabaseError } from "@/utils/errorHandler";
 
 const couponSchema = z.object({
   code: z.string()
@@ -123,9 +124,8 @@ export default function CouponForm({ onSuccess, onCancel, listingId, autoLinkLis
       toast.success("Coupon created successfully");
 
       onSuccess();
-    } catch (error: any) {
-      console.error('Error creating coupon:', error);
-      toast.error(error.message || "Failed to create coupon");
+    } catch (error) {
+      handleSupabaseError(error, "Creating coupon", "Failed to create coupon");
     } finally {
       setIsLoading(false);
     }

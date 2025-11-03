@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import SignupModal from "@/components/SignupModal";
@@ -120,47 +120,47 @@ const VendorDashboard = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const loadVendorProfile = async () => {
-      if (!user) return;
+  const loadVendorProfile = useCallback(async () => {
+    if (!user) return;
 
-      const { data: vendorProfile } = await supabase
-        .from("vendor_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const { data: vendorProfile } = await supabase
+      .from("vendor_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url, profile_picture_url")
-        .eq("id", user.id)
-        .maybeSingle();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url, profile_picture_url")
+      .eq("id", user.id)
+      .maybeSingle();
 
-      if (vendorProfile) {
-        setVendorName(vendorProfile.business_name || profile?.display_name || "Vendor");
-        setLocation(`${vendorProfile.city}, ${vendorProfile.state_region}`);
-        setLocationPublic(vendorProfile.location_public ?? true);
-        setExternalUrl(vendorProfile.website || "");
-        setVendorDescription(vendorProfile.business_description || "");
-        setSubcategories(vendorProfile.area_of_expertise || []);
-        setMainCategories(vendorProfile.products_services || []);
-        setAdditionalVendorInfo({
-          businessType: vendorProfile.business_type || undefined,
-          businessDuration: vendorProfile.business_duration || undefined,
-          sustainableMethods: vendorProfile.sustainable_methods || undefined,
-          pricingStyle: vendorProfile.pricing_style || undefined,
-          inventoryType: vendorProfile.inventory_type || undefined,
-          shippingOptions: vendorProfile.shipping_options || undefined,
-        });
-      }
+    if (vendorProfile) {
+      setVendorName(vendorProfile.business_name || profile?.display_name || "Vendor");
+      setLocation(`${vendorProfile.city}, ${vendorProfile.state_region}`);
+      setLocationPublic(vendorProfile.location_public ?? true);
+      setExternalUrl(vendorProfile.website || "");
+      setVendorDescription(vendorProfile.business_description || "");
+      setSubcategories(vendorProfile.area_of_expertise || []);
+      setMainCategories(vendorProfile.products_services || []);
+      setAdditionalVendorInfo({
+        businessType: vendorProfile.business_type || undefined,
+        businessDuration: vendorProfile.business_duration || undefined,
+        sustainableMethods: vendorProfile.sustainable_methods || undefined,
+        pricingStyle: vendorProfile.pricing_style || undefined,
+        inventoryType: vendorProfile.inventory_type || undefined,
+        shippingOptions: vendorProfile.shipping_options || undefined,
+      });
+    }
 
-      if (profile) {
-        setVendorImage(profile.profile_picture_url || profile.avatar_url || "");
-      }
-    };
-
-    loadVendorProfile();
+    if (profile) {
+      setVendorImage(profile.profile_picture_url || profile.avatar_url || "");
+    }
   }, [user]);
+
+  useEffect(() => {
+    loadVendorProfile();
+  }, [loadVendorProfile]);
   
   useEffect(() => {
     if (!user) {
@@ -176,153 +176,153 @@ const VendorDashboard = () => {
   }, [roles, activeRole, setActiveRole]);
 
   // Load metrics data
-  useEffect(() => {
-    const loadMetrics = async () => {
-      if (!user) return;
+  const loadMetrics = useCallback(async () => {
+    if (!user) return;
 
-      const { data: vendorProfile } = await supabase
-        .from("vendor_profiles")
-        .select("profile_views, clicks_to_website")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const { data: vendorProfile } = await supabase
+      .from("vendor_profiles")
+      .select("profile_views, clicks_to_website")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-      const { data: coupons } = await supabase
-        .from("coupons")
+    const { data: coupons } = await supabase
+      .from("coupons")
+      .select("id")
+      .eq("vendor_id", user.id)
+      .eq("active_status", true);
+
+    const { data: followers } = await supabase
+      .from("followers")
+      .select("id")
+      .eq("vendor_id", user.id);
+
+    // Calculate total coupon claims across all vendor's coupons
+    let couponUsageCount = 0;
+    if (coupons && coupons.length > 0) {
+      const { data: couponUsage } = await supabase
+        .from("coupon_usage")
         .select("id")
-        .eq("vendor_id", user.id)
-        .eq("active_status", true);
+        .in("coupon_id", coupons.map(c => c.id));
+      couponUsageCount = couponUsage?.length || 0;
+    }
 
-      const { data: followers } = await supabase
-        .from("followers")
-        .select("id")
-        .eq("vendor_id", user.id);
-
-      // Calculate total coupon claims across all vendor's coupons
-      let couponUsageCount = 0;
-      if (coupons && coupons.length > 0) {
-        const { data: couponUsage } = await supabase
-          .from("coupon_usage")
-          .select("id")
-          .in("coupon_id", coupons.map(c => c.id));
-        couponUsageCount = couponUsage?.length || 0;
-      }
-
-      setMetrics({
-        clicks: vendorProfile?.clicks_to_website || 0,
-        sales: couponUsageCount,
-        activeOffers: coupons?.length || 0,
-        followers: followers?.length || 0,
-      });
-    };
-
-    loadMetrics();
+    setMetrics({
+      clicks: vendorProfile?.clicks_to_website || 0,
+      sales: couponUsageCount,
+      activeOffers: coupons?.length || 0,
+      followers: followers?.length || 0,
+    });
   }, [user]);
+
+  useEffect(() => {
+    loadMetrics();
+  }, [loadMetrics]);
 
   // Load followers/recent visitors
-  useEffect(() => {
-    const loadFollowers = async () => {
-      if (!user) return;
+  const loadFollowers = useCallback(async () => {
+    if (!user) return;
 
-      // Get followers first
-      const { data: followers } = await supabase
-        .from("followers")
-        .select("shopper_id, created_at")
-        .eq("vendor_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
+    // Get followers first
+    const { data: followers } = await supabase
+      .from("followers")
+      .select("shopper_id, created_at")
+      .eq("vendor_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
 
-      if (followers && followers.length > 0) {
-        // Get profile info for each follower
-        const shopperIds = followers.map(f => f.shopper_id);
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, display_name, avatar_url, profile_picture_url")
-          .in("id", shopperIds);
+    if (followers && followers.length > 0) {
+      // Get profile info for each follower
+      const shopperIds = followers.map(f => f.shopper_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url, profile_picture_url")
+        .in("id", shopperIds);
 
-        // Map profiles to followers
-        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-        
-        setRecentVisitors(
-          followers.map((f) => {
-            const profile = profileMap.get(f.shopper_id);
-            return {
-              id: f.shopper_id,
-              name: profile?.display_name || "Shopper",
-              image: profile?.profile_picture_url || profile?.avatar_url || "",
-              lastVisit: new Date(f.created_at).toLocaleDateString(),
-              itemsViewed: 0,
-            };
-          })
-        );
-      }
-    };
-
-    loadFollowers();
+      // Map profiles to followers
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      setRecentVisitors(
+        followers.map((f) => {
+          const profile = profileMap.get(f.shopper_id);
+          return {
+            id: f.shopper_id,
+            name: profile?.display_name || "Shopper",
+            image: profile?.profile_picture_url || profile?.avatar_url || "",
+            lastVisit: new Date(f.created_at).toLocaleDateString(),
+            itemsViewed: 0,
+          };
+        })
+      );
+    }
   }, [user]);
+
+  useEffect(() => {
+    loadFollowers();
+  }, [loadFollowers]);
 
   // Load listings
   const [listingsRefreshTrigger, setListingsRefreshTrigger] = useState(0);
   
+  const loadListings = useCallback(async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("listings")
+      .select("*")
+      .eq("vendor_id", user.id)
+      .order("updated_at", { ascending: false });
+
+    if (data) {
+      // For each listing, check if it has an active coupon
+      const listingsWithCoupons = await Promise.all(
+        data.map(async (listing) => {
+          // Query for active coupons linked to this listing
+          const { data: couponData } = await supabase
+            .from("coupons")
+            .select("id, code, discount_type, discount_value, used_count")
+            .eq("listing_id", listing.id)
+            .eq("active_status", true)
+            .gte("end_date", new Date().toISOString())
+            .limit(1);
+
+          const activeCoupon = couponData?.[0];
+          
+          // Map listing types to the three supported categories
+          let mappedType: "product" | "service" | "experience";
+          if (listing.listing_type === "service") {
+            mappedType = "service";
+          } else if (listing.listing_type === "experience" || listing.listing_type === "video" || listing.listing_type === "audio") {
+            mappedType = "experience";
+          } else {
+            mappedType = "product"; // Default for product, material, and others
+          }
+          
+          return {
+            id: listing.id,
+            title: listing.title,
+            type: mappedType,
+            categories: listing.categories || [],
+            price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
+            inventory: "Available",
+            activeOffer: !!activeCoupon,
+            offerDetails: activeCoupon 
+              ? `${activeCoupon.code} - ${activeCoupon.discount_value}${activeCoupon.discount_type === 'percentage' ? '%' : '$'} off`
+              : undefined,
+            couponClaims: activeCoupon?.used_count || undefined,
+            status: (listing.status === "active" ? "active" : "paused") as "active" | "paused",
+            created_at: listing.created_at,
+            updated_at: listing.updated_at,
+          };
+        })
+      );
+
+      setListings(listingsWithCoupons);
+    }
+  }, [user]);
+
   useEffect(() => {
-    const loadListings = async () => {
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("listings")
-        .select("*")
-        .eq("vendor_id", user.id)
-        .order("updated_at", { ascending: false });
-
-      if (data) {
-        // For each listing, check if it has an active coupon
-        const listingsWithCoupons = await Promise.all(
-          data.map(async (listing) => {
-            // Query for active coupons linked to this listing
-            const { data: couponData } = await supabase
-              .from("coupons")
-              .select("id, code, discount_type, discount_value, used_count")
-              .eq("listing_id", listing.id)
-              .eq("active_status", true)
-              .gte("end_date", new Date().toISOString())
-              .limit(1);
-
-            const activeCoupon = couponData?.[0];
-            
-            // Map listing types to the three supported categories
-            let mappedType: "product" | "service" | "experience";
-            if (listing.listing_type === "service") {
-              mappedType = "service";
-            } else if (listing.listing_type === "experience" || listing.listing_type === "video" || listing.listing_type === "audio") {
-              mappedType = "experience";
-            } else {
-              mappedType = "product"; // Default for product, material, and others
-            }
-            
-            return {
-              id: listing.id,
-              title: listing.title,
-              type: mappedType,
-              categories: listing.categories || [],
-              price: listing.price ? `$${Number(listing.price).toFixed(2)}` : "Free",
-              inventory: "Available",
-              activeOffer: !!activeCoupon,
-              offerDetails: activeCoupon 
-                ? `${activeCoupon.code} - ${activeCoupon.discount_value}${activeCoupon.discount_type === 'percentage' ? '%' : '$'} off`
-                : undefined,
-              couponClaims: activeCoupon?.used_count || undefined,
-              status: (listing.status === "active" ? "active" : "paused") as "active" | "paused",
-              created_at: listing.created_at,
-              updated_at: listing.updated_at,
-            };
-          })
-        );
-
-        setListings(listingsWithCoupons);
-      }
-    };
-
     loadListings();
-  }, [user, listingsRefreshTrigger]);
+  }, [loadListings, listingsRefreshTrigger]);
 
   // Refresh listings when tab regains focus
   useEffect(() => {

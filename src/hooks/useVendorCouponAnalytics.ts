@@ -1,5 +1,21 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logError } from "@/utils/errorHandler";
+
+interface ListingData {
+  id: string;
+  title: string;
+  resets_at: string | null;
+  reset_cycle: string;
+}
+
+interface CouponWithListing {
+  id: string;
+  code: string;
+  used_count: number;
+  max_uses: number | null;
+  listings: ListingData;
+}
 
 export interface CouponResetSchedule {
   id: string;
@@ -67,7 +83,7 @@ export const useVendorCouponAnalytics = () => {
 
       if (schedulesError) throw schedulesError;
 
-      const formattedSchedules: CouponResetSchedule[] = (schedulesData || []).map((item: any) => {
+      const formattedSchedules: CouponResetSchedule[] = (schedulesData as CouponWithListing[] || []).map((item) => {
         const listing = item.listings;
         const resetsAt = listing.resets_at ? new Date(listing.resets_at) : null;
         const now = new Date();
@@ -116,7 +132,7 @@ export const useVendorCouponAnalytics = () => {
       // Calculate performance insights
       const mostPopular = formattedSchedules.reduce(
         (max, current) => (current.used_count > max.used_count ? current : max),
-        { code: null, used_count: 0 } as any
+        { code: null, used_count: 0 } as { code: string | null; used_count: number }
       );
 
       const nearingDepletion = formattedSchedules.filter(
@@ -137,7 +153,7 @@ export const useVendorCouponAnalytics = () => {
         coupons_nearing_depletion: nearingDepletion,
       });
     } catch (error) {
-      console.error("Error loading vendor coupon analytics:", error);
+      logError("Loading vendor coupon analytics", error);
     } finally {
       setLoading(false);
     }
