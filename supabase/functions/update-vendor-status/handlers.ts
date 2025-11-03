@@ -239,7 +239,7 @@ async function sendApprovalEmail(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc2p2b2xscnZ6b2tocHB0ZG9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MDE5OTQsImV4cCI6MjA3NjM3Nzk5NH0.5C-dRTTNcR8FC2oeNHAdLICy588BSyOhrF8qYYNDHzE'
+      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
       },
       body: JSON.stringify({
         to: userEmail,
@@ -267,7 +267,7 @@ async function sendRejectionEmail(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc2p2b2xscnZ6b2tocHB0ZG9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MDE5OTQsImV4cCI6MjA3NjM3Nzk5NH0.5C-dRTTNcR8FC2oeNHAdLICy588BSyOhrF8qYYNDHzE'
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
       },
       body: JSON.stringify({
         to: userEmail,

@@ -28,7 +28,9 @@ const replaceVars = (template: string, vars: TemplateVars): string => {
   let result = template;
   Object.keys(vars).forEach((key) => {
     const value = vars[key] || "";
-    result = result.replace(new RegExp(`{${key}}`, "g"), value);
+    // Escape special regex characters to prevent ReDoS attacks
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(`{${escapedKey}}`, "g"), value);
   });
   return result;
 };

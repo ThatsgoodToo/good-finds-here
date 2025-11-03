@@ -1,0 +1,7 @@
+# Suppress JWT warnings in migration files
+# These contain public anon keys used during database setup
+supabase/migrations/*.sql
+
+# Suppress JWT warnings in .env file
+# This contains the public anon key which is safe to expose
+.env

@@ -58,6 +58,11 @@ function wrapInBrandedTemplate(htmlContent: string, unsubscribeUrl: string): str
   return template;
 }
 
+// Sanitize user input before logging to prevent log injection
+function sanitizeForLog(value: string): string {
+  return value.replace(/[\r\n\t\u0000-\u001f\u007f-\u009f]/g, '');
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -83,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
         finalHtml = templateData.html;
         console.log(`Using template: ${template}`);
       } catch (error) {
-        console.error(`Template error for '${template}':`, error);
+        console.error(`Template error for '${sanitizeForLog(template)}':`, error);
         return new Response(
           JSON.stringify({ error: `Template '${template}' not found or invalid` }),
           {
