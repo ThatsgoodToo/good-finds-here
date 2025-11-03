@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
+import { useSavedItemsWithDetails } from "@/hooks/useSaves";
+import { useFolders } from "@/hooks/useFolders";
 import SignupModal from "@/components/SignupModal";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,26 +66,11 @@ import { supabase } from "@/integrations/supabase/client";
 import VendorSignupPrompt from "@/components/VendorSignupPrompt";
 import DashboardInfoDialog from "@/components/DashboardInfoDialog";
 
-interface FolderItem {
-  id: string;
-  title: string;
-  vendor: string;
-  vendorId: string;
-  image: string;
-  type: "product" | "service" | "experience";
-  saved: boolean;
-}
-
-interface Folder {
-  id: string;
-  name: string;
-  count: number;
-  items: FolderItem[];
-}
-
 const ShopperDashboard = () => {
   const { user, userRole, roles, activeRole, setActiveRole, loading } = useAuth();
   const { status: vendorStatus, isPending, isRejected } = useVendorAccess();
+  const { savedItems, isLoading: isSavedItemsLoading, deleteSave, isDeleting } = useSavedItemsWithDetails();
+  const { folders: dbFolders, isLoading: isFoldersLoading, createFolder, updateFolder, deleteFolder } = useFolders();
   const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
@@ -94,7 +81,7 @@ const ShopperDashboard = () => {
   const [showAddPreferenceDialog, setShowAddPreferenceDialog] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
+  const [editingFolder, setEditingFolder] = useState<{ id: string; name: string } | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [customFilterInput, setCustomFilterInput] = useState("");
   const [isEditingLocation, setIsEditingLocation] = useState(false);
@@ -227,8 +214,6 @@ const ShopperDashboard = () => {
 
   const [preferences, setPreferences] = useState<Array<{ id: string; name: string; category: string }>>([]);
 
-  const [folders, setFolders] = useState<Folder[]>([]);
-
   const [activeCoupons, setActiveCoupons] = useState<Array<{
     id: string;
     vendor: string;
@@ -262,27 +247,31 @@ const ShopperDashboard = () => {
     }
   };
 
-  const handleToggleSave = (folderId: string, itemId: string) => {
-    setFolders(folders.map(folder => {
-      if (folder.id === folderId) {
-        return {
-          ...folder,
-          items: folder.items.map(item => 
-            item.id === itemId ? { ...item, saved: !item.saved } : item
-          ),
-          count: folder.items.filter(item => 
-            item.id === itemId ? !item.saved : item.saved
-          ).length
-        };
-      }
-      return folder;
-    }));
+  const handleUnsave = async (saveId: string, itemTitle: string) => {
+    const confirmed = window.confirm(`Remove "${itemTitle}" from your saved items?`);
+    if (!confirmed) return;
     
-    const item = folders.find(f => f.id === folderId)?.items.find(i => i.id === itemId);
-    if (item) {
-      toast.success(item.saved ? "Removed from folder" : "Added back to folder");
-    }
+    await deleteSave(saveId);
   };
+
+  // Group saved items by folder
+  const groupedSavedItems = savedItems.reduce((acc, item) => {
+    const folderId = item.folder_id || 'unsorted';
+    if (!acc[folderId]) {
+      acc[folderId] = {
+        folder: item.folder_id ? dbFolders.find(f => f.id === item.folder_id) || { id: item.folder_id, name: 'Unknown', description: null } : { id: null, name: 'Unsorted', description: null },
+        items: []
+      };
+    }
+    acc[folderId].items.push(item);
+    return acc;
+  }, {} as Record<string, { folder: { id: string | null; name: string; description: string | null }; items: typeof savedItems }>);
+
+  const folderGroups = Object.values(groupedSavedItems).sort((a, b) => {
+    if (a.folder.id === null) return 1;
+    if (b.folder.id === null) return -1;
+    return 0;
+  });
 
   const handleClaimCoupon = (coupon: typeof activeCoupons[0]) => {
     toast.success("Coupon claimed! Redirecting to vendor...", {
@@ -298,14 +287,7 @@ const ShopperDashboard = () => {
       toast.error("Please enter a folder name");
       return;
     }
-    const newFolder: Folder = {
-      id: Date.now().toString(),
-      name: newFolderName,
-      count: 0,
-      items: []
-    };
-    setFolders([...folders, newFolder]);
-    toast.success(`Folder "${newFolderName}" created!`);
+    createFolder({ name: newFolderName });
     setNewFolderName("");
     setShowAddFolderDialog(false);
   };
@@ -315,20 +297,16 @@ const ShopperDashboard = () => {
       toast.error("Please enter a folder name");
       return;
     }
-    setFolders(folders.map(f => 
-      f.id === editingFolder.id ? { ...f, name: newFolderName } : f
-    ));
-    toast.success("Folder name updated!");
+    updateFolder({ id: editingFolder.id, name: newFolderName });
     setNewFolderName("");
     setEditingFolder(null);
     setShowEditFolderDialog(false);
   };
 
   const handleDeleteFolder = (folderId: string) => {
-    const folder = folders.find(f => f.id === folderId);
+    const folder = dbFolders.find(f => f.id === folderId);
     if (folder && window.confirm(`Delete folder "${folder.name}"?`)) {
-      setFolders(folders.filter(f => f.id !== folderId));
-      toast.success("Folder deleted");
+      deleteFolder(folderId);
     }
   };
 
@@ -396,7 +374,9 @@ const ShopperDashboard = () => {
     setSelectedFolderId(folderId);
   };
 
-  const selectedFolder = folders.find(f => f.id === selectedFolderId);
+  const selectedFolderGroup = Object.values(groupedSavedItems).find(g => 
+    g.folder.id === selectedFolderId || (selectedFolderId === 'unsorted' && g.folder.id === null)
+  );
 
   if (loading) {
     return (
@@ -929,96 +909,150 @@ const ShopperDashboard = () => {
 
               {viewMode === "grid" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {folders.map((folder) => (
-                    <Card 
-                      key={folder.id} 
-                      className="cursor-pointer hover:shadow-lg transition-shadow group"
-                    >
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between text-lg">
-                          <span onClick={() => openFolderDetails(folder.id)}>{folder.name}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary">{folder.count}</Badge>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Settings className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => {
-                                  setEditingFolder(folder);
-                                  setNewFolderName(folder.name);
-                                  setShowEditFolderDialog(true);
-                                }}>
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Edit Name
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeleteFolder(folder.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Folder
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent onClick={() => openFolderDetails(folder.id)}>
-                        {folder.items.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2 mb-3">
-                            {folder.items.slice(0, 4).map((item) => (
-                              <div key={item.id} className="relative aspect-square rounded-lg overflow-hidden">
-                                <img 
-                                  src={item.image} 
-                                  alt={item.title}
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute top-1 left-1">
-                                  <div className={cn("h-2 w-2 rounded-full", getTypeDotColor(item.type))} />
+                  {isSavedItemsLoading || isFoldersLoading ? (
+                    <div className="col-span-full text-center py-12">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-2" />
+                      <p className="text-muted-foreground">Loading your saved items...</p>
+                    </div>
+                  ) : folderGroups.length === 0 && dbFolders.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <FolderHeart className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">No folders yet. Create one to organize your saved items!</p>
+                      <Button onClick={() => setShowAddFolderDialog(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Folder
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      {folderGroups.map((group) => {
+                        const folderId = group.folder.id || 'unsorted';
+                        return (
+                          <Card 
+                            key={folderId} 
+                            className="cursor-pointer hover:shadow-lg transition-shadow group"
+                          >
+                            <CardHeader>
+                              <CardTitle className="flex items-center justify-between text-lg">
+                                <span onClick={() => openFolderDetails(folderId)}>{group.folder.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary">{group.items.length}</Badge>
+                                  {group.folder.id && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <Settings className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => {
+                                          setEditingFolder({ id: group.folder.id!, name: group.folder.name });
+                                          setNewFolderName(group.folder.name);
+                                          setShowEditFolderDialog(true);
+                                        }}>
+                                          <Edit2 className="h-4 w-4 mr-2" />
+                                          Edit Name
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                          onClick={() => handleDeleteFolder(group.folder.id!)}
+                                          className="text-destructive"
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete Folder
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
                                 </div>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent onClick={() => openFolderDetails(folderId)}>
+                              {group.items.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                  {group.items.slice(0, 4).map((item) => {
+                                    const imageUrl = item.save_type === 'listing' 
+                                      ? item.listing?.image_url 
+                                      : item.vendor?.profile_picture_url;
+                                    const title = item.save_type === 'listing'
+                                      ? item.listing?.title
+                                      : item.vendor?.business_name;
+                                    const type = item.save_type === 'listing'
+                                      ? (item.listing?.listing_type as "product" | "service" | "experience" | "sale")
+                                      : "service";
+                                      
+                                    return (
+                                      <div key={item.id} className="relative aspect-square rounded-lg overflow-hidden">
+                                        <img 
+                                          src={imageUrl || '/placeholder.svg'} 
+                                          alt={title || 'Saved item'}
+                                          className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute top-1 left-1">
+                                          <div className={cn("h-2 w-2 rounded-full", getTypeDotColor(type))} />
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="h-24 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
+                                  <FolderHeart className="h-8 w-8 opacity-50" />
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Hand className="h-4 w-4" />
+                                Saved items
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="h-24 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
-                            <FolderHeart className="h-8 w-8 opacity-50" />
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Hand className="h-4 w-4" />
-                          Saved items
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </>
+                  )}
                 </div>
               )}
 
               {viewMode === "list" && (
                 <div className="space-y-2">
-                  {folders.map((folder) => (
-                    <Card 
-                      key={folder.id}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => openFolderDetails(folder.id)}
-                    >
-                      <CardContent className="pt-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <FolderHeart className="h-5 w-5 text-primary" />
-                            <div>
-                              <h3 className="font-semibold">{folder.name}</h3>
-                              <p className="text-sm text-muted-foreground">{folder.count} items</p>
+                  {isSavedItemsLoading || isFoldersLoading ? (
+                    <div className="text-center py-12">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-2" />
+                      <p className="text-muted-foreground">Loading your saved items...</p>
+                    </div>
+                  ) : folderGroups.length === 0 && dbFolders.length === 0 ? (
+                    <div className="text-center py-12">
+                      <FolderHeart className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">No folders yet. Create one to organize your saved items!</p>
+                      <Button onClick={() => setShowAddFolderDialog(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Folder
+                      </Button>
+                    </div>
+                  ) : (
+                    folderGroups.map((group) => {
+                      const folderId = group.folder.id || 'unsorted';
+                      return (
+                        <Card 
+                          key={folderId}
+                          className="cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => openFolderDetails(folderId)}
+                        >
+                          <CardContent className="pt-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <FolderHeart className="h-5 w-5 text-primary" />
+                                <div>
+                                  <h3 className="font-semibold">{group.folder.name}</h3>
+                                  <p className="text-sm text-muted-foreground">{group.items.length} items</p>
+                                </div>
+                              </div>
+                              <ChevronRight className="h-5 w-5 text-muted-foreground" />
                             </div>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  )}
                 </div>
               )}
 
@@ -1243,51 +1277,76 @@ const ShopperDashboard = () => {
       <Dialog open={!!selectedFolderId} onOpenChange={() => setSelectedFolderId(null)}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedFolder?.name}</DialogTitle>
+            <DialogTitle>{selectedFolderGroup?.folder.name}</DialogTitle>
             <DialogDescription>
-              {selectedFolder?.count} saved items
+              {selectedFolderGroup?.items.length || 0} saved items
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {selectedFolder?.items.map((item) => (
-              <Card key={item.id} className="overflow-hidden">
-                <div className="relative h-40 cursor-pointer" onClick={() => navigate(`/listing/product/${item.id}`)}>
-                  <img 
-                    src={item.image} 
-                    alt={item.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute top-2 left-2">
-                    <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(item.type))} />
-                  </div>
-                  <button
-                    className={cn(
-                      "absolute top-2 right-2 p-2 rounded-full shadow-md transition-all",
-                      item.saved
-                        ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                        : "bg-background/90 hover:bg-background text-foreground"
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleSave(selectedFolder.id, item.id);
+            {selectedFolderGroup?.items.map((item) => {
+              const isListing = item.save_type === 'listing';
+              const imageUrl = isListing 
+                ? item.listing?.image_url 
+                : item.vendor?.profile_picture_url;
+              const title = isListing
+                ? item.listing?.title
+                : item.vendor?.business_name;
+              const listingId = isListing ? item.target_id : null;
+              const vendorId = !isListing ? item.target_id : item.listing?.vendor_id;
+              const type = isListing
+                ? (item.listing?.listing_type as "product" | "service" | "experience" | "sale")
+                : "service";
+                
+              return (
+                <Card key={item.id} className="overflow-hidden">
+                  <div 
+                    className="relative h-40 cursor-pointer" 
+                    onClick={() => {
+                      if (isListing && listingId) {
+                        navigate(`/listing/product/${listingId}`);
+                      } else if (vendorId) {
+                        navigate(`/vendor/${vendorId}`);
+                      }
                     }}
                   >
-                    <Hand 
-                      className={cn("h-5 w-5", item.saved && "fill-current")} 
+                    <img 
+                      src={imageUrl || '/placeholder.svg'} 
+                      alt={title || 'Saved item'}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform"
                     />
-                  </button>
-                </div>
-                <CardContent className="pt-4">
-                  <h3 className="font-semibold mb-1">{item.title}</h3>
-                  <p 
-                    className="text-sm text-muted-foreground hover:text-primary cursor-pointer"
-                    onClick={() => navigate(`/vendor/${item.vendorId}`)}
-                  >
-                    {item.vendor}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="absolute top-2 left-2">
+                      <div className={cn("h-3 w-3 rounded-full", getTypeDotColor(type))} />
+                    </div>
+                    <button
+                      className="absolute top-2 right-2 p-2 rounded-full shadow-md transition-all bg-primary hover:bg-primary/90 text-primary-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnsave(item.id, title || 'this item');
+                      }}
+                      disabled={isDeleting}
+                    >
+                      <Hand className="h-5 w-5 fill-current" />
+                    </button>
+                  </div>
+                  <CardContent className="pt-4">
+                    <h3 className="font-semibold mb-1">{title}</h3>
+                    {isListing && vendorId && (
+                      <p 
+                        className="text-sm text-muted-foreground hover:text-primary cursor-pointer"
+                        onClick={() => navigate(`/vendor/${vendorId}`)}
+                      >
+                        View Vendor
+                      </p>
+                    )}
+                    {!isListing && item.vendor && (
+                      <p className="text-sm text-muted-foreground">
+                        {item.vendor.city}, {item.vendor.state_region}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
