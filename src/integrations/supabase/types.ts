@@ -616,6 +616,14 @@ export type Database = {
           id: string
           marketing_emails: boolean | null
           notification_frequency: string | null
+          notify_coupon_resets: boolean | null
+          notify_engagement: boolean | null
+          notify_expiry_alerts: boolean | null
+          notify_feedback_requests: boolean | null
+          notify_listing_updates: boolean | null
+          notify_referral_bonus: boolean | null
+          notify_share_invites: boolean | null
+          notify_vendor_nudges: boolean | null
           push_notifications: boolean | null
           updated_at: string | null
           user_id: string
@@ -626,6 +634,14 @@ export type Database = {
           id?: string
           marketing_emails?: boolean | null
           notification_frequency?: string | null
+          notify_coupon_resets?: boolean | null
+          notify_engagement?: boolean | null
+          notify_expiry_alerts?: boolean | null
+          notify_feedback_requests?: boolean | null
+          notify_listing_updates?: boolean | null
+          notify_referral_bonus?: boolean | null
+          notify_share_invites?: boolean | null
+          notify_vendor_nudges?: boolean | null
           push_notifications?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -636,6 +652,14 @@ export type Database = {
           id?: string
           marketing_emails?: boolean | null
           notification_frequency?: string | null
+          notify_coupon_resets?: boolean | null
+          notify_engagement?: boolean | null
+          notify_expiry_alerts?: boolean | null
+          notify_feedback_requests?: boolean | null
+          notify_listing_updates?: boolean | null
+          notify_referral_bonus?: boolean | null
+          notify_share_invites?: boolean | null
+          notify_vendor_nudges?: boolean | null
           push_notifications?: boolean | null
           updated_at?: string | null
           user_id?: string

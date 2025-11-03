@@ -7,8 +7,9 @@ import VendorApplicationRejected from "@/components/VendorApplicationRejected";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Users, BarChart3, Tag, Hand, AlertCircle } from "lucide-react";
+import { Package, Users, BarChart3, Tag, Hand, AlertCircle, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import CouponAnalytics from "@/components/dashboard/vendor/CouponAnalytics";
 import Header from "@/components/Header";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -540,7 +541,7 @@ const VendorDashboard = () => {
 
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-8">
               <TabsTrigger value="overview" className="gap-2" data-tour="vendor-dashboard">
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -551,14 +552,18 @@ const VendorDashboard = () => {
               </TabsTrigger>
               <TabsTrigger value="coupons" className="gap-2" data-tour="vendor-offers">
                 <Tag className="h-4 w-4" />
-                <span className="hidden sm:inline">Active Offers</span>
+                <span className="hidden sm:inline">Coupons</span>
                 {metrics.activeOffers === 0 && (
                   <Badge variant="destructive" className="ml-1">!</Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="analytics" className="gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">Analytics</span>
+              </TabsTrigger>
               <TabsTrigger value="hifives" className="gap-2" data-tour="vendor-hi-fives">
                 <Hand className="h-4 w-4" />
-                <span className="hidden sm:inline">Your Hi Fives</span>
+                <span className="hidden sm:inline">Hi Fives</span>
               </TabsTrigger>
             </TabsList>
 
@@ -639,6 +644,11 @@ const VendorDashboard = () => {
                   />
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Analytics Tab */}
+            <TabsContent value="analytics" className="space-y-6">
+              <CouponAnalytics />
             </TabsContent>
 
             {/* Your Hi Fives Tab */}

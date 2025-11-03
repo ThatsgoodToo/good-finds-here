@@ -31,6 +31,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import VendorPendingApproval from "./components/VendorPendingApproval";
 import EmailTestPage from "./pages/EmailTestPage";
+import TestDataPage from "./pages/TestDataPage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => {
               
               {/* Admin Tools */}
               <Route path="/admin/email-test" element={<EmailTestPage />} />
+              <Route path="/admin/test-data" element={<TestDataPage />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

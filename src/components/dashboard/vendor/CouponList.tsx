@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Copy, Pencil, Gift } from "lucide-react";
+import { Trash2, Copy, Pencil, Gift, TestTube } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -34,6 +35,8 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+  const [testingCoupon, setTestingCoupon] = useState<{ coupon: Coupon; listingId: string } | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
 
   const loadCoupons = async () => {
     try {
@@ -104,11 +107,47 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
     });
   };
 
+  const testReset = async () => {
+    if (!testingCoupon) return;
+    
+    setTestLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const response = await supabase.functions.invoke("test-coupon-reset", {
+        body: {
+          listing_id: testingCoupon.listingId,
+          coupon_id: testingCoupon.coupon.id,
+        },
+      });
+
+      if (response.error) throw response.error;
+
+      toast({
+        title: "Test Reset Successful",
+        description: `Coupon ${testingCoupon.coupon.code} has been reset. Check your email for details.`,
+      });
+
+      loadCoupons();
+      setTestingCoupon(null);
+    } catch (error: any) {
+      console.error("Error testing reset:", error);
+      toast({
+        title: "Test Reset Failed",
+        description: error.message || "Failed to reset coupon",
+        variant: "destructive",
+      });
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   const activeCoupons = coupons.filter(c => c.active_status && new Date(c.end_date) > new Date());
   const expiredCoupons = coupons.filter(c => !c.active_status || new Date(c.end_date) <= new Date());
   const recurringCoupons = coupons.filter(c => c.is_recurring);
 
-  const CouponCard = ({ coupon }: { coupon: Coupon }) => (
+  const CouponCard = ({ coupon, listingId }: { coupon: Coupon; listingId?: string }) => (
     <Card key={coupon.id} className="mb-4">
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
@@ -148,6 +187,16 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
           </div>
 
           <div className="flex gap-1">
+            {coupon.is_recurring && listingId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTestingCoupon({ coupon, listingId })}
+                title="Test reset functionality"
+              >
+                <TestTube className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -236,6 +285,24 @@ export default function CouponList({ refresh, onRefreshComplete, onCreateClick }
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!testingCoupon} onOpenChange={(open) => !open && setTestingCoupon(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Test Coupon Reset</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will reset the usage count for <strong>{testingCoupon?.coupon.code}</strong> and send a test email to you.
+              This action simulates the automatic reset that occurs during scheduled cron jobs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={testLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={testReset} disabled={testLoading}>
+              {testLoading ? "Testing..." : "Test Reset"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

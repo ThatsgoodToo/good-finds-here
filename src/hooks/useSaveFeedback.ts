@@ -28,7 +28,14 @@ export const useSaveFeedback = () => {
             .eq("id", user.id)
             .single();
 
-          if (profile?.email) {
+          // Check user preferences before sending
+          const { data: prefs } = await supabase
+            .from("user_preferences")
+            .select("email_notifications, notify_feedback_requests")
+            .eq("user_id", user.id)
+            .single();
+
+          if (profile?.email && prefs?.email_notifications && prefs?.notify_feedback_requests) {
             await supabase.functions.invoke("send-email", {
               body: {
                 to: profile.email,
