@@ -31,6 +31,7 @@ import { AlertCircle, Upload, X, Plus, ChevronLeft, Hand, CheckCircle, ExternalL
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import LocationLink from "@/components/LocationLink";
+import { isValidImageUrl } from "@/utils/urlValidation";
 type CategoryType = "product" | "service" | "experience";
 type MediaType = "product" | "video" | "audio";
 type Coupon = Database['public']['Tables']['coupons']['Row'];
@@ -836,7 +837,13 @@ const VendorNewListing = () => {
                     
                     {mediaItems.length > 0 && <div className="grid grid-cols-3 gap-4">
                         {mediaItems.map((item, idx) => <div key={idx} className="relative group">
-                            <img src={item.url} alt={`Image ${idx + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                            {isValidImageUrl(item.url) ? (
+                              <img src={item.url} alt={`Image ${idx + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                            ) : (
+                              <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
+                                <p className="text-xs text-muted-foreground">Invalid URL</p>
+                              </div>
+                            )}
                             <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeMediaItem(idx)}>
                               <X className="h-4 w-4" />
                             </Button>
@@ -1228,7 +1235,7 @@ const VendorNewListing = () => {
                     </div>}
 
                   {/* Media Preview */}
-                  {mediaItems.find(m => m.type === 'image') ? <div className="w-full">
+                  {mediaItems.find(m => m.type === 'image') && isValidImageUrl(mediaItems.find(m => m.type === 'image')?.url) ? <div className="w-full">
                       <img src={mediaItems.find(m => m.type === 'image')?.url} alt={title || "Preview"} className="w-full rounded-lg" />
                     </div> : <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
                       <p className="text-sm text-muted-foreground">

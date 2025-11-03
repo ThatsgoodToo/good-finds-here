@@ -23,8 +23,11 @@ serve(async (req) => {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname.replace('www.', '').toLowerCase();
     
+    // Allowed domains for security (prevent URL substring attacks)
+    const YOUTUBE_HOSTS = ['youtube.com', 'youtu.be', 'm.youtube.com'];
+    
     // YouTube - use oEmbed (free, no API key)
-    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+    if (YOUTUBE_HOSTS.includes(hostname)) {
       const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
       const response = await fetch(oembedUrl);
       
@@ -48,7 +51,7 @@ serve(async (req) => {
     }
     
     // Spotify - use oEmbed
-    if (hostname.includes('spotify.com')) {
+    if (hostname === 'spotify.com' || hostname.endsWith('.spotify.com')) {
       const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
       const response = await fetch(oembedUrl);
       
@@ -72,7 +75,7 @@ serve(async (req) => {
     }
     
     // SoundCloud - use oEmbed
-    if (hostname.includes('soundcloud.com')) {
+    if (hostname === 'soundcloud.com' || hostname.endsWith('.soundcloud.com')) {
       const oembedUrl = `https://soundcloud.com/oembed?url=${encodeURIComponent(url)}&format=json`;
       const response = await fetch(oembedUrl);
       

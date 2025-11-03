@@ -42,9 +42,13 @@ interface VendorInfo {
 // Audio URL parsing utilities
 const getAudioEmbedUrl = (url: string | null): { embedUrl: string; type: 'iframe' | 'audio' } | null => {
   if (!url) return null;
-
-  // Bandcamp
-  if (url.includes('bandcamp.com')) {
+  
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    
+    // Bandcamp (supports artist subdomains like artist.bandcamp.com)
+    if (hostname === 'bandcamp.com' || hostname.endsWith('.bandcamp.com')) {
     const trackMatch = url.match(/\/track\/([^/?]+)/);
     const albumMatch = url.match(/\/album\/([^/?]+)/);
     if (trackMatch) {
@@ -53,10 +57,10 @@ const getAudioEmbedUrl = (url: string | null): { embedUrl: string; type: 'iframe
     if (albumMatch) {
       return { embedUrl: `https://bandcamp.com/EmbeddedPlayer/album=${albumMatch[1]}/size=large/`, type: 'iframe' };
     }
-  }
-
-  // SoundCloud
-  if (url.includes('soundcloud.com')) {
+    }
+    
+    // SoundCloud
+    if (hostname === 'soundcloud.com' || hostname.endsWith('.soundcloud.com')) {
     return { 
       embedUrl: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`, 
       type: 'iframe' 
@@ -64,13 +68,18 @@ const getAudioEmbedUrl = (url: string | null): { embedUrl: string; type: 'iframe
   }
 
   // Spotify
-  const spotifyRegex = /open\.spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/;
+  if (hostname === 'spotify.com' || hostname.endsWith('.spotify.com')) {
+    const spotifyRegex = /open\.spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/;
   const spotifyMatch = url.match(spotifyRegex);
   if (spotifyMatch) {
     return { embedUrl: `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`, type: 'iframe' };
   }
+  }
 
-  // YouTube Shorts pattern
+  // YouTube (check against allowed hosts)
+  const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com'];
+  if (YOUTUBE_HOSTS.includes(hostname)) {
+    // YouTube Shorts pattern
   const shortsRegex = /(?:youtube\.com\/shorts\/)([^"&?/\s]{11})/i;
   const shortsMatch = url.match(shortsRegex);
   if (shortsMatch && shortsMatch[1]) {
@@ -80,16 +89,21 @@ const getAudioEmbedUrl = (url: string | null): { embedUrl: string; type: 'iframe
   // YouTube standard patterns (for audio)
   const youtubeRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i;
   const youtubeMatch = url.match(youtubeRegex);
-  if (youtubeMatch) {
-    return { embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}`, type: 'iframe' };
+    if (youtubeMatch) {
+      return { embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}`, type: 'iframe' };
+    }
   }
 
   // Direct audio file
   if (url.match(/\.(mp3|wav|ogg|m4a)$/i)) {
-    return { embedUrl: url, type: 'audio' };
+      return { embedUrl: url, type: 'audio' };
+    }
+    
+    return null;
+  } catch {
+    // Invalid URL
+    return null;
   }
-
-  return null;
 };
 
 const AudioListing = () => {
