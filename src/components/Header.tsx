@@ -1,4 +1,4 @@
-import { Hand, Settings, Shield } from "lucide-react";
+import { Hand, Settings, Shield, FolderHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -157,6 +157,11 @@ const Header = ({ showGoodToday = true, onWhatsgoodClick, onHighFiveClick, onYou
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/settings/profile")} className="cursor-pointer">
                     Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/saved")} className="cursor-pointer">
+                    <FolderHeart className="h-4 w-4 mr-2" />
+                    My Saved Items
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>

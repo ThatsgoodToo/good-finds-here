@@ -32,6 +32,7 @@ import TermsPage from "./pages/TermsPage";
 import VendorPendingApproval from "./components/VendorPendingApproval";
 import EmailTestPage from "./pages/EmailTestPage";
 import TestDataPage from "./pages/TestDataPage";
+import SavedPage from "./pages/SavedPage";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => {
               <Route path="/vendor/listing/edit/:listingId" element={<VendorNewListing />} />
               <Route path="/listing/:listingId" element={<ListingRouter />} />
               <Route path="/high-fives" element={<HighFives />} />
+              <Route path="/saved" element={<SavedPage />} />
               <Route path="/shopper/:shopperId" element={<ShopperProfile />} />
               
               {/* Settings Routes */}
