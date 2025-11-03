@@ -1241,6 +1241,20 @@ export type Database = {
       }
       daily_listing_notifications: { Args: never; Returns: undefined }
       expire_coupons: { Args: never; Returns: Json }
+      get_popular_listings: {
+        Args: { _limit?: number }
+        Returns: {
+          category: string
+          description: string
+          image_url: string
+          listing_id: string
+          save_count: number
+          share_count: number
+          title: string
+          vendor_id: string
+          views: number
+        }[]
+      }
       get_public_profile: {
         Args: { _user_id: string }
         Returns: {
