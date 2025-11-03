@@ -47,7 +47,22 @@ export const useShopperActiveCoupons = (userId: string | undefined) => {
       }
 
       // Query coupons from saved listings and vendors
-      let query = supabase
+      const now = new Date().toISOString();
+      
+      // Build OR condition for saved items
+      const filters = [];
+      if (savedListingIds.length > 0) {
+        filters.push(`listing_id.in.(${savedListingIds.join(",")})`);
+      }
+      if (savedVendorIds.length > 0) {
+        filters.push(`vendor_id.in.(${savedVendorIds.join(",")})`);
+      }
+
+      if (filters.length === 0) {
+        return [];
+      }
+
+      const { data: coupons, error } = await supabase
         .from("coupons")
         .select(`
           *,
@@ -62,28 +77,21 @@ export const useShopperActiveCoupons = (userId: string | undefined) => {
             website
           )
         `)
+        .or(filters.join(","))
         .eq("active_status", true)
-        .gte("end_date", new Date().toISOString())
+        .lte("start_date", now)
+        .gte("end_date", now)
         .order("created_at", { ascending: false });
 
-      // Build OR condition for saved items
-      const filters = [];
-      if (savedListingIds.length > 0) {
-        filters.push(`listing_id.in.(${savedListingIds.join(",")})`);
+      if (error) {
+        console.error('[useShopperActiveCoupons] Query failed:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
       }
-      if (savedVendorIds.length > 0) {
-        filters.push(`vendor_id.in.(${savedVendorIds.join(",")})`);
-      }
-
-      if (filters.length > 0) {
-        query = query.or(filters.join(","));
-      }
-
-      query = query.lte("start_date", new Date().toISOString());
-
-      const { data: coupons, error } = await query;
-
-      if (error) throw error;
 
       // Format coupons for display
       return (coupons || []).map((coupon: any) => {

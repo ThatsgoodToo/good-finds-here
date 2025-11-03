@@ -30,6 +30,8 @@ export const useVendorSharedOffers = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) return [];
 
+      // Note: Cannot filter on joined table columns directly
+      // Fetch all shares and filter active coupons client-side
       const { data: shares, error } = await supabase
         .from("coupon_shares")
         .select(`
@@ -57,15 +59,30 @@ export const useVendorSharedOffers = (userId: string | undefined) => {
           )
         `)
         .eq("shopper_id", userId)
-        .eq("coupons.active_status", true)
-        .lte("coupons.start_date", new Date().toISOString())
-        .gte("coupons.end_date", new Date().toISOString())
         .order("shared_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useVendorSharedOffers] Query failed:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+
+      // Filter active coupons client-side
+      const now = new Date();
+      const activeShares = (shares || []).filter((share: any) => {
+        const coupon = share.coupons;
+        return coupon && 
+          coupon.active_status === true &&
+          new Date(coupon.start_date) <= now &&
+          new Date(coupon.end_date) >= now;
+      });
 
       // Format the offers for display
-      return (shares || []).map((share: any) => {
+      return activeShares.map((share: any) => {
         const coupon = share.coupons;
         const vendor = share.vendor_profiles;
         const listing = share.listings;
