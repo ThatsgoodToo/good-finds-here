@@ -133,6 +133,13 @@ export type Database = {
             referencedRelation: "listings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coupon_usage_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "popular_listings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       coupons: {
@@ -193,6 +200,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupons_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "popular_listings"
             referencedColumns: ["id"]
           },
         ]
@@ -569,6 +583,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shares_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "popular_listings"
             referencedColumns: ["id"]
           },
         ]
@@ -1102,6 +1123,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_listing"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "popular_listings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_vendor"
             columns: ["vendor_id"]
             isOneToOne: false
@@ -1112,6 +1140,36 @@ export type Database = {
       }
     }
     Views: {
+      popular_listings: {
+        Row: {
+          category: string | null
+          coupon_claims: number | null
+          id: string | null
+          image_url: string | null
+          popularity_score: number | null
+          saves_count: number | null
+          shares_count: number | null
+          title: string | null
+          vendor_id: string | null
+          views: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null

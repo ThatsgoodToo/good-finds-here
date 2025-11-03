@@ -178,6 +178,28 @@ const ProductListing = () => {
         setRelatedListings(relatedData.relatedListings);
         setHighFivesCount(relatedData.highFivesCount);
 
+        // Track listing view (increment views count)
+        await supabase
+          .from("listings")
+          .update({ views: (listingData.views || 0) + 1 })
+          .eq("id", listingId);
+
+        // Track vendor profile view if not viewing own listing
+        if (user?.id && user.id !== listingData.vendor_id) {
+          const { data: vendorProfile } = await supabase
+            .from("vendor_profiles")
+            .select("profile_views")
+            .eq("user_id", listingData.vendor_id)
+            .maybeSingle();
+
+          if (vendorProfile) {
+            await supabase
+              .from("vendor_profiles")
+              .update({ profile_views: (vendorProfile.profile_views || 0) + 1 })
+              .eq("user_id", listingData.vendor_id);
+          }
+        }
+
       } catch (error) {
         console.error("Error loading listing:", error);
         toast.error("Failed to load listing");
@@ -187,7 +209,7 @@ const ProductListing = () => {
     };
 
     loadListingData();
-  }, [listingId]);
+  }, [listingId, user?.id]);
 
   const categoryColors: Record<string, string> = {
     product: "bg-category-product",

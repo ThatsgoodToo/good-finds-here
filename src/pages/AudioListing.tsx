@@ -196,13 +196,27 @@ const AudioListing = () => {
           .eq("target_id", listingId);
 
         setHighFivesCount(count || 0);
+
+        // Track listing view (increment views count)
+        await supabase
+          .from("listings")
+          .update({ views: (listingData.views || 0) + 1 })
+          .eq("id", listingId);
+
+        // Track vendor profile view if not viewing own listing
+        if (user?.id && user.id !== listingData.vendor_id && vendorProfile) {
+          await supabase
+            .from("vendor_profiles")
+            .update({ profile_views: (vendorProfile.profile_views || 0) + 1 })
+            .eq("user_id", listingData.vendor_id);
+        }
       }
 
       setLoading(false);
     };
 
     loadData();
-  }, [listingId]);
+  }, [listingId, user?.id]);
 
   const folders = [
     { id: "1", name: "Music" },

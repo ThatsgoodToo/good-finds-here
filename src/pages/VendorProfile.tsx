@@ -128,6 +128,14 @@ const VendorProfile = () => {
       if (matchedVendor) {
         // Check if this is the user's own profile
         setIsOwnProfile(user?.id === matchedVendor.user_id);
+
+        // Track profile view if not own profile
+        if (user?.id && user.id !== matchedVendor.user_id) {
+          await supabase
+            .from("vendor_profiles")
+            .update({ profile_views: (matchedVendor.profile_views || 0) + 1 })
+            .eq("user_id", matchedVendor.user_id);
+        }
         // Get profile separately
         const { data: profile } = await supabase
           .from("profiles")

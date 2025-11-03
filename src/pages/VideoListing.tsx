@@ -96,6 +96,41 @@ const VideoListing = () => {
     }
   }, [user]);
 
+  // Track views when listing loads
+  useEffect(() => {
+    const trackView = async () => {
+      if (!listingId || !listing) return;
+
+      try {
+        // Track listing view
+        await supabase
+          .from("listings")
+          .update({ views: (listing.views || 0) + 1 })
+          .eq("id", listingId);
+
+        // Track vendor profile view if not viewing own listing
+        if (user?.id && vendor?.id && user.id !== vendor.id) {
+          const { data: vendorProfile } = await supabase
+            .from("vendor_profiles")
+            .select("profile_views")
+            .eq("user_id", vendor.id)
+            .maybeSingle();
+
+          if (vendorProfile) {
+            await supabase
+              .from("vendor_profiles")
+              .update({ profile_views: (vendorProfile.profile_views || 0) + 1 })
+              .eq("user_id", vendor.id);
+          }
+        }
+      } catch (error) {
+        console.error("Error tracking view:", error);
+      }
+    };
+
+    trackView();
+  }, [listingId, listing, vendor, user?.id]);
+
   const images = listing?.image_url ? [listing.image_url] : [];
 
   const nextImage = () => {

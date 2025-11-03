@@ -5,6 +5,8 @@ import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { useSavedItemsWithDetails } from "@/hooks/useSaves";
 import { useFolders } from "@/hooks/useFolders";
 import { useShopperActiveCoupons } from "@/hooks/useShopperActiveCoupons";
+import { useNewOffersForShopper } from "@/hooks/useNewOffersForShopper";
+import { useShopperActivityMetrics } from "@/hooks/useShopperActivityMetrics";
 import SignupModal from "@/components/SignupModal";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,6 +75,8 @@ const ShopperDashboard = () => {
   const { savedItems, isLoading: isSavedItemsLoading, deleteSave, isDeleting } = useSavedItemsWithDetails();
   const { folders: dbFolders, isLoading: isFoldersLoading, createFolder, updateFolder, deleteFolder } = useFolders();
   const { data: activeCoupons = [], isLoading: isCouponsLoading } = useShopperActiveCoupons(user?.id);
+  const { data: newOffers = [], isLoading: isOffersLoading } = useNewOffersForShopper(user?.id);
+  const { data: activityMetrics, isLoading: isMetricsLoading } = useShopperActivityMetrics(user?.id);
   const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
@@ -215,16 +219,6 @@ const ShopperDashboard = () => {
   };
 
   const [preferences, setPreferences] = useState<Array<{ id: string; name: string; category: string }>>([]);
-
-  const [newOffers, setNewOffers] = useState<Array<{
-    id: string;
-    title: string;
-    vendor: string;
-    vendorId: string;
-    discount: string;
-    image: string;
-    matchedFilters: string[];
-  }>>([]);
 
   const getTypeDotColor = (type: "product" | "service" | "experience" | "sale") => {
     switch (type) {
@@ -1231,39 +1225,73 @@ const ShopperDashboard = () => {
                 </div>
                 <Badge variant="secondary">{newOffers.length} new</Badge>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {newOffers.map((offer) => (
-                  <Card 
-                    key={offer.id} 
-                    className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
-                    onClick={() => navigate(`/vendor/${offer.vendorId}`)}
-                  >
-                    <div className="relative h-48">
-                      <img 
-                        src={offer.image} 
-                        alt={offer.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <Badge className="absolute top-2 right-2 bg-primary">
-                        {offer.discount}
-                      </Badge>
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{offer.title}</CardTitle>
-                      <CardDescription>{offer.vendor}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-1">
-                        {offer.matchedFilters.map((filter, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {filter}
+
+              {isOffersLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="animate-pulse">
+                      <div className="h-48 bg-muted" />
+                      <CardHeader>
+                        <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              ) : newOffers.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {newOffers.map((offer) => (
+                    <Card 
+                      key={offer.id} 
+                      className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
+                      onClick={() => navigate(`/listing/${offer.id}`)}
+                    >
+                      <div className="relative h-48">
+                        <img 
+                          src={offer.image || "/placeholder.svg"}
+                          alt={offer.title}
+                          className="w-full h-full object-cover"
+                        />
+                        {offer.discount && (
+                          <Badge className="absolute top-2 right-2 bg-primary">
+                            {offer.discount}
                           </Badge>
-                        ))}
+                        )}
+                        {offer.isNew && (
+                          <Badge className="absolute top-2 left-2 bg-secondary">
+                            New
+                          </Badge>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      <CardHeader>
+                        <CardTitle className="text-lg">{offer.title}</CardTitle>
+                        <CardDescription>{offer.vendor}</CardDescription>
+                      </CardHeader>
+                      {offer.matchedInterests && offer.matchedInterests.length > 0 && (
+                        <CardContent>
+                          <div className="flex flex-wrap gap-1">
+                            {offer.matchedInterests.map((filter, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {filter}
+                              </Badge>
+                            ))}
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">No new offers yet</p>
+                    <p className="text-sm text-muted-foreground">
+                      Save some vendors or add interests to your preferences to see personalized offers!
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>
