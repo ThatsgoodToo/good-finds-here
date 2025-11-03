@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.fetch-url-metadata]
 verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
