@@ -1260,6 +1260,25 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_vendor_coupon_analytics: {
+        Args: { _vendor_id?: string }
+        Returns: {
+          active_status: boolean
+          code: string
+          coupon_id: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          end_date: string
+          max_uses: number
+          start_date: string
+          total_claims: number
+          unique_users: number
+          usage_percentage: number
+          used_count: number
+          vendor_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
