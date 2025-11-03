@@ -197,6 +197,42 @@ export type Database = {
           },
         ]
       }
+      cron_logs: {
+        Row: {
+          completed_at: string | null
+          emails_sent: number | null
+          error_message: string | null
+          execution_details: Json | null
+          id: string
+          job_name: string
+          records_processed: number | null
+          started_at: string | null
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          emails_sent?: number | null
+          error_message?: string | null
+          execution_details?: Json | null
+          id?: string
+          job_name: string
+          records_processed?: number | null
+          started_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          emails_sent?: number | null
+          error_message?: string | null
+          execution_details?: Json | null
+          id?: string
+          job_name?: string
+          records_processed?: number | null
+          started_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -1112,6 +1148,7 @@ export type Database = {
         }
         Returns: Json
       }
+      daily_listing_notifications: { Args: never; Returns: undefined }
       expire_coupons: { Args: never; Returns: Json }
       get_public_profile: {
         Args: { _user_id: string }
@@ -1144,7 +1181,20 @@ export type Database = {
         Args: { _vendor_profile_id: string }
         Returns: boolean
       }
+      log_cron_complete: {
+        Args: {
+          emails_count: number
+          error_msg?: string
+          log_id: string
+          records_count: number
+        }
+        Returns: undefined
+      }
+      log_cron_start: { Args: { job_name: string }; Returns: string }
+      monthly_engagement_tasks: { Args: never; Returns: undefined }
       renew_recurring_coupons: { Args: never; Returns: Json }
+      trigger_cron_job: { Args: { job_name: string }; Returns: Json }
+      weekly_vendor_nudges: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "vendor" | "shopper" | "admin" | "moderator"
