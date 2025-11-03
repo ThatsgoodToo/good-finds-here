@@ -15,6 +15,8 @@ import {
 import { toast } from "sonner";
 import ShareListingDialog from "@/components/ShareListingDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFolders } from "@/hooks/useFolders";
+import { useSaves } from "@/hooks/useSaves";
 
 export type CategoryType = "product" | "service" | "experience" | "sale";
 
@@ -33,46 +35,27 @@ interface ProductCardProps {
 const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, isSaved = false, onSaveToggle }: ProductCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { folders, createFolder } = useFolders();
+  const { checkIsSaved, saveItem, unsaveItem } = useSaves();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [folders, setFolders] = useState<string[]>([]);
+  const [newFolderDescription, setNewFolderDescription] = useState("");
   const [saved, setSaved] = useState(isSaved);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
 
-  // Check if already saved and load folders
+  // Check if already saved
   useEffect(() => {
     const loadSaveStatus = async () => {
       if (!user) return;
-
-      // Check if item is saved
-      const { data: saveData } = await supabase
-        .from("favorites")
-        .select("folder_name")
-        .eq("user_id", user.id)
-        .eq("item_id", id)
-        .maybeSingle();
-
-      setSaved(!!saveData);
-
-      // Load user's folders
-      const { data: foldersData } = await supabase
-        .from("favorites")
-        .select("folder_name")
-        .eq("user_id", user.id);
-
-      if (foldersData) {
-        const uniqueFolders = Array.from(new Set(foldersData.map(f => f.folder_name)));
-        setFolders(uniqueFolders.length > 0 ? uniqueFolders : ["Favorites", "Wishlist", "For Later"]);
-      } else {
-        setFolders(["Favorites", "Wishlist", "For Later"]);
-      }
+      const isSaved = await checkIsSaved('listing', id);
+      setSaved(isSaved);
     };
 
     loadSaveStatus();
-  }, [user, id]);
+  }, [user, id, checkIsSaved]);
 
   // Check for active coupon
   useEffect(() => {
@@ -135,73 +118,63 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
     }
 
     if (saved) {
-      // Remove from favorites
-      try {
-        const { error } = await supabase
-          .from("favorites")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("item_id", id);
-
-        if (error) throw error;
-
-        setSaved(false);
-        if (onSaveToggle) {
-          onSaveToggle();
+      // Unsave the listing
+      unsaveItem({ saveType: 'listing', targetId: id }, {
+        onSuccess: () => {
+          setSaved(false);
+          if (onSaveToggle) {
+            onSaveToggle();
+          }
+          toast.success("Removed from collection");
         }
-        toast.success("Removed from collection");
-      } catch (error) {
-        console.error("Error removing favorite:", error);
-        toast.error("Failed to remove from collection");
-      }
+      });
     } else {
       // Show dialog to choose folder
       setShowSaveDialog(true);
     }
   };
 
-  const handleSave = async (folder: string) => {
+  const handleSave = async (folderId: string, folderName: string) => {
     if (!user) {
       toast.error("Please sign in to save items");
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from("favorites")
-        .insert({
-          user_id: user.id,
-          item_id: id,
-          folder_name: folder,
+    saveItem({ 
+      saveType: 'listing', 
+      targetId: id, 
+      folderId,
+      emailOnSave: false 
+    }, {
+      onSuccess: () => {
+        setSaved(true);
+        if (onSaveToggle) {
+          onSaveToggle();
+        }
+        toast.success(`Saved to ${folderName}!`, {
+          description: `${title} has been added to your collection.`,
         });
-
-      if (error) throw error;
-
-      setSaved(true);
-      if (onSaveToggle) {
-        onSaveToggle();
+        setShowSaveDialog(false);
+        setNewFolderName("");
+        setNewFolderDescription("");
       }
-      toast.success(`Saved to ${folder}!`, {
-        description: `${title} has been added to your collection.`,
-      });
-      setShowSaveDialog(false);
-      setNewFolderName("");
-    } catch (error) {
-      console.error("Error saving favorite:", error);
-      toast.error("Failed to save to collection");
-    }
+    });
   };
 
   const handleCreateFolder = () => {
-    if (newFolderName.trim() && !folders.includes(newFolderName.trim())) {
-      const folderName = newFolderName.trim();
-      setFolders([...folders, folderName]);
-      handleSave(folderName);
-    } else if (folders.includes(newFolderName.trim())) {
-      toast.error("Folder already exists");
-    } else {
+    if (!newFolderName.trim()) {
       toast.error("Please enter a folder name");
+      return;
     }
+
+    createFolder({ 
+      name: newFolderName.trim(), 
+      description: newFolderDescription.trim() || undefined 
+    }, {
+      onSuccess: (newFolder) => {
+        handleSave(newFolder.id, newFolder.name);
+      }
+    });
   };
 
   return (
@@ -302,32 +275,42 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
           <div className="space-y-2">
             {folders.map((folder) => (
               <Button
-                key={folder}
-                onClick={() => handleSave(folder)}
+                key={folder.id}
+                onClick={() => handleSave(folder.id, folder.name)}
                 variant="outline"
                 className="w-full justify-start bg-background hover:bg-muted text-foreground"
               >
-                {folder}
+                {folder.name}
               </Button>
             ))}
             
             {/* Create New Folder Section */}
             <div className="pt-4 border-t border-border space-y-2">
               <p className="text-sm font-medium text-foreground">Create New Folder</p>
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 <Input
                   type="text"
                   placeholder="Folder name"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === "Enter" && !e.shiftKey) {
                       handleCreateFolder();
                     }
                   }}
-                  className="flex-1"
                 />
-                <Button onClick={handleCreateFolder} className="shrink-0">
+                <Input
+                  type="text"
+                  placeholder="Description (optional)"
+                  value={newFolderDescription}
+                  onChange={(e) => setNewFolderDescription(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      handleCreateFolder();
+                    }
+                  }}
+                />
+                <Button onClick={handleCreateFolder} className="w-full">
                   Create
                 </Button>
               </div>

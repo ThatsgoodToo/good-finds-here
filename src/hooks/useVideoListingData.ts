@@ -125,9 +125,10 @@ export const useVideoListingData = (listingId: string | undefined) => {
 
   const loadHighFives = async (id: string) => {
     const { count } = await supabase
-      .from("favorites")
+      .from("user_saves")
       .select("*", { count: "exact", head: true })
-      .eq("item_id", id);
+      .eq("save_type", "listing")
+      .eq("target_id", id);
 
     setHighFivesCount(count || 0);
   };

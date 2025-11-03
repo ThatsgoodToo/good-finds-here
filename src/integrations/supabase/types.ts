@@ -233,26 +233,29 @@ export type Database = {
         }
         Relationships: []
       }
-      favorites: {
+      folders: {
         Row: {
-          created_at: string
-          folder_name: string
+          created_at: string | null
+          description: string | null
           id: string
-          item_id: string
+          name: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
-          folder_name?: string
+          created_at?: string | null
+          description?: string | null
           id?: string
-          item_id: string
+          name: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
-          folder_name?: string
+          created_at?: string | null
+          description?: string | null
           id?: string
-          item_id?: string
+          name?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -689,32 +692,38 @@ export type Database = {
       }
       user_saves: {
         Row: {
-          email_on_save: boolean
+          email_on_save: boolean | null
+          folder_id: string | null
           id: string
-          listing_id: string
-          saved_at: string
+          save_type: string
+          saved_at: string | null
+          target_id: string
           user_id: string
         }
         Insert: {
-          email_on_save?: boolean
+          email_on_save?: boolean | null
+          folder_id?: string | null
           id?: string
-          listing_id: string
-          saved_at?: string
+          save_type: string
+          saved_at?: string | null
+          target_id: string
           user_id: string
         }
         Update: {
-          email_on_save?: boolean
+          email_on_save?: boolean | null
+          folder_id?: string | null
           id?: string
-          listing_id?: string
-          saved_at?: string
+          save_type?: string
+          saved_at?: string | null
+          target_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_saves_listing_id_fkey"
-            columns: ["listing_id"]
+            foreignKeyName: "user_saves_folder_id_fkey"
+            columns: ["folder_id"]
             isOneToOne: false
-            referencedRelation: "listings"
+            referencedRelation: "folders"
             referencedColumns: ["id"]
           },
         ]

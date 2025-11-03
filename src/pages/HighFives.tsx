@@ -174,9 +174,10 @@ const HighFives = () => {
           }
 
           const { count } = await supabase
-            .from("favorites")
+            .from("user_saves")
             .select("*", { count: "exact", head: true })
-            .eq("item_id", listing.id);
+            .eq("save_type", "listing")
+            .eq("target_id", listing.id);
 
           return {
             id: listing.id,
@@ -247,17 +248,18 @@ const HighFives = () => {
     }
 
     // Fetch saved listings
-    const { data: favorites, error: favError } = await supabase
-      .from("favorites")
+    const { data: saves, error: savesError } = await supabase
+      .from("user_saves")
       .select(`
-        item_id,
-        folder_name,
-        created_at
+        target_id,
+        folder_id,
+        saved_at
       `)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("save_type", "listing");
 
-    if (!favError && favorites && favorites.length > 0) {
-      const listingIds = favorites.map(f => f.item_id);
+    if (!savesError && saves && saves.length > 0) {
+      const listingIds = saves.map(s => s.target_id);
       
       const { data: listings } = await supabase
         .from("listings")
@@ -281,13 +283,14 @@ const HighFives = () => {
               .eq("id", listing.vendor_id)
               .single();
 
-            // Get favorites count
+            // Get saves count
             const { count } = await supabase
-              .from("favorites")
+              .from("user_saves")
               .select("*", { count: "exact", head: true })
-              .eq("item_id", listing.id);
+              .eq("save_type", "listing")
+              .eq("target_id", listing.id);
 
-            const favorite = favorites.find(f => f.item_id === listing.id);
+            const save = saves.find(s => s.target_id === listing.id);
 
             return {
               id: listing.id,
@@ -298,7 +301,7 @@ const HighFives = () => {
               highFives: count || 0,
               price: listing.price ? `$${listing.price}` : "Contact for price",
               type: listing.listing_type as CategoryType,
-              folder: favorite?.folder_name || "Favorites",
+              folder: save?.folder_id || null,
             };
           })
         );
@@ -338,11 +341,12 @@ const HighFives = () => {
               .eq("id", listing.vendor_id)
               .single();
 
-            // Get favorites count
+            // Get saves count
             const { count } = await supabase
-              .from("favorites")
+              .from("user_saves")
               .select("*", { count: "exact", head: true })
-              .eq("item_id", listing.id);
+              .eq("save_type", "listing")
+              .eq("target_id", listing.id);
 
             const matchedFilters = listing.tags?.filter((tag: string) => 
               profile.interests.some((interest: string) => 

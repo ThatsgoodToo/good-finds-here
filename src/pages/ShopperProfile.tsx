@@ -129,18 +129,19 @@ const ShopperProfile = () => {
           highFivesPublic: matchedProfile.high_fives_public ?? true,
         });
 
-        // Load saved items from favorites table
-        const { data: favorites } = await supabase
-          .from("favorites")
+        // Load saved items from user_saves table
+        const { data: saves } = await supabase
+          .from("user_saves")
           .select("*")
-          .eq("user_id", matchedProfile.id);
+          .eq("user_id", matchedProfile.id)
+          .eq("save_type", "listing");
 
-        if (favorites) {
+        if (saves) {
           setSavedItems(
-            favorites.map((fav: any) => ({
-              id: fav.item_id,
-              type: fav.item_id.startsWith("vendor-") ? "vendor" : "listing",
-              name: fav.folder_name,
+            saves.map((save: any) => ({
+              id: save.target_id,
+              type: save.save_type,
+              name: save.folder_id || "Unsorted",
               image: "",
               category: "",
             }))

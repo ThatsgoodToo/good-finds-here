@@ -38,7 +38,8 @@ export default function TestDataPage() {
       // Create 5 test saves
       const saves = Array.from({ length: 5 }, (_, i) => ({
         user_id: user.id,
-        listing_id: crypto.randomUUID(), // Fake listing IDs
+        save_type: 'listing',
+        target_id: crypto.randomUUID(), // Fake listing IDs
         email_on_save: true,
       }));
 
