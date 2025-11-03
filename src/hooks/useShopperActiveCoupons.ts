@@ -79,6 +79,8 @@ export const useShopperActiveCoupons = (userId: string | undefined) => {
         query = query.or(filters.join(","));
       }
 
+      query = query.lte("start_date", new Date().toISOString());
+
       const { data: coupons, error } = await query;
 
       if (error) throw error;

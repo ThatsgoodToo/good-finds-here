@@ -5,7 +5,7 @@ import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { useSavedItemsWithDetails } from "@/hooks/useSaves";
 import { useFolders } from "@/hooks/useFolders";
 import { useShopperActiveCoupons } from "@/hooks/useShopperActiveCoupons";
-import { useNewOffersForShopper } from "@/hooks/useNewOffersForShopper";
+import { useVendorSharedOffers } from "@/hooks/useVendorSharedOffers";
 import { useShopperActivityMetrics } from "@/hooks/useShopperActivityMetrics";
 import SignupModal from "@/components/SignupModal";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
@@ -75,7 +75,7 @@ const ShopperDashboard = () => {
   const { savedItems, isLoading: isSavedItemsLoading, deleteSave, isDeleting } = useSavedItemsWithDetails();
   const { folders: dbFolders, isLoading: isFoldersLoading, createFolder, updateFolder, deleteFolder } = useFolders();
   const { data: activeCoupons = [], isLoading: isCouponsLoading } = useShopperActiveCoupons(user?.id);
-  const { data: newOffers = [], isLoading: isOffersLoading } = useNewOffersForShopper(user?.id);
+  const { data: vendorOffers = [], isLoading: isOffersLoading, markAsViewed } = useVendorSharedOffers(user?.id);
   const { data: activityMetrics, isLoading: isMetricsLoading } = useShopperActivityMetrics(user?.id);
   const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
@@ -1220,10 +1220,15 @@ const ShopperDashboard = () => {
             <TabsContent value="new-offers" className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold">New Offers</h2>
-                  <p className="text-sm text-muted-foreground">Based on your preferences and saved vendors</p>
+                  <h2 className="text-2xl font-bold">Vendor Offers</h2>
+                  <p className="text-sm text-muted-foreground">Exclusive coupons shared with you by vendors</p>
                 </div>
-                <Badge variant="secondary">{newOffers.length} new</Badge>
+                <Badge variant="secondary">
+                  {vendorOffers.filter(o => !o.viewed).length > 0 && (
+                    <span className="mr-1">{vendorOffers.filter(o => !o.viewed).length} new</span>
+                  )}
+                  {vendorOffers.length} total
+                </Badge>
               </div>
 
               {isOffersLoading ? (
@@ -1238,56 +1243,67 @@ const ShopperDashboard = () => {
                     </Card>
                   ))}
                 </div>
-              ) : newOffers.length > 0 ? (
+              ) : vendorOffers.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {newOffers.map((offer) => (
+                  {vendorOffers.map((offer) => (
                     <Card 
                       key={offer.id} 
                       className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
-                      onClick={() => navigate(`/listing/${offer.id}`)}
+                      onClick={() => {
+                        if (!offer.viewed) {
+                          markAsViewed(offer.id);
+                        }
+                        if (offer.listing_id) {
+                          navigate(`/listing/${offer.listing_id}`);
+                        }
+                      }}
                     >
                       <div className="relative h-48">
                         <img 
-                          src={offer.image || "/placeholder.svg"}
-                          alt={offer.title}
+                          src={offer.listing_image}
+                          alt={offer.listing_title}
                           className="w-full h-full object-cover"
                         />
-                        {offer.discount && (
-                          <Badge className="absolute top-2 right-2 bg-primary">
-                            {offer.discount}
-                          </Badge>
-                        )}
-                        {offer.isNew && (
-                          <Badge className="absolute top-2 left-2 bg-secondary">
-                            New
+                        <Badge className="absolute top-2 right-2 bg-primary">
+                          {offer.discount}
+                        </Badge>
+                        {!offer.viewed && (
+                          <Badge className="absolute top-2 left-2 bg-destructive">
+                            NEW
                           </Badge>
                         )}
                       </div>
                       <CardHeader>
-                        <CardTitle className="text-lg">{offer.title}</CardTitle>
-                        <CardDescription>{offer.vendor}</CardDescription>
-                      </CardHeader>
-                      {offer.matchedInterests && offer.matchedInterests.length > 0 && (
-                        <CardContent>
-                          <div className="flex flex-wrap gap-1">
-                            {offer.matchedInterests.map((filter, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs">
-                                {filter}
-                              </Badge>
-                            ))}
+                        <CardTitle className="text-lg">{offer.listing_title}</CardTitle>
+                        <CardDescription className="space-y-1">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs">From</span>
+                            <span className="font-semibold">{offer.vendor_name}</span>
                           </div>
-                        </CardContent>
-                      )}
+                          <div className="text-xs text-muted-foreground">
+                            Shared {offer.shared_ago}
+                          </div>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Coupon Code</p>
+                            <p className="font-mono font-bold text-sm">{offer.code}</p>
+                          </div>
+                          <Ticket className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
               ) : (
                 <Card>
                   <CardContent className="p-12 text-center">
-                    <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-2">No new offers yet</p>
+                    <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">No vendor offers yet</p>
                     <p className="text-sm text-muted-foreground">
-                      Save some vendors or add interests to your preferences to see personalized offers!
+                      When vendors share exclusive coupons with you, they'll appear here!
                     </p>
                   </CardContent>
                 </Card>
