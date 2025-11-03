@@ -120,6 +120,9 @@ const ShareCouponDialog = ({ open, onOpenChange, shopperId, shopperName }: Share
       }
 
       const { data, error } = await supabase.functions.invoke("share-coupon", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: {
           coupon_id: selectedCouponId,
           shopper_id: shopperId,
