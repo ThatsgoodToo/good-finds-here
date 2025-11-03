@@ -197,16 +197,22 @@ const Index = () => {
         {/* What's Good Today Section - Shows on scroll when not searched */}
         {!hasSearched && (
           <div className="container mx-auto px-4 py-16 mt-[40vh] space-y-16">
-            {/* About That's Good Too */}
-            <div className="max-w-2xl mx-auto text-center space-y-4 mb-16">
-              <ul className="text-lg text-muted-foreground space-y-3">
-                <li>• Your one-stop destination for local goods</li>
-                <li>• Support small-scale makers in your community</li>
-                <li>• Access exclusive offers from local vendors</li>
-                <li>• Distraction-free shopping experience</li>
-                <li>• Affordable, subscription-based platform</li>
-                <li>• Save time discovering quality products</li>
-              </ul>
+            {/* Key Selling Points */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16">
+              <div className="bg-card border rounded-lg p-6 text-center">
+                <h3 className="text-xl font-semibold mb-3">Discover Local</h3>
+                <p className="text-muted-foreground">Support small-scale makers and discover unique goods in your community</p>
+              </div>
+              
+              <div className="bg-card border rounded-lg p-6 text-center">
+                <h3 className="text-xl font-semibold mb-3">Exclusive Offers</h3>
+                <p className="text-muted-foreground">Access special deals and coupons from your favorite local vendors</p>
+              </div>
+              
+              <div className="bg-card border rounded-lg p-6 text-center">
+                <h3 className="text-xl font-semibold mb-3">Clean Experience</h3>
+                <p className="text-muted-foreground">Distraction-free shopping that saves you time and keeps it simple</p>
+              </div>
             </div>
 
             <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in">
