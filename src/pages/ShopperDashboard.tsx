@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useVendorAccess } from "@/hooks/useVendorAccess";
 import { useSavedItemsWithDetails } from "@/hooks/useSaves";
 import { useFolders } from "@/hooks/useFolders";
+import { useShopperActiveCoupons } from "@/hooks/useShopperActiveCoupons";
 import SignupModal from "@/components/SignupModal";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,6 +72,7 @@ const ShopperDashboard = () => {
   const { status: vendorStatus, isPending, isRejected } = useVendorAccess();
   const { savedItems, isLoading: isSavedItemsLoading, deleteSave, isDeleting } = useSavedItemsWithDetails();
   const { folders: dbFolders, isLoading: isFoldersLoading, createFolder, updateFolder, deleteFolder } = useFolders();
+  const { data: activeCoupons = [], isLoading: isCouponsLoading } = useShopperActiveCoupons(user?.id);
   const [showVendorSignupPrompt, setShowVendorSignupPrompt] = useState(false);
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
@@ -214,19 +216,6 @@ const ShopperDashboard = () => {
 
   const [preferences, setPreferences] = useState<Array<{ id: string; name: string; category: string }>>([]);
 
-  const [activeCoupons, setActiveCoupons] = useState<Array<{
-    id: string;
-    vendor: string;
-    vendorId: string;
-    code: string;
-    discount: string;
-    expires: string;
-    claimed: boolean;
-    vendorUrl: string;
-    thumbnail: string;
-    listingTitle: string;
-  }>>([]);
-
   const [newOffers, setNewOffers] = useState<Array<{
     id: string;
     title: string;
@@ -273,14 +262,6 @@ const ShopperDashboard = () => {
     return 0;
   });
 
-  const handleClaimCoupon = (coupon: typeof activeCoupons[0]) => {
-    toast.success("Coupon claimed! Redirecting to vendor...", {
-      description: `Code: ${coupon.code}`,
-    });
-    setTimeout(() => {
-      window.open(coupon.vendorUrl, "_blank");
-    }, 1000);
-  };
 
   const handleAddFolder = () => {
     if (!newFolderName.trim()) {
@@ -1074,72 +1055,93 @@ const ShopperDashboard = () => {
             <TabsContent value="coupons" className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Active Coupons</h2>
-                <Badge variant="secondary">{activeCoupons.filter(c => !c.claimed).length} available</Badge>
+                <Badge variant="secondary">{activeCoupons.length} available</Badge>
               </div>
-              <div className="space-y-4">
-                {activeCoupons.map((coupon) => (
-                  <Card key={coupon.id} className={cn(
-                    "transition-all",
-                    coupon.claimed && "opacity-60"
-                  )}>
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        {/* Listing Thumbnail */}
-                        <div 
-                          className="relative w-full sm:w-32 h-32 rounded-lg overflow-hidden cursor-pointer group shrink-0"
-                          onClick={() => navigate(`/listing/${coupon.id}`)}
-                        >
-                          <img 
-                            src={coupon.thumbnail} 
-                            alt={coupon.listingTitle}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                          <Badge className="absolute top-2 right-2 bg-primary text-xs">
-                            {coupon.discount}
-                          </Badge>
-                        </div>
-                        
-                        {/* Coupon Details */}
-                        <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 
-                                className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors"
-                                onClick={() => navigate(`/vendor/${coupon.vendorId}`)}
-                              >
-                                {coupon.vendor}
-                              </h3>
-                              {coupon.claimed && (
-                                <Badge variant="secondary">Claimed</Badge>
-                              )}
-                            </div>
-                            <p 
-                              className="text-sm text-muted-foreground hover:text-foreground cursor-pointer mb-2"
-                              onClick={() => navigate(`/listing/${coupon.id}`)}
-                            >
-                              {coupon.listingTitle}
-                            </p>
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">
-                                Code: <span className="font-mono font-bold text-foreground">{coupon.code}</span>
-                              </p>
-                              <p className="text-xs text-muted-foreground">Expires: {coupon.expires}</p>
-                            </div>
+
+              {isCouponsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <Card key={i}>
+                      <CardContent className="pt-6">
+                        <div className="animate-pulse flex gap-4">
+                          <div className="w-32 h-32 bg-muted rounded-lg shrink-0" />
+                          <div className="flex-1 space-y-3">
+                            <div className="h-4 bg-muted rounded w-1/4" />
+                            <div className="h-3 bg-muted rounded w-1/2" />
+                            <div className="h-3 bg-muted rounded w-1/3" />
                           </div>
-                          <Button 
-                            className="w-full sm:w-auto gap-2"
-                            onClick={() => handleClaimCoupon(coupon)}
-                            disabled={coupon.claimed}
-                          >
-                            <Ticket className="h-4 w-4" />
-                            {coupon.claimed ? "Visit Store" : "Claim & Visit"}
-                          </Button>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : activeCoupons.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-8 pb-8 text-center">
+                    <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground mb-2">No active coupons available</p>
+                    <p className="text-sm text-muted-foreground">Save some listings or vendors to see their active coupons!</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {activeCoupons.map((coupon) => (
+                    <Card key={coupon.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          {/* Listing Thumbnail */}
+                          <div 
+                            className="relative w-full sm:w-32 h-32 rounded-lg overflow-hidden cursor-pointer group shrink-0"
+                            onClick={() => navigate(`/listing/${coupon.listing_id}`)}
+                          >
+                            <img 
+                              src={coupon.listing_image} 
+                              alt={coupon.listing_title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <Badge className="absolute top-2 right-2 bg-primary text-xs">
+                              {coupon.discount}
+                            </Badge>
+                          </div>
+                          
+                          {/* Coupon Details */}
+                          <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 
+                                  className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors"
+                                  onClick={() => navigate(`/vendor/${coupon.vendor_id}`)}
+                                >
+                                  {coupon.vendor_name}
+                                </h3>
+                              </div>
+                              <p 
+                                className="text-sm text-muted-foreground hover:text-foreground cursor-pointer mb-2"
+                                onClick={() => navigate(`/listing/${coupon.listing_id}`)}
+                              >
+                                {coupon.listing_title}
+                              </p>
+                              <div className="space-y-1">
+                                <p className="text-sm text-muted-foreground">
+                                  Code: <span className="font-mono font-bold text-foreground">{coupon.code}</span>
+                                </p>
+                                <p className="text-xs text-muted-foreground">Expires: {coupon.expires}</p>
+                              </div>
+                            </div>
+                            <Button 
+                              className="w-full sm:w-auto gap-2"
+                              onClick={() => navigate(`/listing/${coupon.listing_id}`)}
+                            >
+                              <Ticket className="h-4 w-4" />
+                              View Listing
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             {/* My Preferences */}
