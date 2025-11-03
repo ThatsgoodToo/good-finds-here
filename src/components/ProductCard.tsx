@@ -4,7 +4,7 @@ import { Hand, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import ShareListingDialog from "@/components/ShareListingDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type CategoryType = "product" | "service" | "experience" | "sale";
 
@@ -30,14 +31,48 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, isSaved = false, onSaveToggle }: ProductCardProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [folders, setFolders] = useState(["Favorites", "Wishlist", "For Later"]);
+  const [folders, setFolders] = useState<string[]>([]);
   const [saved, setSaved] = useState(isSaved);
   const [hasActiveCoupon, setHasActiveCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
+
+  // Check if already saved and load folders
+  useEffect(() => {
+    const loadSaveStatus = async () => {
+      if (!user) return;
+
+      // Check if item is saved
+      const { data: saveData } = await supabase
+        .from("favorites")
+        .select("folder_name")
+        .eq("user_id", user.id)
+        .eq("item_id", id)
+        .maybeSingle();
+
+      setSaved(!!saveData);
+
+      // Load user's folders
+      const { data: foldersData } = await supabase
+        .from("favorites")
+        .select("folder_name")
+        .eq("user_id", user.id);
+
+      if (foldersData) {
+        const uniqueFolders = Array.from(new Set(foldersData.map(f => f.folder_name)));
+        setFolders(uniqueFolders.length > 0 ? uniqueFolders : ["Favorites", "Wishlist", "For Later"]);
+      } else {
+        setFolders(["Favorites", "Wishlist", "For Later"]);
+      }
+    };
+
+    loadSaveStatus();
+  }, [user, id]);
 
   // Check for active coupon
   useEffect(() => {
@@ -89,30 +124,72 @@ const ProductCard = ({ id, title, price, image, categories, vendor, vendorId, is
     sale: "bg-category-sale",
   };
 
-  const handleHighFive = () => {
+  const handleHighFive = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error("Please sign in to save items");
+      navigate("/auth");
+      return;
+    }
+
     if (saved) {
-      // If already saved, toggle it off directly
-      setSaved(false);
-      if (onSaveToggle) {
-        onSaveToggle();
+      // Remove from favorites
+      try {
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("item_id", id);
+
+        if (error) throw error;
+
+        setSaved(false);
+        if (onSaveToggle) {
+          onSaveToggle();
+        }
+        toast.success("Removed from collection");
+      } catch (error) {
+        console.error("Error removing favorite:", error);
+        toast.error("Failed to remove from collection");
       }
-      toast.success("Removed from collection");
     } else {
-      // If not saved, show dialog to choose folder
+      // Show dialog to choose folder
       setShowSaveDialog(true);
     }
   };
 
-  const handleSave = (folder: string) => {
-    setSaved(true);
-    if (onSaveToggle) {
-      onSaveToggle();
+  const handleSave = async (folder: string) => {
+    if (!user) {
+      toast.error("Please sign in to save items");
+      return;
     }
-    toast.success(`Saved to ${folder}!`, {
-      description: `${title} has been added to your collection.`,
-    });
-    setShowSaveDialog(false);
-    setNewFolderName("");
+
+    try {
+      const { error } = await supabase
+        .from("favorites")
+        .insert({
+          user_id: user.id,
+          item_id: id,
+          folder_name: folder,
+        });
+
+      if (error) throw error;
+
+      setSaved(true);
+      if (onSaveToggle) {
+        onSaveToggle();
+      }
+      toast.success(`Saved to ${folder}!`, {
+        description: `${title} has been added to your collection.`,
+      });
+      setShowSaveDialog(false);
+      setNewFolderName("");
+    } catch (error) {
+      console.error("Error saving favorite:", error);
+      toast.error("Failed to save to collection");
+    }
   };
 
   const handleCreateFolder = () => {
