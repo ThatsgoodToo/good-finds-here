@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFolders } from "@/hooks/useFolders";
 import { useSaves } from "@/hooks/useSaves";
+import { useFollowers } from "@/hooks/useFollowers";
 import { cn } from "@/lib/utils";
 
 interface SaveButtonProps {
@@ -39,6 +40,7 @@ export function SaveButton({
   const navigate = useNavigate();
   const { folders, createFolder } = useFolders();
   const { checkIsSaved, saveItem, unsaveItem } = useSaves();
+  const { isFollowing, toggleFollow, isToggling, isCheckingFollow } = useFollowers(itemType === 'vendor' ? itemId : undefined);
   
   const [isSaved, setIsSaved] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
@@ -46,10 +48,10 @@ export function SaveButton({
   const [newFolderDescription, setNewFolderDescription] = useState("");
   const [isChecking, setIsChecking] = useState(true);
 
-  // Check if item is already saved
+  // Check if listing is already saved (only for listings)
   useEffect(() => {
     const checkSaved = async () => {
-      if (!user) {
+      if (!user || itemType === 'vendor') {
         setIsSaved(false);
         setIsChecking(false);
         return;
@@ -68,13 +70,24 @@ export function SaveButton({
     e.stopPropagation();
 
     if (!user) {
-      toast.error("Please sign in to save items");
+      toast.error(`Please sign in to ${itemType === 'vendor' ? 'follow vendors' : 'save items'}`);
       navigate("/auth");
       return;
     }
 
+    // Handle vendor following
+    if (itemType === 'vendor') {
+      toggleFollow(itemId);
+      if (isFollowing) {
+        toast.success(`Unfollowed ${itemTitle || 'vendor'}`);
+      } else {
+        toast.success(`Now following ${itemTitle || 'vendor'}!`);
+      }
+      return;
+    }
+
+    // Handle listing saving
     if (isSaved) {
-      // Unsave
       unsaveItem({ saveType: itemType, targetId: itemId }, {
         onSuccess: () => {
           setIsSaved(false);
@@ -85,7 +98,6 @@ export function SaveButton({
         }
       });
     } else {
-      // Show folder selection dialog
       setShowDialog(true);
     }
   };
@@ -131,24 +143,31 @@ export function SaveButton({
     });
   };
 
+  // Determine state based on item type
+  const isActive = itemType === 'vendor' ? isFollowing : isSaved;
+  const isLoading = itemType === 'vendor' ? (isCheckingFollow || isToggling) : isChecking;
+  const label = itemType === 'vendor' 
+    ? (isFollowing ? "Following" : "Follow") 
+    : (isSaved ? "Saved" : "Save");
+
   return (
     <>
       <Button
         variant={variant}
         size={size}
         onClick={handleClick}
-        disabled={isChecking}
+        disabled={isLoading}
         className={cn(
           "transition-all",
-          isSaved
+          isActive
             ? "bg-primary hover:bg-primary/90 text-primary-foreground"
             : "bg-background/90 hover:bg-background text-foreground",
           className
         )}
-        title={isSaved ? "Unsave" : "Save to collection"}
+        title={itemType === 'vendor' ? (isFollowing ? "Unfollow" : "Follow vendor") : (isSaved ? "Unsave" : "Save to collection")}
       >
-        <Hand className={cn("h-5 w-5", isSaved && "fill-current")} />
-        {showLabel && <span className="ml-2">{isSaved ? "Saved" : "Save"}</span>}
+        <Hand className={cn("h-5 w-5", isActive && "fill-current")} />
+        {showLabel && <span className="ml-2">{label}</span>}
       </Button>
 
       {/* Folder Selection Dialog */}

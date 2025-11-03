@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFollowers } from "@/hooks/useFollowers";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import SignupModal from "@/components/SignupModal";
@@ -55,6 +56,7 @@ const VendorProfile = () => {
   const navigate = useNavigate();
   const { vendorId } = useParams();
   const { user } = useAuth();
+  const { followerCount } = useFollowers(vendorId);
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
   const [showCouponDialog, setShowCouponDialog] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
@@ -158,7 +160,7 @@ const VendorProfile = () => {
           ownership: "",
           sustainable: matchedVendor.sustainable_methods || [],
           activeOffers: 0,
-          highFives: 0,
+          highFives: followerCount, // Will be updated by useFollowers hook
         });
 
         // Load active offers first
@@ -229,6 +231,11 @@ const VendorProfile = () => {
 
     loadVendorProfile();
   }, [vendorId, user]);
+
+  // Update highFives count when followerCount changes
+  useEffect(() => {
+    setVendor(prev => ({ ...prev, highFives: followerCount }));
+  }, [followerCount]);
 
   const getCategoryColor = (type: string): string => {
     const colors: Record<string, string> = {
