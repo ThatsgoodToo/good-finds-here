@@ -111,6 +111,14 @@ const ShareCouponDialog = ({ open, onOpenChange, shopperId, shopperName }: Share
 
     setSharing(true);
     try {
+      // Get fresh session to ensure auth token is valid
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        toast.error("Please log in again to continue");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("share-coupon", {
         body: {
           coupon_id: selectedCouponId,
