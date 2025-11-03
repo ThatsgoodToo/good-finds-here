@@ -347,10 +347,20 @@ const VideoListing = () => {
                 <p className="text-xl font-semibold">${listing.price}</p>
               )}
 
-              {/* High Fives - This is now handled by SaveButton which has its own dialog */}
-              <p className="text-sm text-muted-foreground">
-                {highFivesCount} High Five{highFivesCount !== 1 ? 's' : ''}
-              </p>
+              {/* High Fives */}
+              <div className="flex items-center gap-3">
+                <SaveButton
+                  itemType="listing"
+                  itemId={listingId || ""}
+                  itemTitle={listing.title}
+                  size="sm"
+                  variant="outline"
+                  showLabel
+                />
+                <span className="text-sm text-muted-foreground">
+                  {highFivesCount} High Five{highFivesCount !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-4">
